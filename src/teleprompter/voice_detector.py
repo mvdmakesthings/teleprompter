@@ -9,7 +9,6 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 try:
     import webrtcvad
-
     WEBRTC_AVAILABLE = True
 except ImportError:
     WEBRTC_AVAILABLE = False
@@ -50,10 +49,13 @@ class VoiceActivityDetector(QObject):
 
         # Initialize WebRTC VAD if available
         if not self.use_simple_vad:
-            self.vad = webrtcvad.Vad(self.sensitivity)
-        else:
-            # Simple threshold-based VAD parameters
-            self.voice_threshold = 0.01  # Adjust based on sensitivity
+            # For WebRTC VAD, use integer part of sensitivity as initial mode
+            webrtc_mode = min(3, int(self.sensitivity))
+            self.vad = webrtcvad.Vad(webrtc_mode)
+
+        # Initialize threshold based on sensitivity (for both VAD types)
+        self.voice_threshold = 0.01  # Default, will be updated by set_sensitivity
+        self.set_sensitivity(self.sensitivity)  # Apply initial sensitivity settings
 
         # State tracking
         self.is_running = False
@@ -69,17 +71,26 @@ class VoiceActivityDetector(QObject):
         # Audio buffer
         self.audio_buffer = np.array([], dtype=np.float32)
 
-    def set_sensitivity(self, sensitivity: int):
-        """Set VAD sensitivity (0-3, higher = more aggressive)."""
-        if 0 <= sensitivity <= 3:
+    def set_sensitivity(self, sensitivity: float):
+        """Set VAD sensitivity (0.0-3.0, higher = more sensitive)."""
+        if 0.0 <= sensitivity <= 3.0:
             self.sensitivity = sensitivity
+
+            # For WebRTC VAD, use the integer part as the mode
             if not self.use_simple_vad and self.vad:
-                self.vad.set_mode(sensitivity)
-            else:
-                # Adjust threshold for simple VAD based on sensitivity
-                # Higher sensitivity = lower threshold
-                thresholds = [0.02, 0.015, 0.01, 0.005]
-                self.voice_threshold = thresholds[sensitivity]
+                webrtc_mode = min(3, int(sensitivity))
+                self.vad.set_mode(webrtc_mode)
+
+            # Set threshold based on floating-point sensitivity
+            # Higher sensitivity = lower threshold (more sensitive to quiet sounds)
+            # Map 0.0-3.0 to 0.025-0.005 threshold range
+            max_threshold = 0.025
+            min_threshold = 0.005
+            threshold_range = max_threshold - min_threshold
+
+            # Invert sensitivity so higher values = lower thresholds
+            normalized_sensitivity = sensitivity / 3.0
+            self.voice_threshold = max_threshold - (normalized_sensitivity * threshold_range)
 
     def set_timing(self, start_delay: float, stop_delay: float):
         """Set voice start/stop timing delays."""
@@ -103,14 +114,12 @@ class VoiceActivityDetector(QObject):
                 channels=1,
                 dtype=np.float32,
                 blocksize=self.frame_size,
-                callback=self._audio_callback,
+                callback=self._audio_callback
             )
             self.audio_stream.start()
 
             # Start processing thread
-            self.audio_thread = threading.Thread(
-                target=self._process_audio, daemon=True
-            )
+            self.audio_thread = threading.Thread(target=self._process_audio, daemon=True)
             self.audio_thread.start()
 
         except Exception as e:
@@ -151,23 +160,26 @@ class VoiceActivityDetector(QObject):
                 # Check if we have enough data for processing
                 if len(self.audio_buffer) >= self.frame_size:
                     # Extract frame for processing
-                    frame_data = self.audio_buffer[: self.frame_size]
-                    self.audio_buffer = self.audio_buffer[self.frame_size :]
+                    frame_data = self.audio_buffer[:self.frame_size]
+                    self.audio_buffer = self.audio_buffer[self.frame_size:]
+
                     # Calculate audio level (RMS)
-                    self.audio_level = float(np.sqrt(np.mean(frame_data**2)))
+                    self.audio_level = float(np.sqrt(np.mean(frame_data ** 2)))
                     self.voice_level_changed.emit(self.audio_level)
 
-                    # Determine if frame contains speech
+                    # Determine if speech is detected using hybrid approach
                     if self.use_simple_vad:
-                        # Simple threshold-based VAD
+                        # Pure threshold-based detection
                         is_speech = self.audio_level > self.voice_threshold
                     else:
-                        # WebRTC VAD
-                        # Convert to 16-bit PCM for WebRTC VAD
+                        # Combined WebRTC VAD + threshold for fine-grained control
                         pcm_data = (frame_data * 32767).astype(np.int16)
-                        is_speech = self.vad.is_speech(
-                            pcm_data.tobytes(), self.sample_rate
-                        )
+                        webrtc_speech = self.vad.is_speech(pcm_data.tobytes(), self.sample_rate)
+                        threshold_speech = self.audio_level > self.voice_threshold
+
+                        # Speech detected if BOTH WebRTC and threshold agree
+                        # This provides more accurate detection with fine-grained control
+                        is_speech = webrtc_speech and threshold_speech
 
                     current_time = time.time()
 
@@ -175,21 +187,16 @@ class VoiceActivityDetector(QObject):
                         self.last_voice_time = current_time
 
                         # Check if we should start speaking
-                        if (
-                            not self.is_speaking
-                            and current_time - self.last_silence_time
-                            >= self.start_delay
-                        ):
+                        if (not self.is_speaking and
+                            current_time - self.last_silence_time >= self.start_delay):
                             self.is_speaking = True
                             self.voice_started.emit()
                     else:
                         self.last_silence_time = current_time
 
                         # Check if we should stop speaking
-                        if (
-                            self.is_speaking
-                            and current_time - self.last_voice_time >= self.stop_delay
-                        ):
+                        if (self.is_speaking and
+                            current_time - self.last_voice_time >= self.stop_delay):
                             self.is_speaking = False
                             self.voice_stopped.emit()
                 else:
@@ -206,15 +213,13 @@ class VoiceActivityDetector(QObject):
             devices = sd.query_devices()
             input_devices = []
             for i, device in enumerate(devices):
-                if device["max_input_channels"] > 0:
-                    input_devices.append(
-                        {
-                            "index": i,
-                            "name": device["name"],
-                            "channels": device["max_input_channels"],
-                            "default_samplerate": device["default_samplerate"],
-                        }
-                    )
+                if device['max_input_channels'] > 0:
+                    input_devices.append({
+                        'index': i,
+                        'name': device['name'],
+                        'channels': device['max_input_channels'],
+                        'default_samplerate': device['default_samplerate']
+                    })
             return input_devices
         except Exception as e:
             self.error_occurred.emit(f"Failed to get audio devices: {str(e)}")

@@ -28,7 +28,7 @@ MAX_FILE_SIZE = 1024 * 1024  # 1MB
 
 # Voice activity detection settings
 VAD_ENABLED_DEFAULT = False
-VAD_SENSITIVITY = 1  # WebRTC VAD aggressiveness (0-3, higher = more aggressive)
+VAD_SENSITIVITY = 1.5  # Voice detection sensitivity (0.0-3.0, higher = more sensitive)
 VAD_SAMPLE_RATE = 16000  # Sample rate for audio processing
 VAD_FRAME_DURATION = 30  # Frame duration in milliseconds (10, 20, or 30)
 VAD_START_DELAY = 0.5  # Seconds before considering speech as started
