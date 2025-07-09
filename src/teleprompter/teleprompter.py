@@ -11,6 +11,7 @@ class TeleprompterWidget(QWidget):
     """Custom widget for teleprompter display and control."""
 
     speed_changed = pyqtSignal(float)
+    voice_activity_changed = pyqtSignal(bool)  # Signal for voice activity status
 
     def __init__(self, parent=None):
         """Initialize the teleprompter widget."""
@@ -21,6 +22,10 @@ class TeleprompterWidget(QWidget):
         self.content_height = 0
         self.current_position = 0
         self.current_content = ""
+
+        # Voice control settings
+        self.voice_control_enabled = False
+        self.voice_detector = None
 
         self._setup_ui()
         self._setup_animation()
@@ -218,6 +223,29 @@ class TeleprompterWidget(QWidget):
     def adjust_speed(self, delta: float):
         """Adjust speed by delta amount."""
         self.set_speed(self.current_speed + delta)
+
+    def set_voice_detector(self, voice_detector):
+        """Set the voice detector instance and connect signals."""
+        self.voice_detector = voice_detector
+        if voice_detector:
+            voice_detector.voice_started.connect(self._on_voice_started)
+            voice_detector.voice_stopped.connect(self._on_voice_stopped)
+
+    def enable_voice_control(self, enabled: bool):
+        """Enable or disable voice-controlled scrolling."""
+        self.voice_control_enabled = enabled
+
+    def _on_voice_started(self):
+        """Handle voice activity start."""
+        if self.voice_control_enabled and not self.is_playing:
+            self.play()
+            self.voice_activity_changed.emit(True)
+
+    def _on_voice_stopped(self):
+        """Handle voice activity stop."""
+        if self.voice_control_enabled and self.is_playing:
+            self.pause()
+            self.voice_activity_changed.emit(False)
 
     def ensure_focus(self):
         """Ensure the widget has focus for keyboard events."""

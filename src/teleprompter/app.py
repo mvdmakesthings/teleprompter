@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 from . import config
 from .markdown_parser import MarkdownParser
 from .teleprompter import TeleprompterWidget
+from .voice_control_widget import VoiceControlWidget
 
 
 class TeleprompterApp(QMainWindow):
@@ -51,6 +52,9 @@ class TeleprompterApp(QMainWindow):
         # Teleprompter widget
         self.teleprompter = TeleprompterWidget()
         self.teleprompter.speed_changed.connect(self._on_speed_changed)
+        self.teleprompter.voice_activity_changed.connect(
+            self._on_voice_activity_changed
+        )
         layout.addWidget(self.teleprompter)
 
         # Load initial content
@@ -104,6 +108,15 @@ class TeleprompterApp(QMainWindow):
 
         toolbar.addSeparator()
 
+        # Voice control widget
+        self.voice_control_widget = VoiceControlWidget()
+        self.voice_control_widget.voice_detection_enabled.connect(
+            self._on_voice_detection_enabled
+        )
+        toolbar.addWidget(self.voice_control_widget)
+
+        toolbar.addSeparator()
+
         # Fullscreen button
         fullscreen_button = QPushButton("Fullscreen")
         fullscreen_button.clicked.connect(self.toggle_fullscreen)
@@ -139,8 +152,9 @@ class TeleprompterApp(QMainWindow):
 1. **Open a File**: Click "Open File" or press Ctrl+O (Cmd+O on Mac)
 2. **Play/Pause**: Click "Play" or press Space
 3. **Adjust Speed**: Use Up/Down arrow keys
-4. **Fullscreen**: Click "Fullscreen" or press F11
-5. **Exit Fullscreen**: Press Escape
+4. **Voice Control**: Enable voice detection to start/stop with your voice
+5. **Fullscreen**: Click "Fullscreen" or press F11
+6. **Exit Fullscreen**: Press Escape
 
 ## Keyboard Shortcuts
 
@@ -149,6 +163,19 @@ class TeleprompterApp(QMainWindow):
 - **Up/Down**: Adjust speed
 - **F11**: Toggle fullscreen
 - **Escape**: Exit fullscreen
+
+## Voice Control
+
+Enable voice detection to automatically start scrolling when you begin speaking and stop when you pause. You can:
+
+- Adjust **Sensitivity** to fine-tune voice detection
+- Select your preferred **Microphone**
+- Monitor **Audio Level** to ensure proper detection
+
+## Manual Navigation
+
+- **Mouse Wheel**: Scroll up/down to navigate (auto-pauses scrolling)
+- **Click**: Resume scrolling from current position
 
 ---
 
@@ -212,3 +239,23 @@ class TeleprompterApp(QMainWindow):
         """Exit fullscreen mode."""
         if self.isFullScreen():
             self.showNormal()
+
+    def _on_voice_detection_enabled(self, enabled: bool):
+        """Handle voice detection enable/disable."""
+        if enabled:
+            # Connect voice detector to teleprompter
+            voice_detector = self.voice_control_widget.get_voice_detector()
+            self.teleprompter.set_voice_detector(voice_detector)
+        else:
+            # Disconnect voice detector
+            self.teleprompter.set_voice_detector(None)
+
+        self.teleprompter.enable_voice_control(enabled)
+
+    def _on_voice_activity_changed(self, is_active: bool):
+        """Handle voice activity status change."""
+        # Update play button text when voice controls the teleprompter
+        if is_active:
+            self.play_button.setText("Pause")
+        else:
+            self.play_button.setText("Play")

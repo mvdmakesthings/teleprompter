@@ -4,7 +4,7 @@ import sys
 
 from PyQt6.QtWidgets import QApplication
 
-from teleprompter.app import TeleprompterApp
+from .app import TeleprompterApp
 
 
 def main():
