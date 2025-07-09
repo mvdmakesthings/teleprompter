@@ -5,55 +5,201 @@ import markdown
 from . import config
 
 
+class LoadingState:
+    """Represents different loading states."""
+
+    IDLE = "idle"
+    LOADING = "loading"
+    SUCCESS = "success"
+    ERROR = "error"
+
+
+class MarkdownParsingError(Exception):
+    """Custom exception for markdown parsing errors."""
+
+    pass
+
+
+class FileLoadingError(Exception):
+    """Custom exception for file loading errors."""
+
+    pass
+
+
 class MarkdownParser:
-    """Handle markdown parsing and HTML conversion."""
+    """Handle markdown parsing and HTML conversion with enhanced error handling."""
 
     def __init__(self):
         """Initialize the markdown parser with extensions."""
-        self.md = markdown.Markdown(extensions=['extra', 'nl2br'])
+        self.md = markdown.Markdown(extensions=["extra", "nl2br"])
         self.css = self._generate_css()
+        self.current_state = LoadingState.IDLE
+        self.last_error = None
 
     def _generate_css(self) -> str:
-        """Generate CSS for teleprompter styling."""
+        """Generate CSS for teleprompter styling with enhanced typography."""
+        theme = config.COLOR_THEMES[config.DEFAULT_THEME]
+
         return f"""
         <style>
+            /* Reset and base typography */
+            * {{
+                box-sizing: border-box;
+            }}
+
             body {{
-                background-color: {config.BACKGROUND_COLOR};
-                color: {config.TEXT_COLOR};
-                font-family: {config.DEFAULT_FONT_FAMILY}, sans-serif;
+                background-color: {theme["background"]};
+                color: {theme["text"]};
+                font-family: {config.DEFAULT_FONT_FAMILY};
                 font-size: {config.DEFAULT_FONT_SIZE}px;
+                font-weight: 400;
                 line-height: 1.6;
-                padding: 20px;
+                letter-spacing: 0.01em;
+                padding: 40px 20px;
                 margin: 0;
                 text-align: center;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                text-rendering: optimizeLegibility;
+
+                /* Add bottom padding for better scrolling experience */
+                padding-bottom: 50vh;
             }}
+
+            /* Enhanced heading typography */
             h1, h2, h3, h4, h5, h6 {{
-                color: {config.TEXT_COLOR};
-                margin: 20px 0;
+                color: {theme["text"]};
+                margin: 1.5em 0 0.8em 0;
+                font-weight: 600;
+                letter-spacing: -0.02em;
+                line-height: 1.2;
             }}
-            h1 {{ font-size: 2.5em; }}
-            h2 {{ font-size: 2.0em; }}
-            h3 {{ font-size: 1.7em; }}
-            h4 {{ font-size: 1.5em; }}
-            h5 {{ font-size: 1.3em; }}
-            h6 {{ font-size: 1.1em; }}
+
+            h1 {{
+                font-size: 2.5em;
+                font-weight: 700;
+                margin-top: 0;
+            }}
+            h2 {{
+                font-size: 2.0em;
+                font-weight: 650;
+            }}
+            h3 {{
+                font-size: 1.7em;
+                font-weight: 600;
+            }}
+            h4 {{
+                font-size: 1.5em;
+                font-weight: 600;
+            }}
+            h5 {{
+                font-size: 1.3em;
+                font-weight: 500;
+            }}
+            h6 {{
+                font-size: 1.1em;
+                font-weight: 500;
+            }}
+
+            /* Improved paragraph spacing */
             p {{
-                margin: 15px 0;
+                margin: 1.2em 0;
+                max-width: 80%;
+                margin-left: auto;
+                margin-right: auto;
             }}
+
+            /* Better list styling */
             ul, ol {{
                 text-align: left;
                 display: inline-block;
-                margin: 15px 0;
+                margin: 1.5em 0;
+                padding-left: 2em;
+                max-width: 80%;
             }}
+
+            li {{
+                margin: 0.5em 0;
+                line-height: 1.6;
+            }}
+
+            /* Enhanced link styling */
             a {{
-                color: {config.TEXT_COLOR};
-                text-decoration: underline;
+                color: {theme["accent"]};
+                text-decoration: none;
+                border-bottom: 1px solid {theme["accent"]};
+                transition: all 0.2s ease;
             }}
+
+            a:hover {{
+                color: {theme["text"]};
+                border-bottom-color: {theme["text"]};
+            }}
+
+            /* Code styling */
+            code {{
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 0.2em 0.4em;
+                border-radius: 3px;
+                font-family: Monaco, 'Courier New', monospace;
+                font-size: 0.9em;
+            }}
+
+            pre {{
+                background-color: rgba(255, 255, 255, 0.05);
+                padding: 1em;
+                border-radius: 5px;
+                overflow-x: auto;
+                margin: 1.5em auto;
+                max-width: 90%;
+            }}
+
+            /* Blockquote styling */
+            blockquote {{
+                border-left: 4px solid {theme["accent"]};
+                padding-left: 1.5em;
+                margin: 1.5em auto;
+                font-style: italic;
+                max-width: 80%;
+                opacity: 0.9;
+            }}
+
+            /* Table styling */
+            table {{
+                margin: 1.5em auto;
+                border-collapse: collapse;
+                max-width: 90%;
+            }}
+
+            th, td {{
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 0.8em;
+                text-align: left;
+            }}
+
+            th {{
+                background-color: rgba(255, 255, 255, 0.1);
+                font-weight: 600;
+            }}
+
+            /* Emphasis styling */
             strong {{
-                font-weight: bold;
+                font-weight: 600;
+                color: {theme["text"]};
             }}
+
             em {{
                 font-style: italic;
+                color: {theme["accent"]};
+            }}
+
+            /* Horizontal rule */
+            hr {{
+                border: none;
+                height: 1px;
+                background: linear-gradient(to right, transparent, {theme["accent"]}, transparent);
+                margin: 2em auto;
+                max-width: 60%;
             }}
         </style>
         """
@@ -61,37 +207,375 @@ class MarkdownParser:
     def parse_file(self, file_path: str) -> str:
         """Parse a markdown file and return HTML content."""
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Check file size
-            if len(content.encode('utf-8')) > config.MAX_FILE_SIZE:
-                raise ValueError(f"File size exceeds {config.MAX_FILE_SIZE / 1024 / 1024}MB limit")
+            if len(content.encode("utf-8")) > config.MAX_FILE_SIZE:
+                raise ValueError(
+                    f"File size exceeds maximum of {config.MAX_FILE_SIZE} bytes"
+                )
 
-            return self.parse_content(content)
+            # Convert markdown to HTML
+            html_content = self.md.convert(content)
+
+            # Generate full HTML document
+            return self._create_html_document(html_content)
+
         except Exception as e:
-            raise Exception(f"Error reading markdown file: {str(e)}") from e
+            raise ValueError(f"Error parsing markdown file: {str(e)}") from e
 
-    def parse_content(self, content: str) -> str:
-        """Parse markdown content and return HTML with styling."""
-        html_content = self.md.convert(content)
+    def parse_content(self, markdown_text: str) -> str:
+        """Parse markdown text and return HTML content."""
+        try:
+            # Convert markdown to HTML
+            html_content = self.md.convert(markdown_text)
+
+            # Generate full HTML document
+            return self._create_html_document(html_content)
+
+        except Exception as e:
+            raise ValueError(f"Error parsing markdown content: {str(e)}") from e
+
+    def _create_html_document(self, body_content: str) -> str:
+        """Create a complete HTML document with CSS styling."""
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Teleprompter</title>
             {self.css}
         </head>
         <body>
-            {html_content}
+            {body_content}
         </body>
         </html>
         """
 
-    def update_font_size(self, size: int) -> str:
-        """Update CSS with new font size."""
-        self.css = self._generate_css().replace(
-            f"font-size: {config.DEFAULT_FONT_SIZE}px;",
-            f"font-size: {size}px;"
-        )
-        return self.css
+    def get_loading_state(self) -> str:
+        """Get the current loading state."""
+        return self.current_state
+
+    def get_last_error(self) -> str:
+        """Get the last error message."""
+        return self.last_error
+
+    def _set_state(self, state: str, error_message: str = None):
+        """Set the loading state and optional error message."""
+        self.current_state = state
+        if error_message:
+            self.last_error = error_message
+        elif state == LoadingState.SUCCESS:
+            self.last_error = None
+
+    def _generate_error_html(
+        self, error_message: str, error_type: str = "File Error"
+    ) -> str:
+        """Generate HTML for error display with retry options."""
+        theme = config.COLOR_THEMES[config.DEFAULT_THEME]
+
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Error Loading Content</title>
+            {self.css}
+            <style>
+                .error-container {{
+                    max-width: 600px;
+                    margin: 20vh auto;
+                    padding: 40px;
+                    text-align: center;
+                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                        stop: 0 rgba(220, 53, 69, 0.1),
+                        stop: 1 rgba(220, 53, 69, 0.05));
+                    border: 2px solid rgba(220, 53, 69, 0.3);
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(220, 53, 69, 0.2);
+                }}
+
+                .error-icon {{
+                    font-size: 48px;
+                    color: #dc3545;
+                    margin-bottom: 20px;
+                }}
+
+                .error-title {{
+                    font-size: 24px;
+                    font-weight: 600;
+                    color: #dc3545;
+                    margin-bottom: 16px;
+                }}
+
+                .error-message {{
+                    font-size: 16px;
+                    color: {theme["text"]};
+                    margin-bottom: 24px;
+                    line-height: 1.5;
+                }}
+
+                .error-suggestions {{
+                    font-size: 14px;
+                    color: rgba(255, 255, 255, 0.7);
+                    margin-top: 20px;
+                }}
+
+                .suggestion-list {{
+                    list-style: none;
+                    padding: 0;
+                    margin: 16px 0;
+                }}
+
+                .suggestion-list li {{
+                    margin: 8px 0;
+                    padding: 8px 16px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 6px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="error-container">
+                <div class="error-icon">⚠️</div>
+                <div class="error-title">{error_type}</div>
+                <div class="error-message">{error_message}</div>
+
+                <div class="error-suggestions">
+                    <strong>Try these solutions:</strong>
+                    <ul class="suggestion-list">
+                        <li>📁 Check that the file exists and is accessible</li>
+                        <li>📝 Verify the file contains valid Markdown content</li>
+                        <li>🔒 Ensure you have permission to read the file</li>
+                        <li>🔄 Try opening a different file</li>
+                    </ul>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+    def _generate_loading_html(self) -> str:
+        """Generate HTML for loading state display."""
+        theme = config.COLOR_THEMES[config.DEFAULT_THEME]
+
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Loading Content</title>
+            {self.css}
+            <style>
+                .loading-container {{
+                    max-width: 400px;
+                    margin: 30vh auto;
+                    padding: 40px;
+                    text-align: center;
+                }}
+
+                .loading-spinner {{
+                    width: 48px;
+                    height: 48px;
+                    border: 4px solid rgba(255, 255, 255, 0.1);
+                    border-left: 4px solid {config.PRIMARY_COLORS["400"]};
+                    border-radius: 50%;
+                    margin: 0 auto 24px;
+                    animation: spin 1s linear infinite;
+                }}
+
+                @keyframes spin {{
+                    0% {{ transform: rotate(0deg); }}
+                    100% {{ transform: rotate(360deg); }}
+                }}
+
+                .loading-text {{
+                    font-size: 18px;
+                    color: {theme["text"]};
+                    margin-bottom: 8px;
+                }}
+
+                .loading-subtitle {{
+                    font-size: 14px;
+                    color: rgba(255, 255, 255, 0.6);
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading Content</div>
+                <div class="loading-subtitle">Please wait while we prepare your document...</div>
+            </div>
+        </body>
+        </html>
+        """
+
+    def _generate_empty_state_html(self) -> str:
+        """Generate HTML for empty state display when no file is loaded."""
+        theme = config.COLOR_THEMES[config.DEFAULT_THEME]
+
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Welcome to Teleprompter</title>
+            {self.css}
+            <style>
+                .empty-container {{
+                    max-width: 600px;
+                    margin: 20vh auto;
+                    padding: 40px;
+                    text-align: center;
+                }}
+
+                .empty-icon {{
+                    font-size: 72px;
+                    margin-bottom: 24px;
+                    opacity: 0.6;
+                }}
+
+                .empty-title {{
+                    font-size: 28px;
+                    font-weight: 600;
+                    color: {theme["text"]};
+                    margin-bottom: 16px;
+                }}
+
+                .empty-subtitle {{
+                    font-size: 18px;
+                    color: rgba(255, 255, 255, 0.7);
+                    margin-bottom: 32px;
+                    line-height: 1.5;
+                }}
+
+                .empty-actions {{
+                    margin-top: 32px;
+                }}
+
+                .empty-suggestion {{
+                    display: inline-block;
+                    margin: 8px 16px;
+                    padding: 12px 24px;
+                    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
+                        stop: 0 {config.PRIMARY_COLORS["600"]},
+                        stop: 1 {config.PRIMARY_COLORS["500"]});
+                    border-radius: 8px;
+                    color: white;
+                    text-decoration: none;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+                }}
+
+                .empty-suggestion:hover {{
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+                }}
+
+                .feature-list {{
+                    list-style: none;
+                    padding: 0;
+                    margin: 32px 0;
+                    text-align: left;
+                    display: inline-block;
+                }}
+
+                .feature-list li {{
+                    margin: 12px 0;
+                    padding: 8px 0;
+                    font-size: 16px;
+                    color: rgba(255, 255, 255, 0.8);
+                }}
+
+                .feature-list li::before {{
+                    content: "✨ ";
+                    margin-right: 8px;
+                }}
+
+                .keyboard-shortcuts {{
+                    margin-top: 32px;
+                    padding: 24px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 12px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }}
+
+                .shortcuts-title {{
+                    font-size: 16px;
+                    font-weight: 600;
+                    margin-bottom: 16px;
+                    color: {theme["accent"]};
+                }}
+
+                .shortcut-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 8px 0;
+                    font-size: 14px;
+                }}
+
+                .shortcut-key {{
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-family: monospace;
+                    font-weight: 600;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="empty-container">
+                <div class="empty-icon">📖</div>
+                <div class="empty-title">Welcome to Teleprompter</div>
+                <div class="empty-subtitle">
+                    Transform your presentations with smooth, professional teleprompter scrolling
+                </div>
+
+                <ul class="feature-list">
+                    <li>Smooth auto-scrolling with adjustable speed</li>
+                    <li>Voice control with pause on silence</li>
+                    <li>Beautiful typography and themes</li>
+                    <li>Reading progress tracking</li>
+                    <li>Keyboard shortcuts for easy control</li>
+                    <li>Markdown support with live preview</li>
+                </ul>
+
+                <div class="empty-actions">
+                    <div class="empty-suggestion">Press Ctrl+O to open a file</div>
+                </div>
+
+                <div class="keyboard-shortcuts">
+                    <div class="shortcuts-title">Keyboard Shortcuts</div>
+                    <div class="shortcut-row">
+                        <span>Open File</span>
+                        <span class="shortcut-key">Ctrl+O</span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>Play/Pause</span>
+                        <span class="shortcut-key">Space</span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>Increase Speed</span>
+                        <span class="shortcut-key">+</span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>Decrease Speed</span>
+                        <span class="shortcut-key">-</span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>Reset Position</span>
+                        <span class="shortcut-key">R</span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>Toggle Voice Control</span>
+                        <span class="shortcut-key">V</span>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
