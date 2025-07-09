@@ -57,7 +57,9 @@ class VoiceControlWidget(QWidget):
         self.sensitivity_slider = QSlider(Qt.Orientation.Horizontal)
         self.sensitivity_slider.setMinimum(0)
         self.sensitivity_slider.setMaximum(30)  # 0-30 for 0.0-3.0 in 0.1 increments
-        self.sensitivity_slider.setValue(int(config.VAD_SENSITIVITY * 10))  # Convert float to int
+        self.sensitivity_slider.setValue(
+            int(config.VAD_SENSITIVITY * 10)
+        )  # Convert float to int
         self.sensitivity_slider.setFixedWidth(60)
         self.sensitivity_slider.valueChanged.connect(self._on_sensitivity_changed)
         self._update_sensitivity_tooltip()
@@ -156,7 +158,9 @@ class VoiceControlWidget(QWidget):
     def _update_sensitivity_tooltip(self):
         """Update the sensitivity slider tooltip with current value."""
         current_value = self.sensitivity_slider.value() / 10.0
-        self.sensitivity_slider.setToolTip(f"Voice detection sensitivity: {current_value:.1f}")
+        self.sensitivity_slider.setToolTip(
+            f"Voice detection sensitivity: {current_value:.1f}"
+        )
 
     def _on_device_changed(self, index: int):
         """Handle audio device selection change."""
@@ -187,7 +191,9 @@ class VoiceControlWidget(QWidget):
 
         if is_active:
             # Speaking detected
-            self.activity_indicator.setStyleSheet("color: #4CAF50; font-size: 12px; font-weight: bold;")
+            self.activity_indicator.setStyleSheet(
+                "color: #4CAF50; font-size: 12px; font-weight: bold;"
+            )
         else:
             # Silent
             self.activity_indicator.setStyleSheet("color: #FFA500; font-size: 12px;")
