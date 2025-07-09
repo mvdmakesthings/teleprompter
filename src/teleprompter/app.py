@@ -3,21 +3,20 @@
 import os
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QKeySequence
+from PyQt6.QtGui import QAction, QIcon, QKeySequence
 from PyQt6.QtWidgets import (
-    QDoubleSpinBox,
     QFileDialog,
-    QLabel,
     QMainWindow,
     QMessageBox,
     QPushButton,
-    QSpinBox,
     QToolBar,
     QVBoxLayout,
     QWidget,
 )
 
 from . import config
+from .custom_widgets import IconDoubleSpinBox, IconSpinBox
+from .icon_manager import icon_manager
 from .markdown_parser import MarkdownParser
 from .teleprompter import TeleprompterWidget
 from .voice_control_widget import VoiceControlWidget
@@ -36,11 +35,16 @@ class TeleprompterApp(QMainWindow):
         self._setup_ui()
         self._setup_toolbar()
         self._setup_shortcuts()
+        self._setup_button_hover_effects()
+        self._setup_button_hover_effects()
 
     def _setup_ui(self):
         """Set up the main user interface."""
         self.setWindowTitle(config.WINDOW_TITLE)
         self.resize(config.DEFAULT_WIDTH, config.DEFAULT_HEIGHT)
+
+        # Apply modern dark theme
+        self._apply_modern_theme()
 
         # Central widget
         central_widget = QWidget()
@@ -64,51 +68,199 @@ class TeleprompterApp(QMainWindow):
         # Give focus to teleprompter widget
         self.teleprompter.setFocus()
 
+    def _apply_modern_theme(self):
+        """Apply minimal flat dark theme with gun metal grey colors."""
+        self.setStyleSheet("""
+            /* Main window styling */
+            QMainWindow {
+                background-color: #0f0f0f;
+                color: #e0e0e0;
+            }
+
+            /* Toolbar styling */
+            QToolBar {
+                background-color: #1a1a1a;
+                border: none;
+                border-bottom: 1px solid #333333;
+                padding: 2px;
+                spacing: 4px;
+                font-size: 12px;
+                font-weight: normal;
+            }
+
+            QToolBar::separator {
+                background-color: #333333;
+                width: 1px;
+                margin: 2px 4px;
+            }
+
+            /* Button styling */
+            QPushButton {
+                background-color: #2a2a2a;
+                border: 1px solid #404040;
+                border-radius: 4px;
+                color: #c0c0c0;
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: normal;
+                min-height: 20px;
+                min-width: 24px;
+            }
+
+            QPushButton:hover {
+                background-color: #363636;
+                border-color: #0078d4;
+                color: #ffffff;
+            }
+
+            QPushButton:pressed {
+                background-color: #0078d4;
+                border-color: #106ebe;
+                color: #ffffff;
+            }
+
+            /* Modern action button styling for play/pause and reset */
+            QPushButton#playButton, QPushButton#resetButton {
+                background-color: #333333;
+                border: 1px solid #4a4a4a;
+                padding: 8px;
+                min-width: 36px;
+                min-height: 24px;
+                border-radius: 4px;
+            }
+
+            QPushButton#playButton:hover, QPushButton#resetButton:hover {
+                background-color: #404040;
+                border-color: #0078d4;
+                color: #ffffff;
+            }
+
+            QPushButton#playButton:pressed, QPushButton#resetButton:pressed {
+                background-color: #0078d4;
+                border-color: #106ebe;
+            }
+
+            /* Spinbox styling */
+            QSpinBox, QDoubleSpinBox {
+                background-color: #262626;
+                border: 1px solid #404040;
+                border-radius: 2px;
+                color: #e0e0e0;
+                padding: 2px 4px;
+                font-size: 12px;
+                min-width: 50px;
+                max-width: 65px;
+                min-height: 18px;
+            }
+
+            QSpinBox:hover, QDoubleSpinBox:hover {
+                border-color: #505050;
+                background-color: #2e2e2e;
+            }
+
+            QSpinBox:focus, QDoubleSpinBox:focus {
+                border-color: #0078d4;
+                background-color: #2e2e2e;
+            }
+        """)
+
     def _setup_toolbar(self):
-        """Set up the toolbar with controls."""
+        """Set up the toolbar with modern controls inspired by professional video software."""
         toolbar = QToolBar()
         toolbar.setMovable(False)
+        toolbar.setFloatable(False)
+        toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.addToolBar(toolbar)
 
-        # Open file action
+        # File section
         open_action = QAction("Open File", self)
+        open_action.setToolTip("Open markdown file (Ctrl+O)")
         open_action.triggered.connect(self.open_file)
+
+        # Set icon for open action
+        open_pixmap = icon_manager.get_themed_pixmap("folder-open", "default", "medium")
+        if not open_pixmap.isNull():
+            open_action.setIcon(QIcon(open_pixmap))
+        else:
+            open_action.setText("📁 Open File")  # Fallback to emoji
+
         toolbar.addAction(open_action)
 
         toolbar.addSeparator()
 
-        # Play/Pause button with icon
-        self.play_button = QPushButton("▶️")
-        self.play_button.setToolTip("Play/Pause scrolling")
-        self.play_button.setFixedSize(30, 26)
+        # Transport controls section
+        # Play/Pause button with modern styling
+        self.play_button = QPushButton()
+        self.play_button.setObjectName("playButton")
+        self.play_button.setToolTip("Play/Pause scrolling (Space)")
         self.play_button.clicked.connect(self._toggle_playback)
+
+        # Set play icon
+        self._update_play_button_icon()
+
         toolbar.addWidget(self.play_button)
 
-        # Reset button with icon
-        reset_button = QPushButton("⏮️")
-        reset_button.setToolTip("Reset to beginning")
-        reset_button.setFixedSize(30, 26)
+        # Reset button
+        reset_button = QPushButton()
+        reset_button.setObjectName("resetButton")
+        reset_button.setToolTip("Reset to beginning (R)")
         reset_button.clicked.connect(self._reset_and_focus)
+
+        # Set reset icon
+        reset_pixmap = icon_manager.get_themed_pixmap("skip-back", "default", "medium")
+        if not reset_pixmap.isNull():
+            reset_button.setIcon(QIcon(reset_pixmap))
+        else:
+            reset_button.setText("⏮")  # Fallback to emoji
+
         toolbar.addWidget(reset_button)
 
         toolbar.addSeparator()
 
-        # Speed control (compact spinner like font size)
-        self.speed_spin = QDoubleSpinBox()
+        # Speed control section
+        speed_label = QPushButton("Speed")
+        speed_label.setEnabled(False)
+        speed_label.setStyleSheet("""
+            QPushButton:disabled {
+                background: transparent;
+                border: none;
+                color: #888888;
+                font-size: 11px;
+                font-weight: normal;
+                padding: 2px 4px;
+            }
+        """)
+        toolbar.addWidget(speed_label)
+
+        self.speed_spin = IconDoubleSpinBox()
         self.speed_spin.setMinimum(config.MIN_SPEED)
         self.speed_spin.setMaximum(config.MAX_SPEED)
         self.speed_spin.setValue(config.DEFAULT_SPEED)
         self.speed_spin.setSuffix("x")
         self.speed_spin.setDecimals(2)
         self.speed_spin.setSingleStep(config.SPEED_INCREMENT)
-        self.speed_spin.setToolTip("Scrolling speed")
+        self.speed_spin.setToolTip("Scrolling speed (↑↓ arrows)")
         self.speed_spin.valueChanged.connect(self._on_speed_spinner_changed)
         toolbar.addWidget(self.speed_spin)
 
         toolbar.addSeparator()
 
-        # Font size control (compact - no label needed)
-        self.font_size_spin = QSpinBox()
+        # Font size control section
+        font_label = QPushButton("Font")
+        font_label.setEnabled(False)
+        font_label.setStyleSheet("""
+            QPushButton:disabled {
+                background: transparent;
+                border: none;
+                color: #888888;
+                font-size: 11px;
+                font-weight: normal;
+                padding: 2px 4px;
+            }
+        """)
+        toolbar.addWidget(font_label)
+
+        self.font_size_spin = IconSpinBox()
         self.font_size_spin.setMinimum(config.MIN_FONT_SIZE)
         self.font_size_spin.setMaximum(config.MAX_FONT_SIZE)
         self.font_size_spin.setValue(config.DEFAULT_FONT_SIZE)
@@ -119,7 +271,7 @@ class TeleprompterApp(QMainWindow):
 
         toolbar.addSeparator()
 
-        # Voice control widget
+        # Voice control section
         self.voice_control_widget = VoiceControlWidget()
         self.voice_control_widget.voice_detection_enabled.connect(
             self._on_voice_detection_enabled
@@ -128,8 +280,9 @@ class TeleprompterApp(QMainWindow):
 
         toolbar.addSeparator()
 
-        # Fullscreen button
-        fullscreen_button = QPushButton("Fullscreen")
+        # View controls section
+        fullscreen_button = QPushButton("🖥️ Fullscreen")
+        fullscreen_button.setToolTip("Enter fullscreen mode (F11)")
         fullscreen_button.clicked.connect(self.toggle_fullscreen)
         toolbar.addWidget(fullscreen_button)
 
@@ -227,9 +380,51 @@ Enable voice detection to automatically start scrolling when you begin speaking 
     def _toggle_playback(self):
         """Toggle play/pause."""
         self.teleprompter.toggle_playback()
-        self.play_button.setText("⏸️" if self.teleprompter.is_playing else "▶️")
+        self._update_play_button_icon()
         # Ensure teleprompter widget has focus for keyboard controls
         self.teleprompter.ensure_focus()
+
+    def _update_play_button_icon(self):
+        """Update the play button icon based on the current state."""
+        if hasattr(self, "teleprompter") and self.teleprompter.is_playing:
+            # Show pause icon
+            pause_pixmap = icon_manager.get_themed_pixmap("pause", "default", "medium")
+            if not pause_pixmap.isNull():
+                self.play_button.setIcon(QIcon(pause_pixmap))
+                self.play_button.setText("")
+            else:
+                self.play_button.setText("⏸")  # Fallback to emoji
+        else:
+            # Show play icon
+            play_pixmap = icon_manager.get_themed_pixmap("play", "default", "medium")
+            if not play_pixmap.isNull():
+                self.play_button.setIcon(QIcon(play_pixmap))
+                self.play_button.setText("")
+            else:
+                self.play_button.setText("▶")  # Fallback to emoji
+
+    def _setup_button_hover_effects(self):
+        """Set up hover effects for better visual feedback."""
+
+        # Add hover effects to play button
+        def on_play_button_enter():
+            if hasattr(self, "teleprompter") and self.teleprompter.is_playing:
+                pause_pixmap = icon_manager.get_themed_pixmap(
+                    "pause", "hover", "medium"
+                )
+                if not pause_pixmap.isNull():
+                    self.play_button.setIcon(QIcon(pause_pixmap))
+            else:
+                play_pixmap = icon_manager.get_themed_pixmap("play", "hover", "medium")
+                if not play_pixmap.isNull():
+                    self.play_button.setIcon(QIcon(play_pixmap))
+
+        def on_play_button_leave():
+            self._update_play_button_icon()
+
+        # Install event filters for hover effects
+        self.play_button.enterEvent = lambda e: on_play_button_enter()
+        self.play_button.leaveEvent = lambda e: on_play_button_leave()
 
     def _on_speed_spinner_changed(self, speed: float):
         """Handle speed spinner change."""
@@ -273,8 +468,5 @@ Enable voice detection to automatically start scrolling when you begin speaking 
 
     def _on_voice_activity_changed(self, is_active: bool):
         """Handle voice activity status change."""
-        # Update play button text when voice controls the teleprompter
-        if is_active:
-            self.play_button.setText("⏸️")
-        else:
-            self.play_button.setText("▶️")
+        # Update play button icon when voice controls the teleprompter
+        self._update_play_button_icon()
