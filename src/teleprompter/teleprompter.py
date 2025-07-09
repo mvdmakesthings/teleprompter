@@ -64,19 +64,44 @@ class TeleprompterWidget(QWidget):
                 "document.body.scrollHeight",
                 lambda height: setattr(self, "content_height", height),
             )
-            # Disable manual scrolling
+            # Configure scrolling behavior
             self.web_view.page().runJavaScript("""
-                document.body.style.overflow = 'hidden';
-                document.documentElement.style.overflow = 'hidden';
-                // Prevent all scroll events
-                window.addEventListener('wheel', function(e) { e.preventDefault(); }, { passive: false });
+                // Allow manual scrolling via mouse wheel, but control keyboard behavior
+                document.body.style.overflow = 'auto';
+                document.documentElement.style.overflow = 'auto';
+
+                // Detect mouse wheel scrolling and pause auto-scroll
+                window.addEventListener('wheel', function(e) {
+                    // Signal to Qt that user is manually scrolling
+                    window.userIsScrolling = true;
+
+                    // Clear any existing timeout
+                    if (window.scrollTimeout) {
+                        clearTimeout(window.scrollTimeout);
+                    }
+
+                    // Set flag back to false after a brief delay
+                    window.scrollTimeout = setTimeout(function() {
+                        window.userIsScrolling = false;
+                    }, 100);
+                }, { passive: true });
+
+                // Prevent touch scrolling (for mobile devices)
                 window.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+
+                // Prevent keyboard scrolling but allow Qt to handle up/down arrows for speed control
                 window.addEventListener('keydown', function(e) {
-                    // Prevent space, page up/down, home/end, left/right arrows from scrolling
-                    // But allow up/down arrows (38, 40) to reach Qt for speed control
-                    if([32, 33, 34, 35, 36, 37, 39].indexOf(e.keyCode) > -1) {
+                    // Prevent space, page up/down, home/end, all arrow keys from scrolling the page
+                    // This ensures up/down arrows reach Qt for speed control, not page scrolling
+                    if([32, 33, 34, 35, 36, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
                         e.preventDefault();
                     }
+                }, false);
+
+                // Track manual scroll position for auto-scroll resume
+                window.addEventListener('scroll', function(e) {
+                    // This will be used to sync manual scroll position with auto-scroll
+                    window.manualScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
                 }, false);
             """)
             # Apply current font size
@@ -87,6 +112,17 @@ class TeleprompterWidget(QWidget):
         """Perform one scroll step."""
         if not self.is_playing:
             return
+
+        # Check if user is manually scrolling with mouse wheel
+        self.web_view.page().runJavaScript(
+            "window.userIsScrolling", self._handle_user_scrolling
+        )
+
+        # Check if user has manually scrolled and update our position
+        self.web_view.page().runJavaScript(
+            "window.manualScrollPosition || window.pageYOffset || document.documentElement.scrollTop",
+            self._update_position_from_manual_scroll,
+        )
 
         # Calculate scroll amount based on speed
         # Base speed: 100 pixels per second at 1x speed
@@ -104,8 +140,34 @@ class TeleprompterWidget(QWidget):
             f"window.scrollTo(0, {int(self.current_position)})"
         )
 
+    def _handle_user_scrolling(self, is_user_scrolling):
+        """Handle user wheel scrolling by pausing auto-scroll."""
+        if is_user_scrolling and self.is_playing:
+            self.pause()
+            # Update UI button text if parent app has the method
+            parent = self.parent()
+            while parent:
+                if hasattr(parent, "play_button"):
+                    parent.play_button.setText("Play")
+                    break
+                parent = parent.parent()
+
+    def _update_position_from_manual_scroll(self, manual_position):
+        """Update auto-scroll position based on manual scroll."""
+        if (
+            manual_position is not None
+            and abs(manual_position - self.current_position) > 10
+        ):
+            # User has manually scrolled, update our position to match
+            self.current_position = manual_position
+
     def play(self):
         """Start scrolling."""
+        # Sync our position with current manual scroll position before starting
+        self.web_view.page().runJavaScript(
+            "window.pageYOffset || document.documentElement.scrollTop",
+            lambda pos: setattr(self, "current_position", pos or 0),
+        )
         self.is_playing = True
         self.scroll_timer.start()
 
@@ -141,8 +203,13 @@ class TeleprompterWidget(QWidget):
         self.activateWindow()
 
     def mousePressEvent(self, event):
-        """Handle mouse press to regain focus."""
+        """Handle mouse press to regain focus and sync scroll position."""
         self.setFocus()
+        # Sync our position with the current scroll position when user clicks
+        self.web_view.page().runJavaScript(
+            "window.pageYOffset || document.documentElement.scrollTop",
+            lambda pos: setattr(self, "current_position", pos or 0),
+        )
         super().mousePressEvent(event)
 
     def keyPressEvent(self, event):
