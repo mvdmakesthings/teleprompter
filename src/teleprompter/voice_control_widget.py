@@ -28,6 +28,7 @@ class VoiceControlWidget(QWidget):
         # Voice detector instance
         self.voice_detector = VoiceActivityDetector(self)
         self.voice_detector.voice_level_changed.connect(self._update_voice_level)
+        self.voice_detector.speech_detected.connect(self._on_speech_detected)
         self.voice_detector.error_occurred.connect(self._handle_error)
 
         # Internal state
@@ -170,17 +171,14 @@ class VoiceControlWidget(QWidget):
                 self.voice_detector.set_audio_device(device_index)
 
     def _update_voice_level(self, level: float):
-        """Update voice level and activity indicator."""
+        """Update voice level (for potential future use)."""
         self._current_level = level
 
-        # Determine if speaking based on level threshold
-        # Use a simple threshold for visual feedback
-        threshold = 0.01  # Adjust as needed
-        is_speaking = level > threshold
-
-        if is_speaking != self._is_speaking:
-            self._is_speaking = is_speaking
-            self._update_activity_indicator(is_speaking)
+    def _on_speech_detected(self, is_speech: bool):
+        """Handle speech detection state changes from the voice detector."""
+        if is_speech != self._is_speaking:
+            self._is_speaking = is_speech
+            self._update_activity_indicator(is_speech)
 
     def _update_activity_indicator(self, is_active: bool):
         """Update the visual activity indicator."""

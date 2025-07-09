@@ -25,6 +25,9 @@ class VoiceActivityDetector(QObject):
     voice_started = pyqtSignal()
     voice_stopped = pyqtSignal()
     voice_level_changed = pyqtSignal(float)  # Audio level (0.0 to 1.0)
+    speech_detected = pyqtSignal(
+        bool
+    )  # True when speech is detected, False when silent
     error_occurred = pyqtSignal(str)
 
     def __init__(self, parent=None):
@@ -61,6 +64,7 @@ class VoiceActivityDetector(QObject):
         # State tracking
         self.is_running = False
         self.is_speaking = False
+        self.is_speech_detected = False  # Current speech detection state
         self.last_voice_time = 0
         self.last_silence_time = 0
         self.audio_level = 0.0
@@ -149,6 +153,10 @@ class VoiceActivityDetector(QObject):
             self.is_speaking = False
             self.voice_stopped.emit()
 
+        if self.is_speech_detected:
+            self.is_speech_detected = False
+            self.speech_detected.emit(False)
+
     def _audio_callback(self, indata, frames, time_info, status):
         """Callback for audio input stream."""
         if status:
@@ -187,6 +195,11 @@ class VoiceActivityDetector(QObject):
                         # Speech detected if BOTH WebRTC and threshold agree
                         # This provides more accurate detection with fine-grained control
                         is_speech = webrtc_speech and threshold_speech
+
+                    # Emit speech detection signal if state changed
+                    if is_speech != self.is_speech_detected:
+                        self.is_speech_detected = is_speech
+                        self.speech_detected.emit(is_speech)
 
                     current_time = time.time()
 
