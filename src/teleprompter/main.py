@@ -1,0 +1,24 @@
+"""Entry point for the teleprompter application."""
+
+import sys
+
+from PyQt6.QtWidgets import QApplication
+
+from teleprompter.app import TeleprompterApp
+
+
+def main():
+    """Run the teleprompter application."""
+    app = QApplication(sys.argv)
+    app.setApplicationName("Teleprompter")
+
+    # Create and show main window
+    window = TeleprompterApp()
+    window.show()
+
+    # Run event loop
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
