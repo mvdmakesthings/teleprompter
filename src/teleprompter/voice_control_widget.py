@@ -39,22 +39,27 @@ class VoiceControlWidget(QWidget):
 
     def _setup_ui(self):
         """Set up the compact user interface."""
-        # Use horizontal layout for toolbar integration
+        # Use horizontal layout for toolbar integration with no stretch
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(2, 2, 2, 2)
-        layout.setSpacing(8)
+        layout.setContentsMargins(0, 0, 0, 0)  # No margins
+        layout.setSpacing(1)  # Extremely minimal spacing - items almost touch
 
         # Voice detection toggle button with indicator
         self.voice_button = QPushButton("🎤")
         self.voice_button.setCheckable(True)
         self.voice_button.setChecked(config.VAD_ENABLED_DEFAULT)
-        self.voice_button.setToolTip("Toggle voice detection")
+        self.voice_button.setToolTip(
+            "Toggle voice detection\nGray: Disabled\nOrange: Listening\nGreen: Speaking"
+        )
         self.voice_button.setFixedSize(30, 26)
         self.voice_button.toggled.connect(self._on_voice_toggled)
-        layout.addWidget(self.voice_button)
+        layout.addWidget(self.voice_button, 0)  # No stretch
 
-        # Compact sensitivity control
-        layout.addWidget(QLabel("Sens:"))
+        # Sensitivity label and slider as one tight unit
+        sens_label = QLabel("Sens:")
+        sens_label.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(sens_label, 0)  # No stretch
+
         self.sensitivity_slider = QSlider(Qt.Orientation.Horizontal)
         self.sensitivity_slider.setMinimum(0)
         self.sensitivity_slider.setMaximum(30)  # 0-30 for 0.0-3.0 in 0.1 increments
@@ -64,7 +69,7 @@ class VoiceControlWidget(QWidget):
         self.sensitivity_slider.setFixedWidth(60)
         self.sensitivity_slider.valueChanged.connect(self._on_sensitivity_changed)
         self._update_sensitivity_tooltip()
-        layout.addWidget(self.sensitivity_slider)
+        layout.addWidget(self.sensitivity_slider, 0)  # No stretch
 
         # Audio device selection (compact)
         self.device_combo = QComboBox()
@@ -72,15 +77,15 @@ class VoiceControlWidget(QWidget):
         self.device_combo.setToolTip("Select microphone")
         self._populate_audio_devices()
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
-        layout.addWidget(self.device_combo)
+        layout.addWidget(self.device_combo, 0)  # No stretch
 
-        # Visual voice activity indicator
-        self.activity_indicator = QLabel("●")
-        self.activity_indicator.setFixedSize(20, 26)
-        self.activity_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.activity_indicator.setStyleSheet("color: gray; font-size: 12px;")
-        self.activity_indicator.setToolTip("Voice activity indicator")
-        layout.addWidget(self.activity_indicator)
+        # Add a stretch at the end to push everything left
+        layout.addStretch(1)
+
+        # Set the widget to only use the space it needs
+        self.setSizePolicy(
+            self.sizePolicy().Policy.Fixed, self.sizePolicy().Policy.Fixed
+        )
 
         # Initialize state
         self._update_voice_button_style()
@@ -110,7 +115,8 @@ class VoiceControlWidget(QWidget):
             self.voice_detector.start_detection()
         else:
             self.voice_detector.stop_detection()
-            self._update_activity_indicator(False)
+            # Reset speaking state when disabled
+            self._is_speaking = False
 
         # Enable/disable controls
         self.sensitivity_slider.setEnabled(enabled)
@@ -120,9 +126,22 @@ class VoiceControlWidget(QWidget):
         self.voice_detection_enabled.emit(enabled)
 
     def _update_voice_button_style(self):
-        """Update the voice button appearance based on state."""
-        if self.voice_button.isChecked():
-            # Active state - green background
+        """Update the voice button appearance based on state and activity."""
+        if not self.voice_button.isChecked():
+            # Disabled state - gray
+            self.voice_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #f0f0f0;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    color: black;
+                }
+                QPushButton:hover {
+                    background-color: #e0e0e0;
+                }
+            """)
+        elif self._is_speaking:
+            # Active and speaking - green
             self.voice_button.setStyleSheet("""
                 QPushButton {
                     background-color: #4CAF50;
@@ -135,16 +154,16 @@ class VoiceControlWidget(QWidget):
                 }
             """)
         else:
-            # Inactive state - default appearance
+            # Active but listening (no speech) - orange
             self.voice_button.setStyleSheet("""
                 QPushButton {
-                    background-color: #f0f0f0;
-                    border: 1px solid #ccc;
+                    background-color: #FFA500;
+                    border: 1px solid #e6940a;
                     border-radius: 4px;
-                    color: black;
+                    color: white;
                 }
                 QPushButton:hover {
-                    background-color: #e0e0e0;
+                    background-color: #e6940a;
                 }
             """)
 
@@ -178,7 +197,7 @@ class VoiceControlWidget(QWidget):
         """Handle speech detection state changes from the voice detector."""
         if is_speech != self._is_speaking:
             self._is_speaking = is_speech
-            self._update_activity_indicator(is_speech)
+            self._update_voice_button_style()  # Update button color based on speech state
 
     def _update_activity_indicator(self, is_active: bool):
         """Update the visual activity indicator."""
@@ -198,9 +217,16 @@ class VoiceControlWidget(QWidget):
 
     def _handle_error(self, error_message: str):
         """Handle voice detector errors."""
-        # Show error state in activity indicator
-        self.activity_indicator.setStyleSheet("color: red; font-size: 12px;")
-        self.activity_indicator.setToolTip(f"Error: {error_message}")
+        # Show error by setting button to red and updating tooltip
+        self.voice_button.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                border: 1px solid #d32f2f;
+                border-radius: 4px;
+                color: white;
+            }
+        """)
+        self.voice_button.setToolTip(f"Voice detection error: {error_message}")
 
         # Disable voice detection on error
         self.voice_button.setChecked(False)

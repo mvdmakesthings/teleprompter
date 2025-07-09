@@ -94,15 +94,13 @@ class TeleprompterApp(QMainWindow):
 
         toolbar.addSeparator()
 
-        # Font size controls
-        font_label = QLabel("Font Size:")
-        toolbar.addWidget(font_label)
-
+        # Font size control (compact - no label needed)
         self.font_size_spin = QSpinBox()
         self.font_size_spin.setMinimum(config.MIN_FONT_SIZE)
         self.font_size_spin.setMaximum(config.MAX_FONT_SIZE)
         self.font_size_spin.setValue(config.DEFAULT_FONT_SIZE)
         self.font_size_spin.setSuffix("px")
+        self.font_size_spin.setToolTip("Font size")
         self.font_size_spin.valueChanged.connect(self._on_font_size_changed)
         toolbar.addWidget(self.font_size_spin)
 
