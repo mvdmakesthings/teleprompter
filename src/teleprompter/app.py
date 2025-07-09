@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QSpinBox,
     QToolBar,
     QVBoxLayout,
     QWidget,
@@ -28,6 +29,7 @@ class TeleprompterApp(QMainWindow):
         super().__init__()
         self.parser = MarkdownParser()
         self.current_file = None
+        self.current_markdown_content = ""
 
         self._setup_ui()
         self._setup_toolbar()
@@ -88,6 +90,20 @@ class TeleprompterApp(QMainWindow):
 
         toolbar.addSeparator()
 
+        # Font size controls
+        font_label = QLabel("Font Size:")
+        toolbar.addWidget(font_label)
+
+        self.font_size_spin = QSpinBox()
+        self.font_size_spin.setMinimum(config.MIN_FONT_SIZE)
+        self.font_size_spin.setMaximum(config.MAX_FONT_SIZE)
+        self.font_size_spin.setValue(config.DEFAULT_FONT_SIZE)
+        self.font_size_spin.setSuffix("px")
+        self.font_size_spin.valueChanged.connect(self._on_font_size_changed)
+        toolbar.addWidget(self.font_size_spin)
+
+        toolbar.addSeparator()
+
         # Fullscreen button
         fullscreen_button = QPushButton("Fullscreen")
         fullscreen_button.clicked.connect(self.toggle_fullscreen)
@@ -138,6 +154,7 @@ class TeleprompterApp(QMainWindow):
 
 *Load a markdown file to begin...*
 """
+        self.current_markdown_content = welcome_text
         html_content = self.parser.parse_content(welcome_text)
         self.teleprompter.load_content(html_content)
 
@@ -153,6 +170,8 @@ class TeleprompterApp(QMainWindow):
 
         if file_path:
             try:
+                with open(file_path, encoding='utf-8') as f:
+                    self.current_markdown_content = f.read()
                 html_content = self.parser.parse_file(file_path)
                 self.teleprompter.load_content(html_content)
                 self.current_file = file_path
@@ -169,6 +188,10 @@ class TeleprompterApp(QMainWindow):
     def _on_speed_changed(self, speed: float):
         """Handle speed change."""
         self.speed_label.setText(f"Speed: {speed:.1f}x")
+
+    def _on_font_size_changed(self, size: int):
+        """Handle font size change."""
+        self.teleprompter.set_font_size(size)
 
     def toggle_fullscreen(self):
         """Toggle fullscreen mode."""

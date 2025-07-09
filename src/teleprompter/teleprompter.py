@@ -16,9 +16,11 @@ class TeleprompterWidget(QWidget):
         """Initialize the teleprompter widget."""
         super().__init__(parent)
         self.current_speed = config.DEFAULT_SPEED
+        self.current_font_size = config.DEFAULT_FONT_SIZE
         self.is_playing = False
         self.content_height = 0
         self.current_position = 0
+        self.current_content = ""
 
         self._setup_ui()
         self._setup_animation()
@@ -50,6 +52,7 @@ class TeleprompterWidget(QWidget):
 
     def load_content(self, html_content: str):
         """Load HTML content into the web view."""
+        self.current_content = html_content
         self.web_view.setHtml(html_content)
         self.current_position = 0
 
@@ -75,6 +78,9 @@ class TeleprompterWidget(QWidget):
                     }
                 }, false);
             """)
+            # Apply current font size
+            if self.current_font_size != config.DEFAULT_FONT_SIZE:
+                self.set_font_size(self.current_font_size)
 
     def _scroll_step(self):
         """Perform one scroll step."""
@@ -145,3 +151,34 @@ class TeleprompterWidget(QWidget):
             event.accept()
         else:
             super().keyPressEvent(event)
+
+    def set_font_size(self, size: int):
+        """Set the font size for the teleprompter text."""
+        self.current_font_size = size
+        # Update the font size via JavaScript with !important to override CSS
+        js_code = f"""
+        // Create or update a style element for font size overrides
+        var styleId = 'teleprompter-font-size-override';
+        var styleEl = document.getElementById(styleId);
+        if (!styleEl) {{
+            styleEl = document.createElement('style');
+            styleEl.id = styleId;
+            document.head.appendChild(styleEl);
+        }}
+
+        // Calculate relative sizes for headers
+        var baseFontSize = {size};
+        styleEl.textContent = `
+            body {{ font-size: ${{baseFontSize}}px !important; }}
+            p {{ font-size: ${{baseFontSize}}px !important; }}
+            li {{ font-size: ${{baseFontSize}}px !important; }}
+            a {{ font-size: ${{baseFontSize}}px !important; }}
+            h1 {{ font-size: ${{baseFontSize * 2.5}}px !important; }}
+            h2 {{ font-size: ${{baseFontSize * 2.0}}px !important; }}
+            h3 {{ font-size: ${{baseFontSize * 1.7}}px !important; }}
+            h4 {{ font-size: ${{baseFontSize * 1.5}}px !important; }}
+            h5 {{ font-size: ${{baseFontSize * 1.3}}px !important; }}
+            h6 {{ font-size: ${{baseFontSize * 1.1}}px !important; }}
+        `;
+        """
+        self.web_view.page().runJavaScript(js_code)
