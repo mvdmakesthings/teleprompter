@@ -66,9 +66,31 @@ class TeleprompterWidget(QWidget):
             )
             # Configure scrolling behavior
             self.web_view.page().runJavaScript("""
-                // Allow manual scrolling via mouse wheel, but control keyboard behavior
+                // Allow manual scrolling via mouse wheel, but hide scrollbar
                 document.body.style.overflow = 'auto';
                 document.documentElement.style.overflow = 'auto';
+
+                // Hide scrollbars while keeping scroll functionality
+                var style = document.createElement('style');
+                style.textContent = `
+                    /* Hide scrollbar for webkit browsers (Chrome, Safari, Edge) */
+                    ::-webkit-scrollbar {
+                        width: 0px;
+                        background: transparent;
+                    }
+
+                    /* Hide scrollbar for Firefox */
+                    html {
+                        scrollbar-width: none;
+                    }
+
+                    /* Ensure body and html can still scroll */
+                    body, html {
+                        overflow: auto;
+                        -ms-overflow-style: none; /* IE and Edge */
+                    }
+                `;
+                document.head.appendChild(style);
 
                 // Detect mouse wheel scrolling and pause auto-scroll
                 window.addEventListener('wheel', function(e) {
