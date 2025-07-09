@@ -62,7 +62,7 @@ class TeleprompterWidget(QWidget):
             # Get content height
             self.web_view.page().runJavaScript(
                 "document.body.scrollHeight",
-                lambda height: setattr(self, 'content_height', height)
+                lambda height: setattr(self, "content_height", height),
             )
             # Disable manual scrolling
             self.web_view.page().runJavaScript("""

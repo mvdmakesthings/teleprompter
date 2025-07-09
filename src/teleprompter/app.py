@@ -162,20 +162,19 @@ class TeleprompterApp(QMainWindow):
         """Open a markdown file."""
         file_filter = "Markdown files (" + " ".join(config.MARKDOWN_EXTENSIONS) + ")"
         file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Open Markdown File",
-            "",
-            file_filter
+            self, "Open Markdown File", "", file_filter
         )
 
         if file_path:
             try:
-                with open(file_path, encoding='utf-8') as f:
+                with open(file_path, encoding="utf-8") as f:
                     self.current_markdown_content = f.read()
                 html_content = self.parser.parse_file(file_path)
                 self.teleprompter.load_content(html_content)
                 self.current_file = file_path
-                self.setWindowTitle(f"{config.WINDOW_TITLE} - {os.path.basename(file_path)}")
+                self.setWindowTitle(
+                    f"{config.WINDOW_TITLE} - {os.path.basename(file_path)}"
+                )
                 self.teleprompter.reset()
                 # Ensure teleprompter widget has focus for keyboard controls
                 self.teleprompter.ensure_focus()
