@@ -5,6 +5,7 @@ import os
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QKeySequence
 from PyQt6.QtWidgets import (
+    QDoubleSpinBox,
     QFileDialog,
     QLabel,
     QMainWindow,
@@ -76,21 +77,33 @@ class TeleprompterApp(QMainWindow):
 
         toolbar.addSeparator()
 
-        # Play/Pause button
-        self.play_button = QPushButton("Play")
+        # Play/Pause button with icon
+        self.play_button = QPushButton("▶️")
+        self.play_button.setToolTip("Play/Pause scrolling")
+        self.play_button.setFixedSize(30, 26)
         self.play_button.clicked.connect(self._toggle_playback)
         toolbar.addWidget(self.play_button)
 
-        # Reset button
-        reset_button = QPushButton("Reset")
+        # Reset button with icon
+        reset_button = QPushButton("⏮️")
+        reset_button.setToolTip("Reset to beginning")
+        reset_button.setFixedSize(30, 26)
         reset_button.clicked.connect(self._reset_and_focus)
         toolbar.addWidget(reset_button)
 
         toolbar.addSeparator()
 
-        # Speed label
-        self.speed_label = QLabel(f"Speed: {config.DEFAULT_SPEED:.1f}x")
-        toolbar.addWidget(self.speed_label)
+        # Speed control (compact spinner like font size)
+        self.speed_spin = QDoubleSpinBox()
+        self.speed_spin.setMinimum(config.MIN_SPEED)
+        self.speed_spin.setMaximum(config.MAX_SPEED)
+        self.speed_spin.setValue(config.DEFAULT_SPEED)
+        self.speed_spin.setSuffix("x")
+        self.speed_spin.setDecimals(2)
+        self.speed_spin.setSingleStep(config.SPEED_INCREMENT)
+        self.speed_spin.setToolTip("Scrolling speed")
+        self.speed_spin.valueChanged.connect(self._on_speed_spinner_changed)
+        toolbar.addWidget(self.speed_spin)
 
         toolbar.addSeparator()
 
@@ -214,13 +227,21 @@ Enable voice detection to automatically start scrolling when you begin speaking 
     def _toggle_playback(self):
         """Toggle play/pause."""
         self.teleprompter.toggle_playback()
-        self.play_button.setText("Pause" if self.teleprompter.is_playing else "Play")
+        self.play_button.setText("⏸️" if self.teleprompter.is_playing else "▶️")
         # Ensure teleprompter widget has focus for keyboard controls
         self.teleprompter.ensure_focus()
 
+    def _on_speed_spinner_changed(self, speed: float):
+        """Handle speed spinner change."""
+        self.teleprompter.set_speed(speed)
+
     def _on_speed_changed(self, speed: float):
-        """Handle speed change."""
-        self.speed_label.setText(f"Speed: {speed:.1f}x")
+        """Handle speed change from teleprompter (keyboard shortcuts)."""
+        # Update the speed spinner to reflect the new speed
+        if hasattr(self, "speed_spin") and self.speed_spin.value() != speed:
+            self.speed_spin.blockSignals(True)
+            self.speed_spin.setValue(speed)
+            self.speed_spin.blockSignals(False)
 
     def _on_font_size_changed(self, size: int):
         """Handle font size change."""
@@ -254,6 +275,6 @@ Enable voice detection to automatically start scrolling when you begin speaking 
         """Handle voice activity status change."""
         # Update play button text when voice controls the teleprompter
         if is_active:
-            self.play_button.setText("Pause")
+            self.play_button.setText("⏸️")
         else:
-            self.play_button.setText("Play")
+            self.play_button.setText("▶️")

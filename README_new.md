@@ -53,21 +53,10 @@ python -m teleprompter.main
 1. **Load a Script**: Click "Open File" or press Ctrl+O (Cmd+O on Mac) to load a markdown file
 2. **Enable Voice Control** (Optional): Click the 🎤 button to enable voice-activated scrolling
 3. **Start Scrolling**: Click the ▶️ button, press Space, or begin speaking (if voice control is enabled)
-4. **Adjust Speed**: Use Up/Down arrow keys or the speed spinner (e.g., "1.50x") in the toolbar
+4. **Adjust Speed**: Use Up/Down arrow keys or the speed spinner in the toolbar
 5. **Manual Navigation**: Use mouse wheel to scroll to any position (auto-pauses scrolling)
-6. **Change Font Size**: Use the font size spinner (e.g., "24px") in the toolbar
+6. **Change Font Size**: Use the font size spinner in the toolbar
 7. **Go Fullscreen**: Press F11 or click the fullscreen button for recording mode
-
-### Toolbar Controls
-
-The compact toolbar includes:
-- **Open File**: Load markdown scripts
-- **▶️/⏸️**: Play/pause button with dynamic icons
-- **⏮️**: Reset to beginning button
-- **Speed Spinner**: Scrolling speed control (0.05x to 5.00x)
-- **Font Size Spinner**: Text size control (16px to 120px)
-- **🎤 Voice Control**: Complete voice detection interface
-- **Fullscreen**: Distraction-free mode for recording
 
 ### Voice Control
 
