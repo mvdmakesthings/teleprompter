@@ -79,7 +79,7 @@ class TeleprompterApp(QMainWindow):
 
         # Reset button
         reset_button = QPushButton("Reset")
-        reset_button.clicked.connect(self.teleprompter.reset)
+        reset_button.clicked.connect(self._reset_and_focus)
         toolbar.addWidget(reset_button)
 
         toolbar.addSeparator()
@@ -177,13 +177,22 @@ class TeleprompterApp(QMainWindow):
                 self.current_file = file_path
                 self.setWindowTitle(f"{config.WINDOW_TITLE} - {os.path.basename(file_path)}")
                 self.teleprompter.reset()
+                # Ensure teleprompter widget has focus for keyboard controls
+                self.teleprompter.ensure_focus()
             except Exception as e:
                 QMessageBox.critical(self, "Error", str(e))
+
+    def _reset_and_focus(self):
+        """Reset teleprompter and ensure focus."""
+        self.teleprompter.reset()
+        self.teleprompter.ensure_focus()
 
     def _toggle_playback(self):
         """Toggle play/pause."""
         self.teleprompter.toggle_playback()
         self.play_button.setText("Pause" if self.teleprompter.is_playing else "Play")
+        # Ensure teleprompter widget has focus for keyboard controls
+        self.teleprompter.ensure_focus()
 
     def _on_speed_changed(self, speed: float):
         """Handle speed change."""

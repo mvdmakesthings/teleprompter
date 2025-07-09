@@ -72,8 +72,9 @@ class TeleprompterWidget(QWidget):
                 window.addEventListener('wheel', function(e) { e.preventDefault(); }, { passive: false });
                 window.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
                 window.addEventListener('keydown', function(e) {
-                    // Prevent arrow keys, page up/down, home/end from scrolling
-                    if([32, 33, 34, 35, 36, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+                    // Prevent space, page up/down, home/end, left/right arrows from scrolling
+                    // But allow up/down arrows (38, 40) to reach Qt for speed control
+                    if([32, 33, 34, 35, 36, 37, 39].indexOf(e.keyCode) > -1) {
                         e.preventDefault();
                     }
                 }, false);
@@ -134,6 +135,15 @@ class TeleprompterWidget(QWidget):
         """Adjust speed by delta amount."""
         self.set_speed(self.current_speed + delta)
 
+    def ensure_focus(self):
+        """Ensure the widget has focus for keyboard events."""
+        self.setFocus()
+        self.activateWindow()
+
+    def mousePressEvent(self, event):
+        """Handle mouse press to regain focus."""
+        self.setFocus()
+        super().mousePressEvent(event)
 
     def keyPressEvent(self, event):
         """Handle keyboard shortcuts."""
