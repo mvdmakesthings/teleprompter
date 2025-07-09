@@ -16,7 +16,7 @@ BACKGROUND_COLOR = "#000000"  # Black
 TEXT_COLOR = "#FFFFFF"  # White
 
 # Scrolling settings
-DEFAULT_SPEED = 1.0  # 1x speed
+DEFAULT_SPEED = 0.3  # 1x speed
 MIN_SPEED = 0.05
 MAX_SPEED = 5.0
 SPEED_INCREMENT = 0.05
