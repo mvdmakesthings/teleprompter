@@ -6,7 +6,8 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from . import config
-from .style_manager import StyleManager
+from .services import ReadingMetricsService, ScrollController
+from .style_manager import get_style_manager
 
 
 class ProgressBar(QWidget):
@@ -16,7 +17,7 @@ class ProgressBar(QWidget):
         super().__init__(parent)
         self.progress = 0.0  # 0.0 to 1.0
         self.setFixedHeight(4)
-        self.setStyleSheet(StyleManager.get_progress_bar_stylesheet())
+        self.setStyleSheet(get_style_manager().get_progress_bar_stylesheet())
 
     def set_progress(self, progress: float):
         """Set progress value (0.0 to 1.0)."""
@@ -106,11 +107,13 @@ class TeleprompterWidget(QWidget):
     def __init__(self, parent=None):
         """Initialize the teleprompter widget."""
         super().__init__(parent)
-        self.current_speed = config.DEFAULT_SPEED
+
+        # Initialize services
+        self.scroll_controller = ScrollController()
+        self.reading_metrics = ReadingMetricsService()
+
+        # Legacy attributes mapped to services
         self.current_font_size = config.DEFAULT_FONT_SIZE
-        self.is_playing = False
-        self.content_height = 0
-        self.current_position = 0
         self.current_content = ""
 
         # Voice control settings
@@ -133,12 +136,54 @@ class TeleprompterWidget(QWidget):
         self._setup_ui()
         self._setup_animation()
         self._setup_focus_management()
-        self._setup_responsive_layout()
-        self._setup_responsive_layout()
+
+    # Properties for backward compatibility
+    @property
+    def current_speed(self):
+        """Get current scrolling speed."""
+        return self.scroll_controller.get_speed()
+
+    @current_speed.setter
+    def current_speed(self, value):
+        """Set scrolling speed."""
+        self.scroll_controller.set_speed(value)
+
+    @property
+    def is_playing(self):
+        """Check if currently playing."""
+        return self.scroll_controller.is_scrolling()
+
+    @is_playing.setter
+    def is_playing(self, value):
+        """Set playing state."""
+        if value:
+            self.scroll_controller.start_scrolling()
+        else:
+            self.scroll_controller.pause_scrolling()
+
+    @property
+    def current_position(self):
+        """Get current scroll position."""
+        return self.scroll_controller._scroll_position
+
+    @current_position.setter
+    def current_position(self, value):
+        """Set scroll position."""
+        self.scroll_controller._scroll_position = value
+
+    @property
+    def content_height(self):
+        """Get content height."""
+        return self.scroll_controller._content_height
+
+    @content_height.setter
+    def content_height(self, value):
+        """Set content height."""
+        self.scroll_controller._content_height = value
 
     def _setup_ui(self):
         """Set up the user interface with progress tracking."""
-        self.setStyleSheet(StyleManager.get_main_window_stylesheet())
+        self.setStyleSheet(get_style_manager().get_main_window_stylesheet())
 
         # Make widget focusable
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -154,13 +199,13 @@ class TeleprompterWidget(QWidget):
 
         # Web view for displaying HTML content
         self.web_view = QWebEngineView()
-        self.web_view.setStyleSheet(StyleManager.get_web_view_stylesheet())
+        self.web_view.setStyleSheet(get_style_manager().get_web_view_stylesheet())
         layout.addWidget(self.web_view)
 
         # Reading info overlay (bottom)
         self.info_overlay = QWidget()
         self.info_overlay.setStyleSheet(
-            StyleManager.get_teleprompter_info_overlay_stylesheet()
+            get_style_manager().get_teleprompter_info_overlay_stylesheet()
         )
         self.info_overlay.setFixedHeight(40)
 
@@ -169,7 +214,7 @@ class TeleprompterWidget(QWidget):
 
         self.reading_info_label = QLabel("Ready to read")
         self.reading_info_label.setStyleSheet(
-            StyleManager.get_teleprompter_info_label_stylesheet()
+            get_style_manager().get_teleprompter_info_labels_stylesheet()
         )
         info_layout.addWidget(self.reading_info_label)
 
@@ -177,7 +222,7 @@ class TeleprompterWidget(QWidget):
 
         self.progress_label = QLabel("0%")
         self.progress_label.setStyleSheet(
-            StyleManager.get_teleprompter_info_label_stylesheet()
+            get_style_manager().get_teleprompter_info_labels_stylesheet()
         )
         info_layout.addWidget(self.progress_label)
 
@@ -210,6 +255,8 @@ class TeleprompterWidget(QWidget):
             # Analyze content for reading statistics
             if self.current_content:
                 stats = self.reading_estimator.analyze_content(self.current_content)
+                # Update reading metrics service
+                self.reading_metrics.set_word_count(stats.get("total_words", 0))
                 self.reading_stats_changed.emit(stats)
                 self._update_reading_info(stats)
 
@@ -284,7 +331,7 @@ class TeleprompterWidget(QWidget):
 
     def _scroll_step(self):
         """Perform one scroll step."""
-        if not self.is_playing:
+        if not self.scroll_controller.is_scrolling():
             return
 
         # Check if user is manually scrolling with mouse wheel
@@ -298,21 +345,24 @@ class TeleprompterWidget(QWidget):
             self._update_position_from_manual_scroll,
         )
 
-        # Calculate scroll amount based on speed
-        # Base speed: 100 pixels per second at 1x speed
-        pixels_per_frame = (100 * self.current_speed) / config.SCROLL_FPS
+        # Update viewport dimensions
+        self.scroll_controller.set_viewport_dimensions(
+            self.height(), self.content_height
+        )
 
-        self.current_position += pixels_per_frame
+        # Calculate next position using scroll controller
+        delta_time = 1.0 / config.SCROLL_FPS
+        next_position = self.scroll_controller.calculate_next_position(delta_time)
+
+        # Update scroll position
+        self.scroll_controller.update_scroll_position(next_position)
 
         # Check if we've reached the end
-        if self.current_position >= self.content_height - self.height():
+        if self.scroll_controller.has_reached_end():
             self.pause()
-            self.current_position = self.content_height - self.height()
 
         # Scroll to position
-        self.web_view.page().runJavaScript(
-            f"window.scrollTo(0, {int(self.current_position)})"
-        )
+        self.web_view.page().runJavaScript(f"window.scrollTo(0, {int(next_position)})")
 
         # Update progress display during scrolling
         self._update_progress_display()
@@ -333,47 +383,51 @@ class TeleprompterWidget(QWidget):
         """Update auto-scroll position based on manual scroll."""
         if (
             manual_position is not None
-            and abs(manual_position - self.current_position) > 10
+            and abs(manual_position - self.scroll_controller._scroll_position) > 10
         ):
             # User has manually scrolled, update our position to match
-            self.current_position = manual_position
+            self.scroll_controller.update_scroll_position(manual_position)
 
     def play(self):
         """Start scrolling."""
         # Sync our position with current manual scroll position before starting
         self.web_view.page().runJavaScript(
             "window.pageYOffset || document.documentElement.scrollTop",
-            lambda pos: setattr(self, "current_position", pos or 0),
+            lambda pos: self.scroll_controller.update_scroll_position(pos or 0),
         )
-        self.is_playing = True
+        self.scroll_controller.start_scrolling()
+        self.reading_metrics.start_reading()
         self.scroll_timer.start()
 
     def pause(self):
         """Pause scrolling."""
-        self.is_playing = False
+        self.scroll_controller.pause_scrolling()
+        self.reading_metrics.pause_reading()
         self.scroll_timer.stop()
 
     def toggle_playback(self):
         """Toggle between play and pause."""
-        if self.is_playing:
+        if self.scroll_controller.is_scrolling():
             self.pause()
         else:
             self.play()
 
     def reset(self):
         """Reset scroll position to the beginning."""
-        self.current_position = 0
+        self.scroll_controller.stop_scrolling()
+        self.reading_metrics.stop_reading()
         self.web_view.page().runJavaScript("window.scrollTo(0, 0)")
         self._update_progress_display()
 
     def set_speed(self, speed: float):
         """Set the scrolling speed."""
-        self.current_speed = max(config.MIN_SPEED, min(speed, config.MAX_SPEED))
-        self.speed_changed.emit(self.current_speed)
+        self.scroll_controller.set_speed(speed)
+        self.speed_changed.emit(self.scroll_controller.get_speed())
 
     def adjust_speed(self, delta: float):
         """Adjust speed by delta amount."""
-        self.set_speed(self.current_speed + delta)
+        self.scroll_controller.adjust_speed(delta)
+        self.speed_changed.emit(self.scroll_controller.get_speed())
 
     def set_voice_detector(self, voice_detector):
         """Set the voice detector instance and connect signals."""
@@ -717,22 +771,27 @@ class TeleprompterWidget(QWidget):
     def _update_progress_display(self):
         """Update progress bar and information."""
         if self.content_height > 0:
-            progress_info = self.reading_estimator.get_reading_progress(
-                self.current_position, self.content_height
-            )
+            progress = self.scroll_controller.get_progress()
+            self.reading_metrics.set_progress(progress)
 
             # Update progress bar
-            self.progress_bar.set_progress(progress_info["progress"])
+            self.progress_bar.set_progress(progress)
 
             # Update progress label
-            progress_percent = int(progress_info["progress"] * 100)
+            progress_percent = int(progress * 100)
             self.progress_label.setText(f"{progress_percent}%")
 
             # Emit progress signal
-            self.progress_changed.emit(progress_info["progress"])
+            self.progress_changed.emit(progress)
 
             # Update reading stats signal
-            self.reading_stats_changed.emit(progress_info)
+            stats = {
+                "progress": progress,
+                "elapsed_time": self.reading_metrics.get_elapsed_time(),
+                "remaining_time": self.reading_metrics.get_remaining_time(),
+                "average_wpm": self.reading_metrics.get_average_wpm(),
+            }
+            self.reading_stats_changed.emit(stats)
 
     def _setup_responsive_layout(self):
         """Set up responsive layout management for different screen sizes."""
@@ -776,7 +835,7 @@ class TeleprompterWidget(QWidget):
         self.info_overlay.setFixedHeight(60)
 
         # Update font sizes for mobile
-        mobile_css = StyleManager.get_mobile_info_overlay_stylesheet()
+        mobile_css = get_style_manager().get_mobile_info_overlay_stylesheet()
         self.info_overlay.setStyleSheet(self.info_overlay.styleSheet() + mobile_css)
 
     def _apply_tablet_layout(self):
@@ -786,7 +845,7 @@ class TeleprompterWidget(QWidget):
         self.info_overlay.setFixedHeight(50)
 
         # Tablet-specific styling
-        tablet_css = StyleManager.get_tablet_info_overlay_stylesheet()
+        tablet_css = get_style_manager().get_tablet_info_overlay_stylesheet()
         self.info_overlay.setStyleSheet(self.info_overlay.styleSheet() + tablet_css)
 
     def _apply_desktop_layout(self):
