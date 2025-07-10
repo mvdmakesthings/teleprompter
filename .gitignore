@@ -188,5 +188,4 @@ credentials.json
 *.backup
 
 # Testing / Coverage
-*.coverage
-.coverage.*
+.coverage
