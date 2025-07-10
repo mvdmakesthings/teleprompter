@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ..managers.style_manager import get_style_manager
+from ..managers.style_manager import StyleManager
 from ..widgets.custom_widgets import IconButton, ModernDoubleSpinBox, ModernSpinBox
 
 
@@ -34,7 +34,7 @@ class StatusPanelBuilder(WidgetBuilder):
         self._show_progress = True
         self._show_speed = True
         self._show_time = True
-        self._style_manager = get_style_manager()
+        self._style_manager = StyleManager()
 
     def with_progress(self, show: bool = True) -> "StatusPanelBuilder":
         """Configure progress display."""
@@ -166,7 +166,7 @@ class ControlPanelBuilder(WidgetBuilder):
         self._sliders = []
         self._spinboxes = []
         self._orientation = Qt.Orientation.Horizontal
-        self._style_manager = get_style_manager()
+        self._style_manager = StyleManager()
 
     def with_button(
         self,
@@ -317,7 +317,7 @@ class DialogBuilder(WidgetBuilder):
         self._title = ""
         self._sections = []
         self._buttons = []
-        self._style_manager = get_style_manager()
+        self._style_manager = StyleManager()
 
     def with_title(self, title: str) -> "DialogBuilder":
         """Set dialog title."""

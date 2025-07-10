@@ -171,6 +171,11 @@ class MarkdownParser(ContentParserProtocol, LoggerMixin):
                 overflow-x: auto;
                 margin: 1.5em auto;
                 max-width: 90%;
+                text-align: left;
+            }}
+
+            pre code {{
+                text-align: left;
             }}
 
             /* Blockquote styling */

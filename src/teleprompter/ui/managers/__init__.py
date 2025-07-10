@@ -4,6 +4,5 @@
 __all__ = [
     "ResponsiveLayoutManager",
     "StyleManager",
-    "get_style_manager",
     "ToolbarManager",
 ]

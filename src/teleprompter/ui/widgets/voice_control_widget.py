@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 
 from ...core import config
 from ...domain.voice.detector import VoiceActivityDetector
-from ..managers.style_manager import get_style_manager
+from ..managers.style_manager import StyleManager
 
 
 class VoiceControlWidget(QWidget):
@@ -98,7 +98,7 @@ class VoiceControlWidget(QWidget):
 
     def _apply_modern_styling(self):
         """Apply minimal flat styling to match the main application theme."""
-        self.setStyleSheet(get_style_manager().get_voice_control_stylesheet())
+        self.setStyleSheet(StyleManager().get_voice_control_stylesheet())
 
     def _populate_audio_devices(self):
         """Populate the audio device combo box."""
@@ -137,17 +137,17 @@ class VoiceControlWidget(QWidget):
         if not self.voice_button.isChecked():
             # Disabled state - darker gray with flat styling
             self.voice_button.setStyleSheet(
-                get_style_manager().get_voice_button_disabled_stylesheet()
+                StyleManager().get_voice_button_disabled_stylesheet()
             )
         elif self._is_speaking:
             # Active and speaking - green with flat styling
             self.voice_button.setStyleSheet(
-                get_style_manager().get_voice_button_speaking_stylesheet()
+                StyleManager().get_voice_button_speaking_stylesheet()
             )
         else:
             # Active but listening (no speech) - blue with flat styling
             self.voice_button.setStyleSheet(
-                get_style_manager().get_voice_button_listening_stylesheet()
+                StyleManager().get_voice_button_listening_stylesheet()
             )
 
     def _on_sensitivity_changed(self, value: int):
@@ -186,7 +186,7 @@ class VoiceControlWidget(QWidget):
         """Handle voice detector errors."""
         # Show error by setting button to red with flat styling and updating tooltip
         self.voice_button.setStyleSheet(
-            get_style_manager().get_voice_button_error_stylesheet()
+            StyleManager().get_voice_button_error_stylesheet()
         )
         self.voice_button.setToolTip(f"Voice detection error: {error_message}")
 

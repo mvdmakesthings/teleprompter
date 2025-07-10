@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ...infrastructure.icon_manager import icon_manager
-from ..managers.style_manager import get_style_manager
+from ..managers.style_manager import StyleManager
 from .base.base_widgets import (
     DebouncedActionMixin,
     HoverAnimatedWidget,
@@ -40,7 +40,7 @@ class ModernSpinBox(QSpinBox, ModernSpinBoxBase):
         self._down_button = QPushButton(self)
 
         # Modern button styling with proper scaling
-        button_style = get_style_manager().get_spinbox_button_stylesheet()
+        button_style = StyleManager().get_spinbox_button_stylesheet()
 
         self._up_button.setStyleSheet(button_style)
         self._down_button.setStyleSheet(button_style)
@@ -121,7 +121,7 @@ class ModernDoubleSpinBox(QDoubleSpinBox, ModernSpinBoxBase):
         self._down_button = QPushButton(self)
 
         # Modern button styling with proper scaling
-        button_style = get_style_manager().get_spinbox_button_stylesheet()
+        button_style = StyleManager().get_spinbox_button_stylesheet()
 
         self._up_button.setStyleSheet(button_style)
         self._down_button.setStyleSheet(button_style)

@@ -76,8 +76,18 @@ class ContentLoader(QObject):
             content = self._file_manager.load_file(file_path)
             html_content = self._parser.parse(content)
 
-            # Analyze content
-            word_count = self._analyzer.count_words(html_content)
+            # For markdown files, count words from the original markdown content
+            # This is more accurate than counting from HTML
+            if file_path.lower().endswith(".md"):
+                if hasattr(self._parser, "get_word_count"):
+                    word_count = self._parser.get_word_count(content)
+                else:
+                    # Fallback to simple word counting
+                    word_count = len(content.split())
+            else:
+                # For non-markdown files, analyze the HTML
+                word_count = self._analyzer.count_words(html_content)
+
             sections = self._analyzer.find_sections(html_content)
 
             # Update metrics
@@ -120,12 +130,26 @@ class ContentLoader(QObject):
             # Parse content if needed
             if is_html:
                 html_content = text
+                # For HTML loaded directly (like empty state), check if it's actual content
+                # by looking for common empty state indicators
+                if (
+                    "Welcome to Teleprompter" in html_content
+                    or "No sections found" in html_content
+                ):
+                    word_count = 0
+                    sections = []
+                else:
+                    word_count = self._analyzer.count_words(html_content)
+                    sections = self._analyzer.find_sections(html_content)
             else:
                 html_content = self._parser.parse(text)
-
-            # Analyze content
-            word_count = self._analyzer.count_words(html_content)
-            sections = self._analyzer.find_sections(html_content)
+                # For markdown content, count words from the original markdown
+                # This is more accurate than counting from HTML
+                if hasattr(self._parser, "get_word_count"):
+                    word_count = self._parser.get_word_count(text)
+                else:
+                    word_count = self._analyzer.count_words(html_content)
+                sections = self._analyzer.find_sections(html_content)
 
             # Update metrics
             self._metrics_service.set_word_count(word_count)

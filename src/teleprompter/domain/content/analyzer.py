@@ -60,6 +60,20 @@ class HtmlContentAnalyzer(LoggerMixin):
             flags=re.IGNORECASE | re.DOTALL,
         )
 
+        # Remove HTML comments
+        html_clean = re.sub(r"<!--.*?-->", "", html_clean, flags=re.DOTALL)
+
+        # Remove DOCTYPE and HTML structure tags
+        html_clean = re.sub(r"<!DOCTYPE[^>]*>", "", html_clean, flags=re.IGNORECASE)
+
+        # Replace common HTML entities
+        html_clean = html_clean.replace("&nbsp;", " ")
+        html_clean = html_clean.replace("&amp;", "&")
+        html_clean = html_clean.replace("&lt;", "<")
+        html_clean = html_clean.replace("&gt;", ">")
+        html_clean = html_clean.replace("&quot;", '"')
+        html_clean = html_clean.replace("&#39;", "'")
+
         # Remove HTML tags
         text_content = re.sub(r"<[^>]+>", " ", html_clean)
 
@@ -101,7 +115,7 @@ class HtmlContentAnalyzer(LoggerMixin):
             Number of words in the content
         """
         stats = self.analyze_html(html_content)
-        return stats.get("word_count", 0)
+        return stats.get("total_words", 0)
 
     def find_sections(self, html_content: str) -> list[str]:
         """Find sections/headings in HTML content.

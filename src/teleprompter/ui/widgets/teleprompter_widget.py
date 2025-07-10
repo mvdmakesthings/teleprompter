@@ -24,7 +24,7 @@ from ...core.protocols import (
     ScrollControllerProtocol,
 )
 from ..managers.responsive_manager import ResponsiveLayoutManager
-from ..managers.style_manager import get_style_manager
+from ..managers.style_manager import StyleManager
 from .content_loader import ContentLoader, ContentLoadResult, WebViewContentManager
 from .javascript_manager import JavaScriptManager
 from .keyboard_commands import KeyboardCommandRegistry
@@ -37,7 +37,7 @@ class ProgressBar(QWidget):
         super().__init__(parent)
         self.progress = 0.0  # 0.0 to 1.0
         self.setFixedHeight(4)
-        self.setStyleSheet(get_style_manager().get_progress_bar_stylesheet())
+        self.setStyleSheet(StyleManager().get_progress_bar_stylesheet())
 
     def set_progress(self, progress: float):
         """Set progress value (0.0 to 1.0)."""
@@ -116,7 +116,7 @@ class TeleprompterWidget(QWidget):
         # Web view for content display
         self.web_view = QWebEngineView()
         self.web_view.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
-        self.web_view.setStyleSheet(get_style_manager().get_web_view_stylesheet())
+        self.web_view.setStyleSheet(StyleManager().get_web_view_stylesheet())
 
         # Progress bar
         self.progress_bar = ProgressBar()
@@ -124,19 +124,19 @@ class TeleprompterWidget(QWidget):
         # Info overlay
         self.info_overlay = QWidget()
         self.info_overlay.setStyleSheet(
-            get_style_manager().get_teleprompter_info_overlay_stylesheet()
+            StyleManager().get_teleprompter_info_overlay_stylesheet()
         )
         self.info_overlay.setFixedHeight(40)
 
         # Labels
         self.reading_info_label = QLabel("Ready to read")
         self.reading_info_label.setStyleSheet(
-            get_style_manager().get_teleprompter_info_labels_stylesheet()
+            StyleManager().get_teleprompter_info_labels_stylesheet()
         )
 
         self.progress_label = QLabel("0%")
         self.progress_label.setStyleSheet(
-            get_style_manager().get_teleprompter_info_labels_stylesheet()
+            StyleManager().get_teleprompter_info_labels_stylesheet()
         )
 
     def _setup_managers(self):
@@ -154,7 +154,7 @@ class TeleprompterWidget(QWidget):
         # UI management
         self.keyboard_commands = KeyboardCommandRegistry()
         self.responsive_manager = ResponsiveLayoutManager(self)
-        self.style_manager = get_style_manager()
+        self.style_manager = StyleManager()
 
         # JavaScript manager
         self.js_manager = JavaScriptManager()
@@ -180,7 +180,7 @@ class TeleprompterWidget(QWidget):
 
     def _setup_ui(self):
         """Set up the user interface."""
-        self.setStyleSheet(get_style_manager().get_main_window_stylesheet())
+        self.setStyleSheet(StyleManager().get_main_window_stylesheet())
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
         self.web_view.setMouseTracking(True)

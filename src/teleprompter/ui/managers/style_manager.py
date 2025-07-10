@@ -8,14 +8,6 @@ from ...core import config
 _style_manager_instance = None
 
 
-def get_style_manager():
-    """Get the global style manager instance."""
-    global _style_manager_instance
-    if _style_manager_instance is None:
-        _style_manager_instance = StyleManager()
-    return _style_manager_instance
-
-
 class StyleManager:
     """Manages application styling and themes."""
 
