@@ -3,7 +3,7 @@ name = "cuebird"
 version = "0.1.0"
 description = "A professional teleprompter app with voice control"
 authors = [
-    {name = "Michael VanDyke",email = "michaeljamesvandyke@gmail.com"}
+    {name = "Michael VanDyke"}
 ]
 license = {text = "GPL-3.0-or-later"}
 readme = "README.md"
