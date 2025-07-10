@@ -107,16 +107,19 @@ class StyleManager:
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: {config.MATERIAL_BORDER_RADIUS["small"]}px;
                 color: #ffffff;
-                padding: 6px 10px;
-                margin: 2px 4px;
-                font-size: 16px;
-                font-weight: bold;
-                min-width: 36px;
-                max-width: 48px;
-                min-height: 32px;
-                max-height: 36px;
+                padding: 6px 8px;
+                margin: 2px;
+                font-size: 12px;
+                font-weight: 500;
+                /* Match the size of other toolbar buttons */
+                min-width: 24px;
+                max-width: 32px;
+                min-height: 25px;
+                max-height: 25px;
                 text-align: center;
                 qproperty-toolButtonStyle: "ToolButtonIconOnly";
+                /* Ensure the button doesn't expand or shrink */
+                qproperty-sizePolicy: "Fixed";
             }}
 
             QToolButton#toolbarExtensionButton:hover {{
@@ -127,7 +130,7 @@ class StyleManager:
                 border: 1px solid rgba(255, 255, 255, 0.3);
                 color: #ffffff;
                 /* Enhanced hover effect without unsupported transforms */
-                box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
+                /* Note: box-shadow is not supported in Qt stylesheets */
             }}
 
             QToolButton#toolbarExtensionButton:pressed {{

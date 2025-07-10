@@ -18,12 +18,41 @@ class ModernToolBar(QToolBar):
         self._extension_button_timer = QTimer()
         self._extension_button_timer.timeout.connect(self._find_and_style_extension_button)
         self._extension_button_timer.setSingleShot(True)
+        self._extension_button = None
+        self._extension_button_width = 48  # Reserve space for extension button
 
     def resizeEvent(self, event):
-        """Override resize event to handle extension button styling."""
+        """Override resize event to handle extension button styling and ensure visibility."""
         super().resizeEvent(event)
         # Delay the extension button search to allow Qt to create it
         self._extension_button_timer.start(100)
+        # Also ensure proper layout after resize
+        self._ensure_extension_button_visibility()
+
+    def actionEvent(self, event):
+        """Override action event to detect when actions are added/removed."""
+        super().actionEvent(event)
+        # Trigger extension button check when actions change
+        self._extension_button_timer.start(50)
+
+    def _ensure_extension_button_visibility(self):
+        """Ensure the extension button is always visible within toolbar bounds."""
+        if not self._extension_button:
+            return
+
+        # Get toolbar and extension button geometry
+        toolbar_rect = self.rect()
+        button_rect = self._extension_button.geometry()
+
+        # If button is outside visible area or too close to the edge, reposition it
+        if button_rect.right() > toolbar_rect.width() - 10:
+            # Calculate new position to keep button fully visible
+            new_x = max(0, toolbar_rect.width() - button_rect.width() - 10)
+            self._extension_button.move(new_x, button_rect.y())
+            
+            # Force a style and layout update
+            self._extension_button.update()
+            self.update()
 
     def _find_and_style_extension_button(self):
         """Find and style the extension button after a delay."""
@@ -44,6 +73,8 @@ class ModernToolBar(QToolBar):
 
             if is_extension_button and button.objectName() != "toolbarExtensionButton":
                 self._apply_extension_button_styling(button)
+                self._extension_button = button  # Store reference
+                self._ensure_extension_button_visibility()  # Ensure visibility
                 return
 
         # Fallback: If no obvious extension button found but toolbar might be overflowing
@@ -58,23 +89,26 @@ class ModernToolBar(QToolBar):
                     button.objectName() != "toolbarExtensionButton" and
                     not button.defaultAction()):
                     self._apply_extension_button_styling(button)
+                    self._extension_button = button  # Store reference
+                    self._ensure_extension_button_visibility()  # Ensure visibility
                     break
 
     def _apply_extension_button_styling(self, button):
         """Apply comprehensive styling to the extension button."""
         from PyQt6.QtCore import QSize
-        from PyQt6.QtWidgets import QSizePolicy
         from PyQt6.QtGui import QIcon
+        from PyQt6.QtWidgets import QSizePolicy
 
         # Set unique object name for CSS targeting
         button.setObjectName("toolbarExtensionButton")
 
-        # Set proper size constraints to prevent cut-off
-        button.setMinimumSize(36, 32)
-        button.setMaximumSize(48, 36)
+        # Set proper size constraints to match other toolbar buttons
+        button.setMinimumSize(24, 25)
+        button.setMaximumSize(32, 25)
+        button.setFixedSize(28, 25)  # Fixed size to match other buttons
 
-        # Set a modern icon size
-        button.setIconSize(QSize(18, 18))
+        # Set a modern icon size that fits the smaller button
+        button.setIconSize(QSize(14, 14))
 
         # Try to get a modern icon from icon manager, fallback to text
         more_icon = self._create_more_options_icon()
@@ -87,11 +121,18 @@ class ModernToolBar(QToolBar):
 
         button.setToolTip("More toolbar options")
 
-        # Ensure proper size policy to maintain visibility
+        # Ensure proper size policy to maintain visibility and prevent expansion
         button.setSizePolicy(
             QSizePolicy.Policy.Fixed,
             QSizePolicy.Policy.Fixed
         )
+
+        # Ensure the button stays within toolbar bounds
+        button.setParent(self)  # Ensure proper parent
+
+        # Force immediate geometry update to ensure proper positioning
+        button.updateGeometry()
+        button.adjustSize()
 
         # Force style refresh
         button.style().unpolish(button)
@@ -100,11 +141,11 @@ class ModernToolBar(QToolBar):
 
     def _create_more_options_icon(self):
         """Create a modern three-dot icon programmatically."""
-        from PyQt6.QtGui import QIcon, QPixmap, QPainter, QBrush, QPen
         from PyQt6.QtCore import Qt, QRectF
+        from PyQt6.QtGui import QBrush, QIcon, QPainter, QPen, QPixmap
 
-        # Create a 18x18 pixmap for the icon
-        pixmap = QPixmap(18, 18)
+        # Create a 14x14 pixmap for the smaller icon
+        pixmap = QPixmap(14, 14)
         pixmap.fill(Qt.GlobalColor.transparent)
 
         painter = QPainter(pixmap)
@@ -114,12 +155,12 @@ class ModernToolBar(QToolBar):
         painter.setBrush(QBrush(Qt.GlobalColor.lightGray))
         painter.setPen(QPen(Qt.GlobalColor.transparent))
 
-        # Draw three horizontal dots (modern material design style)
-        dot_size = 3
-        spacing = 2
+        # Draw three horizontal dots (scaled for smaller icon)
+        dot_size = 2
+        spacing = 1.5
         total_width = 3 * dot_size + 2 * spacing
-        start_x = (18 - total_width) / 2
-        center_y = 9
+        start_x = (14 - total_width) / 2
+        center_y = 7
 
         for i in range(3):
             x = start_x + i * (dot_size + spacing)
@@ -192,7 +233,33 @@ class ToolbarManager(QObject):
         # Fix toolbar layout rendering issues
         self._fix_toolbar_layout()
 
+        # Set up extension button handling
+        self._setup_extension_button_constraints()
+
         return self.toolbar
+
+    def _setup_extension_button_constraints(self):
+        """Set up constraints to ensure extension button is always visible."""
+        if not self.toolbar:
+            return
+
+        # Force extension button check after a delay to ensure Qt has initialized everything
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(200, self.force_extension_button_update)
+
+        # Set up a timer to periodically check and ensure extension button visibility
+        self._visibility_timer = QTimer()
+        self._visibility_timer.timeout.connect(self._check_extension_button_visibility)
+        self._visibility_timer.start(1000)  # Check every second
+
+    def _check_extension_button_visibility(self):
+        """Periodically check if extension button is visible and properly positioned."""
+        if not self.toolbar:
+            return
+
+        # Only check if we have an extension button reference
+        if hasattr(self.toolbar, '_extension_button') and self.toolbar._extension_button:
+            self.toolbar._ensure_extension_button_visibility()
 
     def _add_file_controls(self):
         """Add file operation controls group."""
@@ -407,5 +474,27 @@ class ToolbarManager(QObject):
         if self.toolbar:
             # Immediately check for and style extension buttons
             self.toolbar._find_and_style_extension_button()
-            # Also trigger a delayed check in case Qt hasn't created the button yet
+            
+            # Also trigger delayed checks to catch extension buttons that appear later
             self.toolbar._extension_button_timer.start(50)
+            
+            # Force a complete toolbar layout refresh
+            self.toolbar.updateGeometry()
+            self.toolbar.adjustSize()
+            self.toolbar.update()
+            
+            # Additional check after layout stabilizes
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(300, self._final_extension_button_check)
+
+    def _final_extension_button_check(self):
+        """Final check to ensure extension button is properly positioned and styled."""
+        if self.toolbar and hasattr(self.toolbar, '_extension_button') and self.toolbar._extension_button:
+            # Ensure the extension button is still properly positioned
+            self.toolbar._ensure_extension_button_visibility()
+            
+            # Force a final style refresh
+            button = self.toolbar._extension_button
+            button.style().unpolish(button)
+            button.style().polish(button)
+            button.update()
