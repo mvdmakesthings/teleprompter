@@ -1,13 +1,35 @@
 """Style management for the teleprompter application."""
 
+from typing import Any
+
 from . import config
+
+# Global instance for backward compatibility
+_style_manager_instance = None
+
+
+def get_style_manager():
+    """Get the global style manager instance."""
+    global _style_manager_instance
+    if _style_manager_instance is None:
+        _style_manager_instance = StyleManager()
+    return _style_manager_instance
 
 
 class StyleManager:
     """Manages application styling and themes."""
 
-    @staticmethod
-    def get_application_stylesheet() -> str:
+    def __init__(self):
+        """Initialize the style manager."""
+        self._current_theme = "default"
+        self._theme_variables = {
+            "background_color": config.BACKGROUND_COLOR,
+            "text_color": config.TEXT_COLOR,
+            "font_family": ", ".join(config.FONT_FAMILIES),
+            "default_font_size": config.DEFAULT_FONT_SIZE,
+        }
+
+    def get_application_stylesheet(self) -> str:
         """Get the complete application stylesheet.
 
         Returns:
@@ -279,8 +301,7 @@ class StyleManager:
             }}
         """
 
-    @staticmethod
-    def get_toolbar_group_label_stylesheet() -> str:
+    def get_toolbar_group_label_stylesheet(self) -> str:
         """Get stylesheet for toolbar group labels.
 
         Returns:
@@ -300,8 +321,7 @@ class StyleManager:
             }
         """
 
-    @staticmethod
-    def get_spinbox_button_stylesheet() -> str:
+    def get_spinbox_button_stylesheet(self) -> str:
         """Get stylesheet for custom spinbox buttons.
 
         Returns:
@@ -337,8 +357,7 @@ class StyleManager:
             }
         """
 
-    @staticmethod
-    def get_voice_control_stylesheet() -> str:
+    def get_voice_control_stylesheet(self) -> str:
         """Get stylesheet for voice control widget.
 
         Returns:
@@ -466,8 +485,7 @@ class StyleManager:
             }
         """
 
-    @staticmethod
-    def get_voice_button_disabled_stylesheet() -> str:
+    def get_voice_button_disabled_stylesheet(self) -> str:
         """Get stylesheet for disabled voice button.
 
         Returns:
@@ -493,8 +511,7 @@ class StyleManager:
             }
         """
 
-    @staticmethod
-    def get_voice_button_speaking_stylesheet() -> str:
+    def get_voice_button_speaking_stylesheet(self) -> str:
         """Get stylesheet for voice button when speaking is detected.
 
         Returns:
@@ -519,8 +536,7 @@ class StyleManager:
             }
         """
 
-    @staticmethod
-    def get_voice_button_listening_stylesheet() -> str:
+    def get_voice_button_listening_stylesheet(self) -> str:
         """Get stylesheet for voice button when listening (active but no speech).
 
         Returns:
@@ -545,8 +561,7 @@ class StyleManager:
             }
         """
 
-    @staticmethod
-    def get_voice_button_error_stylesheet() -> str:
+    def get_voice_button_error_stylesheet(self) -> str:
         """Get voice button error state stylesheet."""
         return """
             QPushButton {
@@ -564,23 +579,19 @@ class StyleManager:
             }
         """
 
-    @staticmethod
-    def get_progress_bar_stylesheet() -> str:
+    def get_progress_bar_stylesheet(self) -> str:
         """Get progress bar stylesheet."""
         return "background: transparent;"
 
-    @staticmethod
-    def get_main_window_stylesheet() -> str:
+    def get_main_window_stylesheet(self) -> str:
         """Get main window background stylesheet."""
         return f"background-color: {config.BACKGROUND_COLOR};"
 
-    @staticmethod
-    def get_web_view_stylesheet() -> str:
+    def get_web_view_stylesheet(self) -> str:
         """Get web view background stylesheet."""
         return f"background-color: {config.BACKGROUND_COLOR};"
 
-    @staticmethod
-    def get_mobile_info_overlay_stylesheet() -> str:
+    def get_mobile_info_overlay_stylesheet(self) -> str:
         """Get mobile-specific info overlay stylesheet."""
         return """
             QLabel {
@@ -589,8 +600,7 @@ class StyleManager:
             }
         """
 
-    @staticmethod
-    def get_tablet_info_overlay_stylesheet() -> str:
+    def get_tablet_info_overlay_stylesheet(self) -> str:
         """Get tablet-specific info overlay stylesheet."""
         return """
             QLabel {
@@ -599,8 +609,7 @@ class StyleManager:
             }
         """
 
-    @staticmethod
-    def get_voice_label_stylesheet() -> str:
+    def get_voice_label_stylesheet(self) -> str:
         """Get stylesheet for voice control labels.
 
         Returns:
@@ -617,8 +626,7 @@ class StyleManager:
             }
         """
 
-    @staticmethod
-    def get_teleprompter_info_overlay_stylesheet() -> str:
+    def get_teleprompter_info_overlay_stylesheet(self) -> str:
         """Get stylesheet for teleprompter info overlay."""
         return f"""
             QWidget {{
@@ -629,8 +637,7 @@ class StyleManager:
             }}
         """
 
-    @staticmethod
-    def get_teleprompter_info_label_stylesheet() -> str:
+    def get_teleprompter_info_labels_stylesheet(self) -> str:
         """Get stylesheet for teleprompter info labels."""
         return """
             QLabel {
@@ -642,3 +649,83 @@ class StyleManager:
                 border: none;
             }
         """
+
+    def get_extension_container_stylesheet(self) -> str:
+        """Get stylesheet for extension container."""
+        return """
+            QWidget {
+                background-color: rgba(30, 30, 30, 0.95);
+                border-radius: 4px;
+                padding: 4px;
+            }
+        """
+
+    def get_voice_button_stylesheet(self) -> str:
+        """Get stylesheet for voice button."""
+        return self.get_voice_control_stylesheet()
+
+    def get_voice_button_active_stylesheet(self) -> str:
+        """Get stylesheet for active voice button."""
+        return self.get_voice_button_speaking_stylesheet()
+
+    def get_main_window_background_stylesheet(self) -> str:
+        """Get main window background stylesheet."""
+        return self.get_main_window_stylesheet()
+
+    def get_web_view_background_stylesheet(self) -> str:
+        """Get web view background stylesheet."""
+        return self.get_web_view_stylesheet()
+
+    def get_pause_button_stylesheet(self) -> str:
+        """Get pause button stylesheet."""
+        return """
+            QPushButton {
+                background-color: transparent;
+                border: none;
+                color: rgba(255, 255, 255, 0.9);
+                font-size: 16px;
+                padding: 8px;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+            }
+            QPushButton:pressed {
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+        """
+
+    # StyleProviderProtocol implementation moved to __init__ at the top of the class
+
+    def get_stylesheet(self, component: str) -> str:
+        """Get stylesheet for a specific component."""
+        component_methods = {
+            "application": self.get_application_stylesheet,
+            "toolbar_group_label": self.get_toolbar_group_label_stylesheet,
+            "extension_container": self.get_extension_container_stylesheet,
+            "voice_button": self.get_voice_button_stylesheet,
+            "voice_button_active": self.get_voice_button_active_stylesheet,
+            "voice_button_error": self.get_voice_button_error_stylesheet,
+            "progress_bar": self.get_progress_bar_stylesheet,
+            "main_window_background": self.get_main_window_background_stylesheet,
+            "web_view_background": self.get_web_view_background_stylesheet,
+            "mobile_info_overlay": self.get_mobile_info_overlay_stylesheet,
+            "tablet_info_overlay": self.get_tablet_info_overlay_stylesheet,
+            "pause_button": self.get_pause_button_stylesheet,
+            "teleprompter_info_overlay": self.get_teleprompter_info_overlay_stylesheet,
+            "teleprompter_info_labels": self.get_teleprompter_info_labels_stylesheet,
+        }
+
+        method = component_methods.get(component)
+        if method:
+            return method()
+        return ""
+
+    def get_theme_variables(self) -> dict[str, Any]:
+        """Get theme variables."""
+        return self._theme_variables.copy()
+
+    def set_theme(self, theme_name: str) -> None:
+        """Set the active theme."""
+        self._current_theme = theme_name
+        # In the future, this could load different theme configurations

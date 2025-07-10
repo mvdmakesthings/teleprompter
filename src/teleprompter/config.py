@@ -30,6 +30,8 @@ MIN_SPEED = 0.05
 MAX_SPEED = 5.0
 SPEED_INCREMENT = 0.05
 SCROLL_FPS = 60  # Target frames per second
+BASE_SCROLL_RATE = 100  # Base pixels per second at 1x speed
+DEFAULT_WPM = 160  # Default words per minute reading speed
 
 # File settings
 MARKDOWN_EXTENSIONS = ["*.md", "*.markdown", "*.mdown", "*.mkd"]
