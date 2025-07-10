@@ -17,7 +17,7 @@ from teleprompter.utils.validators import TeleprompterConfigValidator
 
 class ConfigurationManager(LoggerMixin):
     """Manages application configuration with validation and persistence."""
-    
+
     def _safe_log_info(self, message: str) -> None:
         """Safe logging that won't fail if logger is not initialized."""
         try:
@@ -25,7 +25,7 @@ class ConfigurationManager(LoggerMixin):
         except Exception:
             # Fallback to print if logging is not set up
             print(f"INFO: {message}")
-    
+
     def _safe_log_error(self, message: str) -> None:
         """Safe logging that won't fail if logger is not initialized."""
         try:
@@ -71,7 +71,6 @@ class ConfigurationManager(LoggerMixin):
             "window_x": None,  # None means center
             "window_y": None,
             "fullscreen": False,
-
             # Display settings
             "font_size": 32,
             "font_family": "Arial",
@@ -79,33 +78,27 @@ class ConfigurationManager(LoggerMixin):
             "text_color": "#e0e0e0",
             "background_color": "#1a1a1a",
             "theme": "dark",
-
             # Scrolling settings
             "scroll_speed": 1.0,
             "default_wpm": 150,
             "smooth_scrolling": True,
             "scroll_fps": 60,
-
             # Voice control settings
             "voice_enabled": False,
             "voice_sensitivity": 1,
             "voice_device": None,  # None means default device
-
             # File settings
             "last_file": None,
             "recent_files": [],
             "max_recent_files": 10,
-
             # UI settings
             "show_toolbar": True,
             "show_progress": True,
             "auto_hide_cursor": True,
             "cursor_hide_delay": 3000,  # milliseconds
-
             # Performance settings
             "enable_animations": True,
             "animation_duration": 200,  # milliseconds
-
             # Advanced settings
             "log_level": "INFO",
             "log_file": None,
@@ -326,7 +319,7 @@ class EnvironmentConfig:
         for key, value in os.environ.items():
             if key.startswith(cls.PREFIX):
                 # Remove prefix and convert to lowercase
-                config_key = key[len(cls.PREFIX):].lower()
+                config_key = key[len(cls.PREFIX) :].lower()
 
                 # Convert double underscores to dots for nested values
                 config_key = config_key.replace("__", ".")

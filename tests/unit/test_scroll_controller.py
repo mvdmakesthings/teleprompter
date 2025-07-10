@@ -218,7 +218,7 @@ class TestScrollController:
         controller._position = 0.0
 
         # Mock the animation timer
-        with patch.object(controller, '_start_smooth_scroll') as mock_start:
+        with patch.object(controller, "_start_smooth_scroll") as mock_start:
             controller.smooth_scroll_to(50.0)
             mock_start.assert_called_once()
 

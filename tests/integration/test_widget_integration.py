@@ -134,8 +134,7 @@ class TestKeyboardCommandsIntegration:
 
         # Register custom command
         teleprompter_widget.keyboard_commands.register_command(
-            Qt.Key.Key_X,
-            CustomCommand()
+            Qt.Key.Key_X, CustomCommand()
         )
 
         # Trigger command
@@ -168,8 +167,7 @@ class TestJavaScriptManagerIntegration:
             result_received = True
 
         teleprompter_widget.web_view.page().runJavaScript(
-            font_script + "; 'done'",
-            on_result
+            font_script + "; 'done'", on_result
         )
 
         QTest.qWait(500)
@@ -197,8 +195,7 @@ class TestJavaScriptManagerIntegration:
             scroll_info = info
 
         teleprompter_widget.web_view.page().runJavaScript(
-            "window.getScrollInfo()",
-            on_scroll_info
+            "window.getScrollInfo()", on_scroll_info
         )
 
         QTest.qWait(500)
@@ -228,23 +225,23 @@ This concludes our test document.
 
         # Track signals
         signals_received = {
-            'file_loaded': False,
-            'speed_changed': False,
-            'progress_changed': False,
-            'reading_stats_changed': False
+            "file_loaded": False,
+            "speed_changed": False,
+            "progress_changed": False,
+            "reading_stats_changed": False,
         }
 
         def on_file_loaded(path):
-            signals_received['file_loaded'] = True
+            signals_received["file_loaded"] = True
 
         def on_speed_changed(speed):
-            signals_received['speed_changed'] = True
+            signals_received["speed_changed"] = True
 
         def on_progress_changed(progress):
-            signals_received['progress_changed'] = True
+            signals_received["progress_changed"] = True
 
         def on_stats_changed(stats):
-            signals_received['reading_stats_changed'] = True
+            signals_received["reading_stats_changed"] = True
 
         # Connect signals
         teleprompter_widget.file_loaded.connect(on_file_loaded)
@@ -265,10 +262,10 @@ This concludes our test document.
         teleprompter_widget.pause()
 
         # Check signals were received
-        assert signals_received['file_loaded']
-        assert signals_received['speed_changed']
-        assert signals_received['progress_changed']
-        assert signals_received['reading_stats_changed']
+        assert signals_received["file_loaded"]
+        assert signals_received["speed_changed"]
+        assert signals_received["progress_changed"]
+        assert signals_received["reading_stats_changed"]
 
     def test_responsive_behavior(self, teleprompter_widget):
         """Test responsive behavior of widget."""
@@ -277,7 +274,9 @@ This concludes our test document.
         QTest.qWait(100)
 
         # Check desktop layout
-        assert teleprompter_widget.responsive_manager.get_current_category() == "desktop"
+        assert (
+            teleprompter_widget.responsive_manager.get_current_category() == "desktop"
+        )
 
         # Resize to tablet
         teleprompter_widget.resize(768, 1024)
@@ -385,6 +384,7 @@ def test_performance_under_load(teleprompter_widget):
 
     # Measure loading time
     import time
+
     start_time = time.time()
 
     teleprompter_widget.load_content(large_content)

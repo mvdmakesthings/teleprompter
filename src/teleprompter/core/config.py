@@ -30,7 +30,7 @@ PRIMARY_COLORS = {
     "500": "#2196f3",
     "600": "#1e88e5",
     "700": "#1976d2",
-    "800": "#1565c0"
+    "800": "#1565c0",
 }
 
 # Scrolling
@@ -44,12 +44,12 @@ VAD_SAMPLE_RATE = 16000
 VAD_FRAME_DURATION = 30  # milliseconds
 VAD_SENSITIVITY = 1
 VAD_START_DELAY = 0.3  # seconds
-VAD_STOP_DELAY = 1.0   # seconds
+VAD_STOP_DELAY = 1.0  # seconds
 VAD_ENABLED_DEFAULT = False  # Voice detection disabled by default
 
 # File Handling
 MAX_FILE_SIZE = 1048576  # 1MB in bytes
-SUPPORTED_EXTENSIONS = ['.md', '.markdown', '.txt']
+SUPPORTED_EXTENSIONS = [".md", ".markdown", ".txt"]
 
 # Animation
 ANIMATION_DURATION = 200  # milliseconds
@@ -74,8 +74,4 @@ SETTINGS_VOICE_SENSITIVITY = "voice_sensitivity"
 FONT_FAMILIES = ["Arial", "Helvetica", "sans-serif"]
 
 # Material design border radius
-MATERIAL_BORDER_RADIUS = {
-    "small": 4,
-    "medium": 6,
-    "large": 8
-}
+MATERIAL_BORDER_RADIUS = {"small": 4, "medium": 6, "large": 8}

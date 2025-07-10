@@ -146,10 +146,10 @@ class ScrollController(ScrollControllerProtocol, LoggerMixin):
             self._scroll_position = 0
 
         self.log_debug(f"Jumped to position {self._progress:.2%}")
-    
+
     def set_position(self, position: int) -> None:
         """Set scroll position directly (for backward compatibility).
-        
+
         Args:
             position: Scroll position in pixels
         """

@@ -20,7 +20,9 @@ class TestValidators:
         assert Validators.validate_required("test", "field") == "test"
         assert Validators.validate_required(123, "field") == 123
         assert Validators.validate_required([1, 2, 3], "field") == [1, 2, 3]
-        assert Validators.validate_required({"key": "value"}, "field") == {"key": "value"}
+        assert Validators.validate_required({"key": "value"}, "field") == {
+            "key": "value"
+        }
 
         # Invalid cases
         with pytest.raises(ValidationError, match="Value is required"):
@@ -107,7 +109,10 @@ class TestValidators:
         """Test email validation."""
         # Valid cases - returns the value
         assert Validators.validate_email("test@example.com") == "test@example.com"
-        assert Validators.validate_email("user.name@domain.co.uk") == "user.name@domain.co.uk"
+        assert (
+            Validators.validate_email("user.name@domain.co.uk")
+            == "user.name@domain.co.uk"
+        )
 
         # Invalid cases
         with pytest.raises(ValidationError, match="Invalid email format"):
@@ -120,7 +125,10 @@ class TestValidators:
         """Test URL validation."""
         # Valid cases - returns the value
         assert Validators.validate_url("https://example.com") == "https://example.com"
-        assert Validators.validate_url("http://sub.example.com/path") == "http://sub.example.com/path"
+        assert (
+            Validators.validate_url("http://sub.example.com/path")
+            == "http://sub.example.com/path"
+        )
 
         # Invalid cases
         with pytest.raises(ValidationError, match="Invalid URL format"):
@@ -256,7 +264,7 @@ def test_validate_input_decorator():
 
     @validate_input(
         text=lambda v: Validators.validate_required(v, "text"),
-        size=lambda v: Validators.validate_range(v, 1, 100, "size")
+        size=lambda v: Validators.validate_range(v, 1, 100, "size"),
     )
     def process_data(text: str, size: int, optional: str = None):
         return f"Processed {text} at size {size}"

@@ -42,9 +42,9 @@ Some content here.
 More content here.
 """
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
         f.write(simple_content)
-        files['simple'] = f.name
+        files["simple"] = f.name
 
     # Complex markdown file
     complex_content = """# Complex Document
@@ -84,9 +84,9 @@ def hello_world():
 ![Image description](image.png)
 """
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
         f.write(complex_content)
-        files['complex'] = f.name
+        files["complex"] = f.name
 
     yield files
 
@@ -104,7 +104,7 @@ class TestServiceIntegration:
         parser = container.get(ContentParserProtocol)
 
         # Load and parse simple file
-        content = file_manager.load_file(sample_files['simple'])
+        content = file_manager.load_file(sample_files["simple"])
         assert content is not None
 
         html = parser.parse(content)
@@ -119,7 +119,7 @@ class TestServiceIntegration:
         analyzer = container.get(HtmlContentAnalyzerProtocol)
 
         # Load, parse, and analyze complex file
-        content = file_manager.load_file(sample_files['complex'])
+        content = file_manager.load_file(sample_files["complex"])
         html = parser.parse(content)
 
         # Analyze content
@@ -134,9 +134,9 @@ class TestServiceIntegration:
 
         # Full analysis
         analysis = analyzer.analyze_html(html)
-        assert analysis['total_words'] == word_count
-        assert analysis['sections'] == sections
-        assert 'reading_time' in analysis
+        assert analysis["total_words"] == word_count
+        assert analysis["sections"] == sections
+        assert "reading_time" in analysis
 
     def test_reading_metrics_integration(self, container):
         """Test reading metrics calculations."""
@@ -257,7 +257,7 @@ class TestServiceChaining:
         scroll_controller = container.get(ScrollControllerProtocol)
 
         # Step 1: Load file
-        content = file_loader.load_file(sample_files['complex'])
+        content = file_loader.load_file(sample_files["complex"])
         assert content
 
         # Step 2: Parse to HTML
@@ -266,8 +266,8 @@ class TestServiceChaining:
 
         # Step 3: Analyze content
         analysis = analyzer.analyze_html(html)
-        word_count = analysis['total_words']
-        sections = analysis['sections']
+        word_count = analysis["total_words"]
+        sections = analysis["sections"]
 
         # Step 4: Set up metrics
         metrics.set_word_count(word_count)
@@ -328,7 +328,9 @@ class TestServiceChaining:
 
         # Verify simulation
         assert len(positions) == 10
-        assert all(positions[i] < positions[i+1] for i in range(9))  # Monotonic increase
+        assert all(
+            positions[i] < positions[i + 1] for i in range(9)
+        )  # Monotonic increase
         assert metrics.get_elapsed_time() > 0
         assert metrics.get_remaining_time() > 0
 
@@ -345,7 +347,7 @@ class TestServiceErrorHandling:
             file_loader.load_file("/path/to/nonexistent/file.md")
 
         # Invalid file type
-        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as f:
             exe_path = f.name
 
         try:
@@ -414,4 +416,4 @@ def test_performance_with_different_file_sizes(container, file_size):
     # Performance should scale reasonably
     assert parse_time < file_size / 1000  # Less than 1ms per word
     assert analyze_time < file_size / 1000
-    assert analysis['total_words'] >= file_size * 0.9  # Allow some variance
+    assert analysis["total_words"] >= file_size * 0.9  # Allow some variance

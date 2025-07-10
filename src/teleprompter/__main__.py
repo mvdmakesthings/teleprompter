@@ -20,7 +20,7 @@ def main():
     """Run the teleprompter application."""
     # Set up logging first
     setup_logging()
-    
+
     app = QApplication(sys.argv)
     app.setApplicationName("Teleprompter")
 

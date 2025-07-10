@@ -61,7 +61,7 @@ Excepteur sint occaecat cupidatat non proident, sunt in culpa.
 Qui officia deserunt mollit anim id est laborum.
 """
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
         f.write(content)
         file_path = f.name
 
@@ -219,7 +219,7 @@ class TestApplicationIntegration:
 
         # Check current section
         section_info = app.teleprompter_widget.get_current_section_info()
-        assert section_info['index'] >= 0
+        assert section_info["index"] >= 0
 
     def test_progress_tracking(self, app, sample_markdown_file):
         """Test progress tracking during scrolling."""
@@ -309,7 +309,7 @@ class TestErrorHandling:
     def test_empty_file_handling(self, app):
         """Test handling of empty files."""
         # Create empty file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             file_path = f.name
 
         try:
@@ -318,7 +318,9 @@ class TestErrorHandling:
             QTest.qWait(500)
 
             # Should handle gracefully
-            assert app.teleprompter_widget.current_content != ""  # Should show empty state
+            assert (
+                app.teleprompter_widget.current_content != ""
+            )  # Should show empty state
         finally:
             os.unlink(file_path)
 

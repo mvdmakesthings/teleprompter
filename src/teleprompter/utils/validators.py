@@ -26,7 +26,7 @@ class ValidationError(TeleprompterError):
             f"Validation failed for '{field}': {reason}",
             error_code="VALIDATION_FAILED",
             context={"field": field, "value": str(value), "reason": reason},
-            **kwargs
+            **kwargs,
         )
         # Legacy compatibility
         self.field = field
@@ -79,7 +79,7 @@ class Validators:
             raise ValidationError(
                 field_name,
                 value,
-                f"Expected type {expected_type.__name__}, got {type(value).__name__}"
+                f"Expected type {expected_type.__name__}, got {type(value).__name__}",
             )
         return value
 
@@ -88,7 +88,7 @@ class Validators:
         value: int | float,
         min_value: int | float | None = None,
         max_value: int | float | None = None,
-        field_name: str = "value"
+        field_name: str = "value",
     ) -> int | float:
         """Validate that a numeric value is within a specified range.
 
@@ -105,26 +105,16 @@ class Validators:
             ValidationError: If value is outside the specified range
         """
         if min_value is not None and value < min_value:
-            raise ValidationError(
-                field_name,
-                value,
-                f"Value must be >= {min_value}"
-            )
+            raise ValidationError(field_name, value, f"Value must be >= {min_value}")
 
         if max_value is not None and value > max_value:
-            raise ValidationError(
-                field_name,
-                value,
-                f"Value must be <= {max_value}"
-            )
+            raise ValidationError(field_name, value, f"Value must be <= {max_value}")
 
         return value
 
     @staticmethod
     def validate_choice(
-        value: T,
-        choices: list[T] | tuple[T, ...] | set[T],
-        field_name: str = "value"
+        value: T, choices: list[T] | tuple[T, ...] | set[T], field_name: str = "value"
     ) -> T:
         """Validate that a value is one of the allowed choices.
 
@@ -143,7 +133,7 @@ class Validators:
             raise ValidationError(
                 field_name,
                 value,
-                f"Value must be one of: {', '.join(str(c) for c in choices)}"
+                f"Value must be one of: {', '.join(str(c) for c in choices)}",
             )
         return value
 
@@ -151,7 +141,7 @@ class Validators:
     def validate_file_path(
         path: str | Path | None,
         must_exist: bool = False,
-        extensions: list[str] | None = None
+        extensions: list[str] | None = None,
     ) -> Path | None:
         """Validate a file path.
 
@@ -170,11 +160,12 @@ class Validators:
         """
         if path is None:
             return None
-            
+
         path = Path(path)
 
         if must_exist and not path.exists():
             from teleprompter.core.exceptions import FileNotFoundError
+
             raise FileNotFoundError(str(path))
 
         if extensions and path.suffix not in extensions:
@@ -186,7 +177,7 @@ class Validators:
     def validate_directory_path(
         path: str | Path | None,
         must_exist: bool = False,
-        create_if_missing: bool = False
+        create_if_missing: bool = False,
     ) -> Path | None:
         """Validate a directory path.
 
@@ -203,7 +194,7 @@ class Validators:
         """
         if path is None:
             return None
-            
+
         path = Path(path)
 
         if must_exist and not path.exists():
@@ -211,16 +202,12 @@ class Validators:
                 path.mkdir(parents=True, exist_ok=True)
             else:
                 raise ValidationError(
-                    "directory_path",
-                    str(path),
-                    "Directory does not exist"
+                    "directory_path", str(path), "Directory does not exist"
                 )
 
         if path.exists() and not path.is_dir():
             raise ValidationError(
-                "directory_path",
-                str(path),
-                "Path exists but is not a directory"
+                "directory_path", str(path), "Path exists but is not a directory"
             )
 
         return path
@@ -230,7 +217,7 @@ class Validators:
         value: str,
         pattern: str,
         field_name: str = "value",
-        error_message: str | None = None
+        error_message: str | None = None,
     ) -> str:
         """Validate that a string matches a regex pattern.
 
@@ -266,10 +253,7 @@ class Validators:
         """
         pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return Validators.validate_regex(
-            email,
-            pattern,
-            "email",
-            "Invalid email format"
+            email, pattern, "email", "Invalid email format"
         )
 
     @staticmethod
@@ -286,12 +270,7 @@ class Validators:
             ValidationError: If URL format is invalid
         """
         pattern = r"^https?://[^\s/$.?#].[^\s]*$"
-        return Validators.validate_regex(
-            url,
-            pattern,
-            "url",
-            "Invalid URL format"
-        )
+        return Validators.validate_regex(url, pattern, "url", "Invalid URL format")
 
 
 class ConfigValidator:
@@ -329,11 +308,7 @@ class ConfigValidator:
                 try:
                     validated[key] = self.validators[key](value)
                 except (ValidationError, ValueError) as e:
-                    raise InvalidConfigurationError(
-                        key,
-                        value,
-                        str(e)
-                    ) from e
+                    raise InvalidConfigurationError(key, value, str(e)) from e
             else:
                 # Pass through unregistered keys
                 validated[key] = value
@@ -352,46 +327,70 @@ class TeleprompterConfigValidator(ConfigValidator):
     def _register_validators(self) -> None:
         """Register all teleprompter configuration validators."""
         # Window configuration
-        self.register("window_width", lambda v: Validators.validate_range(
-            v, min_value=640, max_value=7680, field_name="window_width"
-        ))
-        self.register("window_height", lambda v: Validators.validate_range(
-            v, min_value=480, max_value=4320, field_name="window_height"
-        ))
+        self.register(
+            "window_width",
+            lambda v: Validators.validate_range(
+                v, min_value=640, max_value=7680, field_name="window_width"
+            ),
+        )
+        self.register(
+            "window_height",
+            lambda v: Validators.validate_range(
+                v, min_value=480, max_value=4320, field_name="window_height"
+            ),
+        )
 
         # Font configuration
-        self.register("font_size", lambda v: Validators.validate_range(
-            v, min_value=8, max_value=200, field_name="font_size"
-        ))
-        self.register("font_family", lambda v: Validators.validate_type(
-            v, str, "font_family"
-        ))
+        self.register(
+            "font_size",
+            lambda v: Validators.validate_range(
+                v, min_value=8, max_value=200, field_name="font_size"
+            ),
+        )
+        self.register(
+            "font_family", lambda v: Validators.validate_type(v, str, "font_family")
+        )
 
         # Speed configuration
-        self.register("scroll_speed", lambda v: Validators.validate_range(
-            v, min_value=0.05, max_value=10.0, field_name="scroll_speed"
-        ))
-        self.register("default_wpm", lambda v: Validators.validate_range(
-            v, min_value=50, max_value=1000, field_name="default_wpm"
-        ))
+        self.register(
+            "scroll_speed",
+            lambda v: Validators.validate_range(
+                v, min_value=0.05, max_value=10.0, field_name="scroll_speed"
+            ),
+        )
+        self.register(
+            "default_wpm",
+            lambda v: Validators.validate_range(
+                v, min_value=50, max_value=1000, field_name="default_wpm"
+            ),
+        )
 
         # Voice control
-        self.register("voice_sensitivity", lambda v: Validators.validate_range(
-            v, min_value=0, max_value=3, field_name="voice_sensitivity"
-        ))
+        self.register(
+            "voice_sensitivity",
+            lambda v: Validators.validate_range(
+                v, min_value=0, max_value=3, field_name="voice_sensitivity"
+            ),
+        )
 
         # Theme
-        self.register("theme", lambda v: Validators.validate_choice(
-            v, ["dark", "light", "high_contrast"], field_name="theme"
-        ))
+        self.register(
+            "theme",
+            lambda v: Validators.validate_choice(
+                v, ["dark", "light", "high_contrast"], field_name="theme"
+            ),
+        )
 
         # File paths
-        self.register("last_file", lambda v: Validators.validate_file_path(
-            v, must_exist=False
-        ))
-        self.register("settings_directory", lambda v: Validators.validate_directory_path(
-            v, must_exist=False, create_if_missing=True
-        ))
+        self.register(
+            "last_file", lambda v: Validators.validate_file_path(v, must_exist=False)
+        )
+        self.register(
+            "settings_directory",
+            lambda v: Validators.validate_directory_path(
+                v, must_exist=False, create_if_missing=True
+            ),
+        )
 
 
 # Decorator for validation
@@ -409,10 +408,12 @@ def validate_input(**validators):
         def process(text: str, size: int):
             ...
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # Get function signature
             import inspect
+
             sig = inspect.signature(func)
             bound = sig.bind(*args, **kwargs)
             bound.apply_defaults()
@@ -426,12 +427,11 @@ def validate_input(**validators):
                         )
                     except Exception as e:
                         raise ValidationError(
-                            param_name,
-                            bound.arguments[param_name],
-                            str(e)
+                            param_name, bound.arguments[param_name], str(e)
                         ) from e
 
             return func(*bound.args, **bound.kwargs)
 
         return wrapper
+
     return decorator

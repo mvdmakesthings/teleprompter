@@ -25,7 +25,7 @@ class TeleprompterError(Exception):
         *,
         error_code: str | None = None,
         context: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ) -> None:
         """Initialize teleprompter error.
 
@@ -79,14 +79,8 @@ class FileError(TeleprompterError):
 
     def __init__(self, message: str, details: dict | None = None):
         """Initialize for backward compatibility."""
-        super().__init__(
-            message,
-            context=details or {},
-            error_code="FILE_ERROR"
-        )
+        super().__init__(message, context=details or {}, error_code="FILE_ERROR")
         self.details = details or {}
-
-
 
 
 class FileNotFoundError(FileError):
@@ -94,10 +88,7 @@ class FileNotFoundError(FileError):
 
     def __init__(self, file_path: str):
         """Initialize with the missing file path."""
-        super().__init__(
-            f"File not found: {file_path}",
-            {"file_path": file_path}
-        )
+        super().__init__(f"File not found: {file_path}", {"file_path": file_path})
 
 
 class UnsupportedFileTypeError(FileError):
@@ -107,10 +98,7 @@ class UnsupportedFileTypeError(FileError):
         """Initialize with file path and supported types."""
         super().__init__(
             f"Unsupported file type: {file_path}",
-            {
-                "file_path": file_path,
-                "supported_types": supported_types
-            }
+            {"file_path": file_path, "supported_types": supported_types},
         )
 
 
@@ -121,10 +109,7 @@ class FileLoadError(FileError):
         """Initialize with file path and failure reason."""
         super().__init__(
             f"Failed to load file {file_path}: {reason}",
-            {
-                "file_path": file_path,
-                "reason": reason
-            }
+            {"file_path": file_path, "reason": reason},
         )
 
 
@@ -141,10 +126,7 @@ class ContentParseError(ContentError):
         """Initialize with content type and parse failure reason."""
         super().__init__(
             f"Failed to parse {content_type}: {reason}",
-            {
-                "content_type": content_type,
-                "reason": reason
-            }
+            {"content_type": content_type, "reason": reason},
         )
 
 
@@ -153,10 +135,7 @@ class ContentLoadError(ContentError):
 
     def __init__(self, reason: str):
         """Initialize with load failure reason."""
-        super().__init__(
-            f"Failed to load content: {reason}",
-            {"reason": reason}
-        )
+        super().__init__(f"Failed to load content: {reason}", {"reason": reason})
 
 
 class InvalidFileFormatError(FileError):
@@ -169,11 +148,7 @@ class InvalidFileFormatError(FileError):
             message += f" (expected {expected_format})"
 
         super().__init__(
-            message,
-            {
-                "file_path": file_path,
-                "expected_format": expected_format
-            }
+            message, {"file_path": file_path, "expected_format": expected_format}
         )
 
 
@@ -192,10 +167,7 @@ class AudioDeviceError(VoiceError):
         if device_name:
             message = f"Audio device '{device_name}' not available"
 
-        super().__init__(
-            message,
-            {"device_name": device_name}
-        )
+        super().__init__(message, {"device_name": device_name})
 
 
 class VoiceDetectionError(VoiceError):
@@ -203,10 +175,7 @@ class VoiceDetectionError(VoiceError):
 
     def __init__(self, reason: str):
         """Initialize with failure reason."""
-        super().__init__(
-            f"Voice detection failed: {reason}",
-            {"reason": reason}
-        )
+        super().__init__(f"Voice detection failed: {reason}", {"reason": reason})
 
 
 class ConfigurationError(TeleprompterError):
@@ -222,11 +191,7 @@ class InvalidConfigurationError(ConfigurationError):
         """Initialize with configuration details."""
         super().__init__(
             f"Invalid configuration for '{key}': {reason}",
-            {
-                "key": key,
-                "value": value,
-                "reason": reason
-            }
+            {"key": key, "value": value, "reason": reason},
         )
 
 
@@ -235,10 +200,7 @@ class MissingConfigurationError(ConfigurationError):
 
     def __init__(self, key: str):
         """Initialize with missing configuration key."""
-        super().__init__(
-            f"Required configuration missing: '{key}'",
-            {"key": key}
-        )
+        super().__init__(f"Required configuration missing: '{key}'", {"key": key})
 
 
 class UIError(TeleprompterError):
@@ -254,10 +216,7 @@ class WidgetInitializationError(UIError):
         """Initialize with widget details."""
         super().__init__(
             f"Failed to initialize {widget_name}: {reason}",
-            {
-                "widget_name": widget_name,
-                "reason": reason
-            }
+            {"widget_name": widget_name, "reason": reason},
         )
 
 
@@ -273,8 +232,7 @@ class ServiceNotFoundError(ServiceError):
     def __init__(self, service_type: str):
         """Initialize with service type."""
         super().__init__(
-            f"Service not found: {service_type}",
-            context={"service_type": service_type}
+            f"Service not found: {service_type}", context={"service_type": service_type}
         )
 
 
@@ -285,24 +243,18 @@ class ServiceInitializationError(ServiceError):
         """Initialize with service details."""
         super().__init__(
             f"Failed to initialize service {service_name}: {reason}",
-            {
-                "service_name": service_name,
-                "reason": reason
-            }
+            {"service_name": service_name, "reason": reason},
         )
 
 
 # New exception types for better error handling
 
+
 class ParameterValidationError(TeleprompterError):
     """Raised when function parameters fail validation."""
 
     def __init__(
-        self,
-        parameter_name: str,
-        value: Any,
-        constraint: str,
-        **kwargs
+        self, parameter_name: str, value: Any, constraint: str, **kwargs
     ) -> None:
         super().__init__(
             f"Parameter '{parameter_name}' validation failed: {constraint} (got: {value})",
@@ -310,9 +262,9 @@ class ParameterValidationError(TeleprompterError):
             context={
                 "parameter_name": parameter_name,
                 "value": str(value),
-                "constraint": constraint
+                "constraint": constraint,
             },
-            **kwargs
+            **kwargs,
         )
 
 
@@ -320,11 +272,7 @@ class StateValidationError(TeleprompterError):
     """Raised when object state validation fails."""
 
     def __init__(
-        self,
-        object_type: str,
-        expected_state: str,
-        actual_state: str,
-        **kwargs
+        self, object_type: str, expected_state: str, actual_state: str, **kwargs
     ) -> None:
         super().__init__(
             f"{object_type} state validation failed: expected {expected_state}, got {actual_state}",
@@ -332,29 +280,21 @@ class StateValidationError(TeleprompterError):
             context={
                 "object_type": object_type,
                 "expected_state": expected_state,
-                "actual_state": actual_state
+                "actual_state": actual_state,
             },
-            **kwargs
+            **kwargs,
         )
 
 
 class TimeoutError(TeleprompterError):
     """Raised when an operation times out."""
 
-    def __init__(
-        self,
-        operation: str,
-        timeout_seconds: float,
-        **kwargs
-    ) -> None:
+    def __init__(self, operation: str, timeout_seconds: float, **kwargs) -> None:
         super().__init__(
             f"Operation '{operation}' timed out after {timeout_seconds} seconds",
             error_code="OPERATION_TIMEOUT",
-            context={
-                "operation": operation,
-                "timeout_seconds": timeout_seconds
-            },
-            **kwargs
+            context={"operation": operation, "timeout_seconds": timeout_seconds},
+            **kwargs,
         )
 
 
@@ -411,6 +351,7 @@ class ErrorRecovery:
 
 # Convenience functions for error handling
 
+
 def handle_file_error(file_path: str, operation: str = "access") -> None:
     """Check if file exists and is accessible, raise appropriate error if not.
 
@@ -429,11 +370,15 @@ def handle_file_error(file_path: str, operation: str = "access") -> None:
 
     # Check basic read permissions
     if operation in ("read", "access") and not os.access(file_path, os.R_OK):
-        raise FileError(f"Permission denied when attempting to {operation} file: {file_path}")
+        raise FileError(
+            f"Permission denied when attempting to {operation} file: {file_path}"
+        )
 
     # Check write permissions
     if operation == "write" and not os.access(file_path, os.W_OK):
-        raise FileError(f"Permission denied when attempting to {operation} file: {file_path}")
+        raise FileError(
+            f"Permission denied when attempting to {operation} file: {file_path}"
+        )
 
 
 def validate_parameter(
@@ -442,7 +387,7 @@ def validate_parameter(
     expected_type: type,
     min_value: float | None = None,
     max_value: float | None = None,
-    allowed_values: list | None = None
+    allowed_values: list | None = None,
 ) -> None:
     """Validate a parameter against constraints.
 
@@ -460,30 +405,16 @@ def validate_parameter(
     # Type check
     if not isinstance(value, expected_type):
         raise ParameterValidationError(
-            name,
-            value,
-            f"must be of type {expected_type.__name__}"
+            name, value, f"must be of type {expected_type.__name__}"
         )
 
     # Range checks for numeric values
     if min_value is not None and value < min_value:
-        raise ParameterValidationError(
-            name,
-            value,
-            f"must be >= {min_value}"
-        )
+        raise ParameterValidationError(name, value, f"must be >= {min_value}")
 
     if max_value is not None and value > max_value:
-        raise ParameterValidationError(
-            name,
-            value,
-            f"must be <= {max_value}"
-        )
+        raise ParameterValidationError(name, value, f"must be <= {max_value}")
 
     # Allowed values check
     if allowed_values is not None and value not in allowed_values:
-        raise ParameterValidationError(
-            name,
-            value,
-            f"must be one of {allowed_values}"
-        )
+        raise ParameterValidationError(name, value, f"must be one of {allowed_values}")

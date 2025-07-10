@@ -36,17 +36,17 @@ class StatusPanelBuilder(WidgetBuilder):
         self._show_time = True
         self._style_manager = get_style_manager()
 
-    def with_progress(self, show: bool = True) -> 'StatusPanelBuilder':
+    def with_progress(self, show: bool = True) -> "StatusPanelBuilder":
         """Configure progress display."""
         self._show_progress = show
         return self
 
-    def with_speed(self, show: bool = True) -> 'StatusPanelBuilder':
+    def with_speed(self, show: bool = True) -> "StatusPanelBuilder":
         """Configure speed display."""
         self._show_speed = show
         return self
 
-    def with_time(self, show: bool = True) -> 'StatusPanelBuilder':
+    def with_time(self, show: bool = True) -> "StatusPanelBuilder":
         """Configure time display."""
         self._show_time = show
         return self
@@ -173,15 +173,12 @@ class ControlPanelBuilder(WidgetBuilder):
         text: str,
         icon: str | None = None,
         tooltip: str | None = None,
-        object_name: str | None = None
-    ) -> 'ControlPanelBuilder':
+        object_name: str | None = None,
+    ) -> "ControlPanelBuilder":
         """Add a button to the panel."""
-        self._buttons.append({
-            'text': text,
-            'icon': icon,
-            'tooltip': tooltip,
-            'object_name': object_name
-        })
+        self._buttons.append(
+            {"text": text, "icon": icon, "tooltip": tooltip, "object_name": object_name}
+        )
         return self
 
     def with_slider(
@@ -189,15 +186,17 @@ class ControlPanelBuilder(WidgetBuilder):
         min_value: int,
         max_value: int,
         default_value: int,
-        object_name: str | None = None
-    ) -> 'ControlPanelBuilder':
+        object_name: str | None = None,
+    ) -> "ControlPanelBuilder":
         """Add a slider to the panel."""
-        self._sliders.append({
-            'min': min_value,
-            'max': max_value,
-            'default': default_value,
-            'object_name': object_name
-        })
+        self._sliders.append(
+            {
+                "min": min_value,
+                "max": max_value,
+                "default": default_value,
+                "object_name": object_name,
+            }
+        )
         return self
 
     def with_spinbox(
@@ -207,20 +206,22 @@ class ControlPanelBuilder(WidgetBuilder):
         default_value: float,
         step: float = 1.0,
         is_double: bool = False,
-        object_name: str | None = None
-    ) -> 'ControlPanelBuilder':
+        object_name: str | None = None,
+    ) -> "ControlPanelBuilder":
         """Add a spinbox to the panel."""
-        self._spinboxes.append({
-            'min': min_value,
-            'max': max_value,
-            'default': default_value,
-            'step': step,
-            'is_double': is_double,
-            'object_name': object_name
-        })
+        self._spinboxes.append(
+            {
+                "min": min_value,
+                "max": max_value,
+                "default": default_value,
+                "step": step,
+                "is_double": is_double,
+                "object_name": object_name,
+            }
+        )
         return self
 
-    def with_orientation(self, orientation: Qt.Orientation) -> 'ControlPanelBuilder':
+    def with_orientation(self, orientation: Qt.Orientation) -> "ControlPanelBuilder":
         """Set panel orientation."""
         self._orientation = orientation
         return self
@@ -264,47 +265,47 @@ class ControlPanelBuilder(WidgetBuilder):
 
     def _create_button(self, config: dict) -> QPushButton:
         """Create a button from configuration."""
-        if config.get('icon'):
-            button = IconButton(config['icon'], config.get('text', ''))
+        if config.get("icon"):
+            button = IconButton(config["icon"], config.get("text", ""))
         else:
-            button = QPushButton(config['text'])
+            button = QPushButton(config["text"])
 
-        if config.get('tooltip'):
-            button.setToolTip(config['tooltip'])
+        if config.get("tooltip"):
+            button.setToolTip(config["tooltip"])
 
-        if config.get('object_name'):
-            button.setObjectName(config['object_name'])
+        if config.get("object_name"):
+            button.setObjectName(config["object_name"])
 
         return button
 
     def _create_slider(self, config: dict) -> QSlider:
         """Create a slider from configuration."""
         slider = QSlider(Qt.Orientation.Horizontal)
-        slider.setMinimum(config['min'])
-        slider.setMaximum(config['max'])
-        slider.setValue(config['default'])
+        slider.setMinimum(config["min"])
+        slider.setMaximum(config["max"])
+        slider.setValue(config["default"])
 
-        if config.get('object_name'):
-            slider.setObjectName(config['object_name'])
+        if config.get("object_name"):
+            slider.setObjectName(config["object_name"])
 
         return slider
 
     def _create_spinbox(self, config: dict) -> QSpinBox:
         """Create a spinbox from configuration."""
-        if config['is_double']:
+        if config["is_double"]:
             spinbox = ModernDoubleSpinBox()
             spinbox.setDecimals(1)
-            spinbox.setSingleStep(config['step'])
+            spinbox.setSingleStep(config["step"])
         else:
             spinbox = ModernSpinBox()
-            spinbox.setSingleStep(int(config['step']))
+            spinbox.setSingleStep(int(config["step"]))
 
-        spinbox.setMinimum(config['min'])
-        spinbox.setMaximum(config['max'])
-        spinbox.setValue(config['default'])
+        spinbox.setMinimum(config["min"])
+        spinbox.setMaximum(config["max"])
+        spinbox.setValue(config["default"])
 
-        if config.get('object_name'):
-            spinbox.setObjectName(config['object_name'])
+        if config.get("object_name"):
+            spinbox.setObjectName(config["object_name"])
 
         return spinbox
 
@@ -318,26 +319,21 @@ class DialogBuilder(WidgetBuilder):
         self._buttons = []
         self._style_manager = get_style_manager()
 
-    def with_title(self, title: str) -> 'DialogBuilder':
+    def with_title(self, title: str) -> "DialogBuilder":
         """Set dialog title."""
         self._title = title
         return self
 
     def with_section(
-        self,
-        title: str,
-        widgets: list,
-        collapsible: bool = False
-    ) -> 'DialogBuilder':
+        self, title: str, widgets: list, collapsible: bool = False
+    ) -> "DialogBuilder":
         """Add a section to the dialog."""
-        self._sections.append({
-            'title': title,
-            'widgets': widgets,
-            'collapsible': collapsible
-        })
+        self._sections.append(
+            {"title": title, "widgets": widgets, "collapsible": collapsible}
+        )
         return self
 
-    def with_button_bar(self, buttons: list) -> 'DialogBuilder':
+    def with_button_bar(self, buttons: list) -> "DialogBuilder":
         """Add a button bar to the dialog."""
         self._buttons = buttons
         return self
@@ -385,13 +381,13 @@ class DialogBuilder(WidgetBuilder):
         layout.setSpacing(10)
 
         # Section title
-        if config['title']:
-            title = QLabel(config['title'])
+        if config["title"]:
+            title = QLabel(config["title"])
             title.setObjectName("sectionTitle")
             layout.addWidget(title)
 
         # Section content
-        for widget in config['widgets']:
+        for widget in config["widgets"]:
             layout.addWidget(widget)
 
         return section

@@ -34,13 +34,13 @@ class TestContentManager:
     def test_load_file_success(self, manager):
         """Test successful file loading."""
         # Create a temporary markdown file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
             tmp.write("# Test Content\n\nThis is a test.")
             tmp_path = Path(tmp.name)
 
         try:
             # Mock the markdown parser
-            with patch.object(manager._markdown_parser, 'parse') as mock_parse:
+            with patch.object(manager._markdown_parser, "parse") as mock_parse:
                 mock_parse.return_value = "<h1>Test Content</h1><p>This is a test.</p>"
 
                 # Load the file
@@ -48,7 +48,10 @@ class TestContentManager:
 
                 assert manager._current_file == tmp_path
                 assert manager._original_content == "# Test Content\n\nThis is a test."
-                assert manager._html_content == "<h1>Test Content</h1><p>This is a test.</p>"
+                assert (
+                    manager._html_content
+                    == "<h1>Test Content</h1><p>This is a test.</p>"
+                )
                 assert manager._is_modified is False
                 mock_parse.assert_called_once_with("# Test Content\n\nThis is a test.")
         finally:
@@ -62,14 +65,14 @@ class TestContentManager:
 
     def test_load_file_unsupported_format(self, manager):
         """Test loading unsupported file format."""
-        with tempfile.NamedTemporaryFile(suffix='.pdf') as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
             with pytest.raises(InvalidFileFormatError) as exc_info:
                 manager.load_file(Path(tmp.name))
             assert "Unsupported file format" in str(exc_info.value)
 
     def test_load_file_empty(self, manager):
         """Test loading empty file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
             tmp.write("")
             tmp_path = Path(tmp.name)
 
@@ -82,7 +85,7 @@ class TestContentManager:
 
     def test_load_file_read_error(self, manager):
         """Test file read error handling."""
-        with tempfile.NamedTemporaryFile(suffix='.md', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".md", delete=False) as tmp:
             tmp_path = Path(tmp.name)
 
         try:
@@ -100,7 +103,7 @@ class TestContentManager:
     def test_set_content(self, manager):
         """Test setting content directly."""
         # Mock the markdown parser
-        with patch.object(manager._markdown_parser, 'parse') as mock_parse:
+        with patch.object(manager._markdown_parser, "parse") as mock_parse:
             mock_parse.return_value = "<p>New content</p>"
 
             manager.set_content("New content")
@@ -160,7 +163,7 @@ class TestContentManager:
 
     def test_save_current_file(self, manager):
         """Test saving to current file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
             tmp_path = Path(tmp.name)
 
         try:
@@ -185,7 +188,7 @@ class TestContentManager:
 
     def test_save_as(self, manager):
         """Test saving to new file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
             tmp_path = Path(tmp.name)
 
         try:
@@ -203,13 +206,13 @@ class TestContentManager:
 
     def test_reload(self, manager):
         """Test reloading current file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
             tmp.write("# Original")
             tmp_path = Path(tmp.name)
 
         try:
             # Load initial content
-            with patch.object(manager._markdown_parser, 'parse') as mock_parse:
+            with patch.object(manager._markdown_parser, "parse") as mock_parse:
                 mock_parse.return_value = "<h1>Original</h1>"
                 manager.load_file(tmp_path)
 
@@ -217,7 +220,7 @@ class TestContentManager:
             tmp_path.write_text("# Updated")
 
             # Reload
-            with patch.object(manager._markdown_parser, 'parse') as mock_parse:
+            with patch.object(manager._markdown_parser, "parse") as mock_parse:
                 mock_parse.return_value = "<h1>Updated</h1>"
                 manager.reload()
 

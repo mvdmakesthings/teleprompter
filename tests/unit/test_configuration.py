@@ -31,7 +31,9 @@ class TestConfigurationManager:
         """Create a ConfigurationManager instance."""
         return ConfigurationManager(temp_config_file)
 
-    def test_initialization_creates_default_config(self, config_manager, temp_config_file):
+    def test_initialization_creates_default_config(
+        self, config_manager, temp_config_file
+    ):
         """Test that initialization creates a default config file."""
         assert temp_config_file.exists()
 
@@ -205,11 +207,14 @@ class TestEnvironmentConfig:
 
     def test_get_overrides_simple(self):
         """Test getting simple environment overrides."""
-        with patch.dict(os.environ, {
-            "TELEPROMPTER_WINDOW_WIDTH": "1920",
-            "TELEPROMPTER_FONT_SIZE": "48",
-            "OTHER_VAR": "ignored",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "TELEPROMPTER_WINDOW_WIDTH": "1920",
+                "TELEPROMPTER_FONT_SIZE": "48",
+                "OTHER_VAR": "ignored",
+            },
+        ):
             overrides = EnvironmentConfig.get_overrides()
 
             assert overrides == {
@@ -219,10 +224,13 @@ class TestEnvironmentConfig:
 
     def test_get_overrides_nested(self):
         """Test getting nested environment overrides."""
-        with patch.dict(os.environ, {
-            "TELEPROMPTER_VOICE__SENSITIVITY": "2",
-            "TELEPROMPTER_VOICE__ENABLED": "true",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "TELEPROMPTER_VOICE__SENSITIVITY": "2",
+                "TELEPROMPTER_VOICE__ENABLED": "true",
+            },
+        ):
             overrides = EnvironmentConfig.get_overrides()
 
             assert overrides == {
@@ -232,10 +240,13 @@ class TestEnvironmentConfig:
 
     def test_get_overrides_json_values(self):
         """Test parsing JSON values from environment."""
-        with patch.dict(os.environ, {
-            "TELEPROMPTER_RECENT_FILES": '["file1.md", "file2.md"]',
-            "TELEPROMPTER_DEBUG_MODE": "false",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "TELEPROMPTER_RECENT_FILES": '["file1.md", "file2.md"]',
+                "TELEPROMPTER_DEBUG_MODE": "false",
+            },
+        ):
             overrides = EnvironmentConfig.get_overrides()
 
             assert overrides == {
@@ -247,7 +258,7 @@ class TestEnvironmentConfig:
 class TestGlobalConfiguration:
     """Test global configuration functions."""
 
-    @patch('teleprompter.core.configuration._config_manager', None)
+    @patch("teleprompter.core.configuration._config_manager", None)
     def test_get_config_creates_instance(self):
         """Test that get_config creates a singleton instance."""
         config1 = get_config()
@@ -256,7 +267,7 @@ class TestGlobalConfiguration:
         assert config1 is config2
         assert isinstance(config1, ConfigurationManager)
 
-    @patch('teleprompter.core.configuration._config_manager', None)
+    @patch("teleprompter.core.configuration._config_manager", None)
     @patch.dict(os.environ, {"TELEPROMPTER_FONT_SIZE": "48"})
     def test_get_config_applies_env_overrides(self):
         """Test that get_config applies environment overrides."""

@@ -1,6 +1,5 @@
 """Unit tests for core exception classes."""
 
-
 from teleprompter.core import (
     AudioDeviceError,
     ErrorRecovery,

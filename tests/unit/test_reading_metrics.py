@@ -62,7 +62,7 @@ class TestReadingMetricsService:
         assert service.calculate_words_per_minute(2.0) == 300.0
         assert service.calculate_words_per_minute(0.5) == 75.0
 
-    @patch('teleprompter.domain.reading.metrics.time.time')
+    @patch("teleprompter.domain.reading.metrics.time.time")
     def test_reading_session_timing(self, mock_time, service):
         """Test reading session timing functionality."""
         # Start reading at time 100
@@ -93,7 +93,7 @@ class TestReadingMetricsService:
         """Test elapsed time when session hasn't started."""
         assert service.get_elapsed_time() == 0.0
 
-    @patch('teleprompter.domain.reading.metrics.time.time')
+    @patch("teleprompter.domain.reading.metrics.time.time")
     def test_get_remaining_time(self, mock_time, service):
         """Test remaining time calculation."""
         # Set up reading session
@@ -132,12 +132,12 @@ class TestReadingMetricsService:
         service._current_progress = 0.5
 
         # Override get_elapsed_time to return a fixed value
-        with patch.object(service, 'get_elapsed_time', return_value=60.0):
+        with patch.object(service, "get_elapsed_time", return_value=60.0):
             assert service.get_average_wpm() == 150.0
 
         # Test with 100% progress
         service._current_progress = 1.0
-        with patch.object(service, 'get_elapsed_time', return_value=120.0):
+        with patch.object(service, "get_elapsed_time", return_value=120.0):
             assert service.get_average_wpm() == 150.0
 
     def test_format_time(self, service):
@@ -160,8 +160,10 @@ class TestReadingMetricsService:
         service._total_pause_duration = 0.0
 
         # Mock get_elapsed_time and get_average_wpm
-        with patch.object(service, 'get_elapsed_time', return_value=60.0), \
-             patch.object(service, 'get_average_wpm', return_value=150.0):
+        with (
+            patch.object(service, "get_elapsed_time", return_value=60.0),
+            patch.object(service, "get_average_wpm", return_value=150.0),
+        ):
             stats = service.get_statistics()
 
         assert stats["total_words"] == 300

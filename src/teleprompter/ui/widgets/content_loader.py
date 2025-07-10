@@ -22,7 +22,7 @@ class ContentLoadResult:
         html_content: str = "",
         word_count: int = 0,
         sections: list = None,
-        error_message: str = ""
+        error_message: str = "",
     ):
         self.success = success
         self.html_content = html_content
@@ -45,7 +45,7 @@ class ContentLoader(QObject):
         parser: ContentParserProtocol,
         analyzer: HtmlContentAnalyzerProtocol,
         metrics_service: ReadingMetricsProtocol,
-        parent: QObject | None = None
+        parent: QObject | None = None,
     ):
         super().__init__(parent)
         self._file_manager = file_manager
@@ -88,14 +88,11 @@ class ContentLoader(QObject):
                 success=True,
                 html_content=html_content,
                 word_count=word_count,
-                sections=sections
+                sections=sections,
             )
 
         except Exception as e:
-            result = ContentLoadResult(
-                success=False,
-                error_message=str(e)
-            )
+            result = ContentLoadResult(success=False, error_message=str(e))
 
         self._loading = False
         self.loading_finished.emit()
@@ -138,14 +135,11 @@ class ContentLoader(QObject):
                 success=True,
                 html_content=html_content,
                 word_count=word_count,
-                sections=sections
+                sections=sections,
             )
 
         except Exception as e:
-            result = ContentLoadResult(
-                success=False,
-                error_message=str(e)
-            )
+            result = ContentLoadResult(success=False, error_message=str(e))
 
         self._loading = False
         self.loading_finished.emit()
@@ -177,6 +171,7 @@ class WebViewContentManager:
         # Set HTML content with proper encoding
         # Use setContent to ensure proper MIME type
         from PyQt6.QtCore import QUrl
+
         self._web_view.setHtml(html_content, QUrl())
 
         # Inject scripts after content loads
@@ -186,6 +181,7 @@ class WebViewContentManager:
         """Handle web view load finished."""
         # Disconnect to avoid multiple calls
         import contextlib
+
         with contextlib.suppress(Exception):
             self._web_view.loadFinished.disconnect(self._on_load_finished)
 
@@ -207,6 +203,19 @@ class WebViewContentManager:
 
         # Setup section highlighting
         page.runJavaScript(self._js_manager.get_highlight_current_section_script())
+
+        # Set up scroll update callback if parent has the method
+        if hasattr(self._web_view.parent(), "_on_scroll_update"):
+            page.runJavaScript("""
+                window.onScrollUpdate = function(scrollTop) {
+                    // Trigger progress update in Python
+                    if (window._qt_progress_update_pending) return;
+                    window._qt_progress_update_pending = true;
+                    setTimeout(() => {
+                        window._qt_progress_update_pending = false;
+                    }, 50);
+                };
+            """)
 
     def set_font_size(self, size: int) -> None:
         """Set the font size.
@@ -244,10 +253,7 @@ class WebViewContentManager:
         Args:
             callback: Function to call with scroll info
         """
-        self._web_view.page().runJavaScript(
-            "window.getScrollInfo()",
-            callback
-        )
+        self._web_view.page().runJavaScript("window.getScrollInfo()", callback)
 
     def navigate_to_section(self, index: int) -> None:
         """Navigate to a specific section.

@@ -1,7 +1,6 @@
 """JavaScript code management for the teleprompter widget."""
 
 
-
 class JavaScriptManager:
     """Manages JavaScript code for the teleprompter widget."""
 
@@ -51,6 +50,27 @@ class JavaScriptManager:
                     isManualScroll = false;
                     window.manualScrollDetected();
                 }, 150);
+            }, { passive: true });
+            
+            // Track scroll events for progress updates
+            let scrollUpdateTimeout = null;
+            let lastScrollTop = -1;
+            
+            window.addEventListener('scroll', function(e) {
+                const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                
+                // Only trigger update if position actually changed
+                if (Math.abs(currentScrollTop - lastScrollTop) > 1) {
+                    lastScrollTop = currentScrollTop;
+                    
+                    // Throttle scroll events
+                    clearTimeout(scrollUpdateTimeout);
+                    scrollUpdateTimeout = setTimeout(() => {
+                        if (window.onScrollUpdate) {
+                            window.onScrollUpdate(currentScrollTop);
+                        }
+                    }, 16); // ~60fps updates
+                }
             }, { passive: true });
 
             // Function to handle manual scroll detection

@@ -41,9 +41,7 @@ class TestTeleprompterLogger:
         """Test logging setup with file output."""
         log_file = tmp_path / "test.log"
         TeleprompterLogger.setup_logging(
-            level=logging.INFO,
-            log_file=log_file,
-            detailed=True
+            level=logging.INFO, log_file=log_file, detailed=True
         )
 
         logger = get_logger("teleprompter.test")
@@ -71,6 +69,7 @@ class TestLoggerMixin:
 
     class MockClass(LoggerMixin):
         """Mock class using LoggerMixin."""
+
         pass
 
     def test_logger_property(self):
@@ -122,6 +121,7 @@ class TestPerformanceLogger:
         perf_logger.start_timer("operation1")
         # Simulate some work
         import time
+
         time.sleep(0.01)
         duration = perf_logger.end_timer("operation1")
 
@@ -176,6 +176,7 @@ class TestDecorators:
         def slow_method(self):
             """Method with performance logging."""
             import time
+
             time.sleep(0.01)
             return "Done"
 

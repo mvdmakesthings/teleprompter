@@ -1,6 +1,5 @@
 """Modular teleprompter widget using refactored components."""
 
-
 from PyQt6.QtCore import (
     Qt,
     QTimer,
@@ -148,7 +147,7 @@ class TeleprompterWidget(QWidget):
             self.parser,
             self.content_analyzer,
             self.reading_metrics,
-            self
+            self,
         )
         self.web_content_manager = WebViewContentManager(self.web_view)
 
@@ -175,7 +174,9 @@ class TeleprompterWidget(QWidget):
         # Progress update timer
         self.progress_timer = QTimer()
         self.progress_timer.timeout.connect(self._update_progress_display)
-        self.progress_timer.setInterval(100)  # 10 updates per second
+        self.progress_timer.setInterval(
+            50
+        )  # 20 updates per second for smoother progress
 
     def _setup_ui(self):
         """Set up the user interface."""
@@ -370,7 +371,9 @@ class TeleprompterWidget(QWidget):
 
         return {
             "index": self._current_section_index,
-            "title": self._current_sections[self._current_section_index] if self._current_section_index < len(self._current_sections) else "",
+            "title": self._current_sections[self._current_section_index]
+            if self._current_section_index < len(self._current_sections)
+            else "",
             "total": len(self._current_sections),
         }
 
@@ -392,14 +395,14 @@ class TeleprompterWidget(QWidget):
             # Sync position first
             self.web_view.page().runJavaScript(
                 "window.pageYOffset || document.documentElement.scrollTop",
-                lambda pos: self.scroll_controller.update_scroll_position(pos or 0)
+                lambda pos: self.scroll_controller.update_scroll_position(pos or 0),
             )
 
             self._is_scrolling = True
             self.scroll_controller.start_scrolling()
             self.reading_metrics.start_reading()
             self.scroll_timer.start()
-            self.progress_timer.start()
+            # Progress timer is always running now
             self._update_status("Reading...")
 
     def stop_scrolling(self):
@@ -409,7 +412,7 @@ class TeleprompterWidget(QWidget):
             self.scroll_controller.pause_scrolling()
             self.reading_metrics.pause_reading()
             self.scroll_timer.stop()
-            self.progress_timer.stop()
+            # Progress timer keeps running to track manual scrolling
             self._update_status("Paused")
 
     def reset_position(self):
@@ -418,7 +421,7 @@ class TeleprompterWidget(QWidget):
         self.reading_metrics.stop_reading()
         self._is_scrolling = False
         self.scroll_timer.stop()
-        self.progress_timer.stop()
+        # Progress timer keeps running
 
         self.web_content_manager.scroll_to_position(0)
         self.scroll_controller.set_position(0)
@@ -496,23 +499,38 @@ class TeleprompterWidget(QWidget):
 
     def wheelEvent(self, event: QWheelEvent):
         """Handle mouse wheel events."""
-        # Manual scrolling interrupts automatic scrolling
-        if self._is_scrolling:
-            self._manual_scroll_active = True
-            self.stop_scrolling()
+        # Forward the wheel event to web view first
+        if self.web_view:
+            # Let the web view handle the scroll
+            self.web_view.wheelEvent(event)
 
-            # Update UI button text if parent app has the method
-            parent = self.parent()
-            while parent:
-                if hasattr(parent, "play_button"):
-                    parent.play_button.setText("Play")
-                    break
-                parent = parent.parent()
+            # If auto-scrolling, pause it
+            if self._is_scrolling:
+                self._manual_scroll_active = True
+                self.stop_scrolling()
 
-            # Resume after a delay
-            QTimer.singleShot(2000, self._resume_auto_scroll)
+                # Update UI button text if parent app has the method
+                parent = self.parent()
+                while parent:
+                    if hasattr(parent, "play_button"):
+                        parent.play_button.setText("Play")
+                        break
+                    parent = parent.parent()
 
-        super().wheelEvent(event)
+            # Update scroll position and progress after a short delay
+            QTimer.singleShot(50, self._sync_scroll_position)
+
+            # Don't resume auto-scroll immediately - wait for user to stop scrolling
+            if hasattr(self, "_resume_timer"):
+                self._resume_timer.stop()
+            self._resume_timer = QTimer()
+            self._resume_timer.setSingleShot(True)
+            self._resume_timer.timeout.connect(self._check_resume_auto_scroll)
+            self._resume_timer.start(3000)  # Wait 3 seconds after last scroll
+
+            event.accept()
+        else:
+            super().wheelEvent(event)
 
     def mouseMoveEvent(self, event):
         """Handle mouse movement for cursor auto-hide."""
@@ -527,7 +545,7 @@ class TeleprompterWidget(QWidget):
         # Sync our position with the current scroll position when user clicks
         self.web_view.page().runJavaScript(
             "window.pageYOffset || document.documentElement.scrollTop",
-            lambda pos: setattr(self, "current_position", pos or 0)
+            lambda pos: setattr(self, "current_position", pos or 0),
         )
         super().mousePressEvent(event)
 
@@ -541,8 +559,7 @@ class TeleprompterWidget(QWidget):
 
             # Display content
             self.web_content_manager.display_content(
-                result.html_content,
-                result.sections
+                result.html_content, result.sections
             )
 
             # Update reading metrics
@@ -550,8 +567,9 @@ class TeleprompterWidget(QWidget):
                 "total_words": result.word_count,
                 "estimated_minutes": self.reading_metrics.calculate_reading_time(
                     result.word_count,
-                    self.reading_metrics.calculate_words_per_minute(1.0)
-                ) / 60.0,
+                    self.reading_metrics.calculate_words_per_minute(1.0),
+                )
+                / 60.0,
                 "sections": result.sections,
             }
             self.reading_stats_changed.emit(stats)
@@ -578,11 +596,14 @@ class TeleprompterWidget(QWidget):
             # Get content height
             self.web_view.page().runJavaScript(
                 "document.body.scrollHeight",
-                lambda height: setattr(self, "content_height", height)
+                lambda height: setattr(self, "content_height", height),
             )
 
             # Add responsive bottom padding
             self._add_bottom_padding()
+
+            # Start progress timer to track all scrolling (manual and auto)
+            self.progress_timer.start()
 
     def _perform_scroll_step(self):
         """Perform a single scroll step."""
@@ -597,7 +618,7 @@ class TeleprompterWidget(QWidget):
         # Check if user has manually scrolled and update our position
         self.web_view.page().runJavaScript(
             "window.manualScrollPosition || window.pageYOffset || document.documentElement.scrollTop",
-            self._update_position_from_manual_scroll
+            self._update_position_from_manual_scroll,
         )
 
         # Update viewport dimensions
@@ -638,8 +659,33 @@ class TeleprompterWidget(QWidget):
 
     def _update_progress_display(self):
         """Update progress indicators."""
-        if self.content_height > 0:
-            progress = self.scroll_controller.get_progress()
+        # Always get the actual scroll position from the web view
+        self.web_view.page().runJavaScript(
+            """
+            (function() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+                const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
+                const clientHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+                const maxScroll = Math.max(0, scrollHeight - clientHeight);
+                const progress = maxScroll > 0 ? scrollTop / maxScroll : 0;
+                return {
+                    scrollTop: scrollTop,
+                    maxScroll: maxScroll,
+                    progress: Math.min(1.0, Math.max(0.0, progress))
+                };
+            })();
+            """,
+            self._handle_progress_update,
+        )
+
+    def _handle_progress_update(self, scroll_info):
+        """Handle progress update from JavaScript."""
+        if scroll_info and self.content_height > 0:
+            progress = scroll_info.get("progress", 0)
+            scroll_position = scroll_info.get("scrollTop", 0)
+
+            # Update internal state
+            self.scroll_controller.update_scroll_position(scroll_position)
             self.reading_metrics.set_progress(progress)
 
             # Update progress bar
@@ -698,6 +744,20 @@ class TeleprompterWidget(QWidget):
         if not self._is_scrolling and self._manual_scroll_active:
             self._manual_scroll_active = False
             self.start_scrolling()
+
+    def _sync_scroll_position(self):
+        """Sync scroll position from web view and update progress."""
+        # Just trigger the unified progress update
+        self._update_progress_display()
+
+    def _check_resume_auto_scroll(self):
+        """Check if we should resume auto-scrolling."""
+        if not self._is_scrolling and self._manual_scroll_active:
+            # Only resume if we haven't reached the end
+            if not self.scroll_controller.has_reached_end():
+                self._manual_scroll_active = False
+                # Optionally auto-resume (you can make this configurable)
+                # self.start_scrolling()
 
     def _hide_cursor(self):
         """Hide the cursor."""

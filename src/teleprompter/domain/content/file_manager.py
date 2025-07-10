@@ -32,7 +32,7 @@ class FileManager(QObject, LoggerMixin):
         """
         super().__init__(parent)
         self._parser = parser
-        self._supported_extensions = ['.md', '.markdown', '.txt']
+        self._supported_extensions = [".md", ".markdown", ".txt"]
 
     def load_file(self, file_path: str) -> str:
         """Load content from a file.
@@ -54,11 +54,11 @@ class FileManager(QObject, LoggerMixin):
             raise ValueError(f"Unsupported file format: {file_path}")
 
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 return f.read()
         except UnicodeDecodeError:
             # Try with latin-1 encoding as fallback
-            with open(file_path, encoding='latin-1') as f:
+            with open(file_path, encoding="latin-1") as f:
                 return f.read()
 
     def save_file(self, file_path: str, content: str) -> bool:
@@ -72,7 +72,7 @@ class FileManager(QObject, LoggerMixin):
             True if successful, False otherwise
         """
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
         except Exception as e:
@@ -108,13 +108,12 @@ class FileManager(QObject, LoggerMixin):
 
     def open_file_dialog(self) -> None:
         """Open file dialog for selecting a file to load."""
-        file_filters = "Markdown Files (*.md *.markdown);;Text Files (*.txt);;All Files (*)"
+        file_filters = (
+            "Markdown Files (*.md *.markdown);;Text Files (*.txt);;All Files (*)"
+        )
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self.parent(),
-            "Open File",
-            "",
-            file_filters
+            self.parent(), "Open File", "", file_filters
         )
 
         if file_path:
@@ -133,7 +132,7 @@ class FileManager(QObject, LoggerMixin):
             if not self.validate_file(file_path):
                 self._emit_error(
                     f"Unsupported file format: {Path(file_path).suffix}",
-                    "File Format Error"
+                    "File Format Error",
                 )
                 return
 
@@ -147,16 +146,12 @@ class FileManager(QObject, LoggerMixin):
             self.file_loaded.emit(html_content, file_path, markdown_content)
 
         except FileNotFoundError:
-            self._emit_error(
-                f"File not found: {file_path}",
-                "File Not Found"
-            )
+            self._emit_error(f"File not found: {file_path}", "File Not Found")
         except ValueError as e:
             self._emit_error(str(e), "File Processing Error")
         except Exception as e:
             self._emit_error(
-                f"Unexpected error loading file: {str(e)}",
-                "Loading Error"
+                f"Unexpected error loading file: {str(e)}", "Loading Error"
             )
         finally:
             self.loading_finished.emit()

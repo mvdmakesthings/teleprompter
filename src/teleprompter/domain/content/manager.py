@@ -35,8 +35,7 @@ class ContentManager(LoggerMixin):
         self._extract_sections()
 
         self.log_info(
-            f"Content loaded: {self._word_count} words, "
-            f"{len(self._sections)} sections"
+            f"Content loaded: {self._word_count} words, {len(self._sections)} sections"
         )
 
     def get_parsed_content(self) -> str:
@@ -80,8 +79,7 @@ class ContentManager(LoggerMixin):
                     if header_text:
                         self._sections.append((i, header_text))
                         self.log_debug(
-                            f"Found section at line {i}: "
-                            f"Level {level} - {header_text}"
+                            f"Found section at line {i}: Level {level} - {header_text}"
                         )
 
     def find_section_at_progress(self, progress: float) -> int | None:

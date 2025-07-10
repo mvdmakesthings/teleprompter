@@ -45,7 +45,11 @@ class TestHtmlContentAnalyzer:
         assert len(headings) == 4
         assert headings[0] == {"level": 1, "text": "Main Title", "id": "main-title"}
         assert headings[1] == {"level": 2, "text": "Section 1", "id": "section-1"}
-        assert headings[2] == {"level": 3, "text": "Subsection 1.1", "id": "subsection-1.1"}
+        assert headings[2] == {
+            "level": 3,
+            "text": "Subsection 1.1",
+            "id": "subsection-1.1",
+        }
         assert headings[3] == {"level": 2, "text": "Section 2", "id": "section-2"}
 
     def test_extract_headings_with_existing_ids(self, analyzer):
@@ -84,8 +88,18 @@ class TestHtmlContentAnalyzer:
                         "text": "Background",
                         "id": "background",
                         "children": [
-                            {"level": 3, "text": "History", "id": "history", "children": []},
-                            {"level": 3, "text": "Context", "id": "context", "children": []},
+                            {
+                                "level": 3,
+                                "text": "History",
+                                "id": "history",
+                                "children": [],
+                            },
+                            {
+                                "level": 3,
+                                "text": "Context",
+                                "id": "context",
+                                "children": [],
+                            },
                         ],
                     },
                     {"level": 2, "text": "Methods", "id": "methods", "children": []},
@@ -170,7 +184,9 @@ class TestHtmlContentAnalyzer:
         read than the first section.</p>
         """
 
-        estimates = analyzer.estimate_reading_time_per_section(html, words_per_minute=200)
+        estimates = analyzer.estimate_reading_time_per_section(
+            html, words_per_minute=200
+        )
 
         assert len(estimates) == 2
 

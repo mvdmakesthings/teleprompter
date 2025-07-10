@@ -34,8 +34,7 @@ class HtmlContentAnalyzer(LoggerMixin):
         sections = self._extract_sections(html_content)
 
         self.log_debug(
-            f"HTML analysis complete: {word_count} words, "
-            f"{len(sections)} sections"
+            f"HTML analysis complete: {word_count} words, {len(sections)} sections"
         )
 
         return {
@@ -55,17 +54,17 @@ class HtmlContentAnalyzer(LoggerMixin):
         """
         # Remove script and style elements
         html_clean = re.sub(
-            r'<(script|style)[^>]*>.*?</\1>',
-            '',
+            r"<(script|style)[^>]*>.*?</\1>",
+            "",
             html_content,
-            flags=re.IGNORECASE | re.DOTALL
+            flags=re.IGNORECASE | re.DOTALL,
         )
 
         # Remove HTML tags
-        text_content = re.sub(r'<[^>]+>', ' ', html_clean)
+        text_content = re.sub(r"<[^>]+>", " ", html_clean)
 
         # Clean up whitespace
-        text_content = re.sub(r'\s+', ' ', text_content).strip()
+        text_content = re.sub(r"\s+", " ", text_content).strip()
 
         return text_content
 
@@ -79,14 +78,14 @@ class HtmlContentAnalyzer(LoggerMixin):
             List of section titles
         """
         # Find all header tags (h1-h6)
-        header_pattern = r'<h[1-6][^>]*>(.*?)</h[1-6]>'
+        header_pattern = r"<h[1-6][^>]*>(.*?)</h[1-6]>"
         headers = re.findall(header_pattern, html_content, re.IGNORECASE)
 
         # Clean up header text
         sections = []
         for header in headers:
             # Remove any nested HTML tags
-            clean_header = re.sub(r'<[^>]+>', '', header).strip()
+            clean_header = re.sub(r"<[^>]+>", "", header).strip()
             if clean_header:
                 sections.append(clean_header)
 
@@ -166,7 +165,7 @@ class HtmlContentAnalyzer(LoggerMixin):
         headers = []
 
         # Find all header tags with their level
-        header_pattern = r'<h([1-6])[^>]*>(.*?)</h\1>'
+        header_pattern = r"<h([1-6])[^>]*>(.*?)</h\1>"
 
         for match in re.finditer(header_pattern, html_content, re.IGNORECASE):
             level = int(match.group(1))
@@ -174,7 +173,7 @@ class HtmlContentAnalyzer(LoggerMixin):
             position = match.start()
 
             # Clean the header text
-            clean_text = re.sub(r'<[^>]+>', '', content).strip()
+            clean_text = re.sub(r"<[^>]+>", "", content).strip()
 
             if clean_text:
                 headers.append((level, clean_text, position))
@@ -210,12 +209,10 @@ class HtmlContentAnalyzer(LoggerMixin):
             current_level = level
 
             # Create safe anchor ID
-            anchor_id = re.sub(r'[^\w\s-]', '', title.lower())
-            anchor_id = re.sub(r'[-\s]+', '-', anchor_id)
+            anchor_id = re.sub(r"[^\w\s-]", "", title.lower())
+            anchor_id = re.sub(r"[-\s]+", "-", anchor_id)
 
-            toc_html.append(
-                f"<li><a href='#{anchor_id}'>{title}</a></li>"
-            )
+            toc_html.append(f"<li><a href='#{anchor_id}'>{title}</a></li>")
 
         # Close remaining lists
         for _ in range(current_level):
@@ -226,9 +223,7 @@ class HtmlContentAnalyzer(LoggerMixin):
         return "\n".join(toc_html)
 
     def estimate_reading_sections(
-        self,
-        html_content: str,
-        words_per_minute: float = 150
+        self, html_content: str, words_per_minute: float = 150
     ) -> list[dict]:
         """Estimate reading time for each section.
 
@@ -259,13 +254,15 @@ class HtmlContentAnalyzer(LoggerMixin):
             word_count = len(section_text.split())
             reading_time = (word_count / words_per_minute) * 60  # seconds
 
-            sections.append({
-                "level": level,
-                "title": title,
-                "word_count": word_count,
-                "reading_time_seconds": reading_time,
-                "reading_time_formatted": self._format_time(reading_time),
-            })
+            sections.append(
+                {
+                    "level": level,
+                    "title": title,
+                    "word_count": word_count,
+                    "reading_time_seconds": reading_time,
+                    "reading_time_formatted": self._format_time(reading_time),
+                }
+            )
 
         return sections
 

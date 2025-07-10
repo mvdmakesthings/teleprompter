@@ -48,11 +48,11 @@ class MarkdownParser(ContentParserProtocol, LoggerMixin):
     def _generate_css(self) -> str:
         """Generate CSS for teleprompter styling with enhanced typography."""
         # Get configuration values with defaults
-        bg_color = self.config.get('BACKGROUND_COLOR', '#000000')
-        text_color = self.config.get('TEXT_COLOR', '#FFFFFF')
-        font_family = self.config.get('DEFAULT_FONT_FAMILY', 'Arial, sans-serif')
-        font_size = self.config.get('DEFAULT_FONT_SIZE', 24)
-        accent_color = self.config.get('ACCENT_COLOR', '#4A90E2')
+        bg_color = self.config.get("BACKGROUND_COLOR", "#000000")
+        text_color = self.config.get("TEXT_COLOR", "#FFFFFF")
+        font_family = self.config.get("DEFAULT_FONT_FAMILY", "Arial, sans-serif")
+        font_size = self.config.get("DEFAULT_FONT_SIZE", 24)
+        accent_color = self.config.get("ACCENT_COLOR", "#4A90E2")
         # max_file_size = self.config.get('MAX_FILE_SIZE', 1048576)  # Unused variable
         # primary_colors = self.config.get('PRIMARY_COLORS', {  # Unused variable
         #     "400": "#42a5f5",
@@ -229,11 +229,9 @@ class MarkdownParser(ContentParserProtocol, LoggerMixin):
                 content = f.read()
 
             # Check file size
-            max_size = self.config.get('MAX_FILE_SIZE', 1048576)
+            max_size = self.config.get("MAX_FILE_SIZE", 1048576)
             if len(content.encode("utf-8")) > max_size:
-                raise ValueError(
-                    f"File size exceeds maximum of {max_size} bytes"
-                )
+                raise ValueError(f"File size exceeds maximum of {max_size} bytes")
 
             # Convert markdown to HTML
             html_content = self.md.convert(content)
@@ -326,7 +324,7 @@ class MarkdownParser(ContentParserProtocol, LoggerMixin):
 
                 .error-message {{
                     font-size: 16px;
-                    color: {self.config.get('TEXT_COLOR', '#FFFFFF')};
+                    color: {self.config.get("TEXT_COLOR", "#FFFFFF")};
                     margin-bottom: 24px;
                     line-height: 1.5;
                 }}
@@ -403,7 +401,7 @@ class MarkdownParser(ContentParserProtocol, LoggerMixin):
 
                 .loading-text {{
                     font-size: 18px;
-                    color: {self.config.get('TEXT_COLOR', '#FFFFFF')};
+                    color: {self.config.get("TEXT_COLOR", "#FFFFFF")};
                     margin-bottom: 8px;
                 }}
 
@@ -425,12 +423,11 @@ class MarkdownParser(ContentParserProtocol, LoggerMixin):
     def _generate_empty_state_html(self) -> str:
         """Generate HTML for empty state display when no file is loaded."""
         # Get configuration values with defaults
-        text_color = self.config.get('TEXT_COLOR', '#FFFFFF')
-        accent_color = self.config.get('ACCENT_COLOR', '#4A90E2')
-        primary_colors = self.config.get('PRIMARY_COLORS', {
-            "500": "#2196f3",
-            "600": "#1e88e5"
-        })
+        text_color = self.config.get("TEXT_COLOR", "#FFFFFF")
+        accent_color = self.config.get("ACCENT_COLOR", "#4A90E2")
+        primary_colors = self.config.get(
+            "PRIMARY_COLORS", {"500": "#2196f3", "600": "#1e88e5"}
+        )
 
         return f"""<!DOCTYPE html>
         <html>

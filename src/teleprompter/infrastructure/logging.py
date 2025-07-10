@@ -41,7 +41,9 @@ def setup_logging(
     log_file_path = log_file or os.getenv("TELEPROMPTER_LOG_FILE")
 
     # Determine if we're in a terminal for auto format selection
-    is_terminal = sys.stderr.isatty() if log_format == "auto" else log_format == "console"
+    is_terminal = (
+        sys.stderr.isatty() if log_format == "auto" else log_format == "console"
+    )
 
     # Convert string level to logging constant
     numeric_level = getattr(logging, log_level, logging.INFO)
@@ -103,11 +105,7 @@ def setup_logging(
     _install_qt_handler()
 
 
-def _setup_file_logging(
-    file_path: str,
-    level: int,
-    shared_processors: list
-) -> None:
+def _setup_file_logging(file_path: str, level: int, shared_processors: list) -> None:
     """Set up file-based logging with JSON format.
 
     Args:
@@ -159,6 +157,7 @@ def _configure_third_party_logging() -> None:
 
 def _install_qt_handler() -> None:
     """Install custom Qt message handler to integrate with Python logging."""
+
     def qt_message_handler(msg_type: QtMsgType, context, message: str) -> None:
         """Handle Qt messages and route to Python logging."""
         logger = get_logger("teleprompter.qt")
@@ -214,7 +213,7 @@ class TeleprompterLogger:
         cls,
         level: int = logging.INFO,
         log_file: Path | None = None,
-        detailed: bool = False
+        detailed: bool = False,
     ) -> None:
         """Configure logging for the entire application.
 
@@ -247,7 +246,9 @@ class TeleprompterLogger:
 
             file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
             file_handler.setLevel(level)
-            file_formatter = logging.Formatter(cls.DETAILED_FORMAT)  # Always detailed in file
+            file_formatter = logging.Formatter(
+                cls.DETAILED_FORMAT
+            )  # Always detailed in file
             file_handler.setFormatter(file_formatter)
             root_logger.addHandler(file_handler)
 
@@ -271,6 +272,7 @@ class TeleprompterLogger:
     @classmethod
     def _install_qt_handler(cls) -> None:
         """Install custom Qt message handler to integrate with Python logging."""
+
         def qt_message_handler(msg_type: QtMsgType, context, message: str) -> None:
             """Handle Qt messages and route to Python logging."""
             logger = cls.get_logger("teleprompter.qt")
@@ -354,6 +356,7 @@ class PerformanceLogger:
     def start_timer(self, operation: str) -> None:
         """Start timing an operation."""
         import time
+
         self._timers[operation] = time.perf_counter()
         self.logger.debug("Timer started", operation=operation)
 
@@ -367,6 +370,7 @@ class PerformanceLogger:
             Duration in seconds
         """
         import time
+
         if operation not in self._timers:
             self.logger.warning("No timer found", operation=operation)
             return 0.0
@@ -378,7 +382,7 @@ class PerformanceLogger:
             "Operation completed",
             operation=operation,
             duration_seconds=duration,
-            duration_ms=duration * 1000
+            duration_ms=duration * 1000,
         )
         return duration
 
@@ -391,6 +395,7 @@ class PerformanceLogger:
         """
         try:
             import psutil
+
             process = psutil.Process()
             memory_info = process.memory_info()
 
@@ -400,22 +405,17 @@ class PerformanceLogger:
                 rss_mb=memory_info.rss / 1024 / 1024,
                 vms_mb=memory_info.vms / 1024 / 1024,
                 percent=process.memory_percent(),
-                **context
+                **context,
             )
         except ImportError:
             self.logger.warning(
                 "Memory logging unavailable",
                 operation=operation,
                 reason="psutil not installed",
-                **context
+                **context,
             )
 
-    def log_timing(
-        self,
-        operation: str,
-        duration_ms: float,
-        **context: Any
-    ) -> None:
+    def log_timing(self, operation: str, duration_ms: float, **context: Any) -> None:
         """Log timing information.
 
         Args:
@@ -428,7 +428,7 @@ class PerformanceLogger:
             operation=operation,
             duration_ms=duration_ms,
             duration_seconds=duration_ms / 1000,
-            **context
+            **context,
         )
 
 
@@ -449,6 +449,7 @@ class TimerContext:
     def __enter__(self) -> "TimerContext":
         """Start timing."""
         import time
+
         self.start_time = time.perf_counter()
         self.logger.debug("Operation started", operation=self.operation)
         return self
@@ -456,6 +457,7 @@ class TimerContext:
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Stop timing and log result."""
         import time
+
         if self.start_time is not None:
             duration = (time.perf_counter() - self.start_time) * 1000
 
@@ -476,9 +478,7 @@ class TimerContext:
 
 # Convenience function for quick setup
 def quick_setup(
-    level: str = "INFO",
-    console: bool = True,
-    file_path: str | None = None
+    level: str = "INFO", console: bool = True, file_path: str | None = None
 ) -> structlog.stdlib.BoundLogger:
     """Quick logging setup for simple use cases.
 
@@ -520,6 +520,7 @@ def log_method_calls(logger: logging.Logger | None = None):
     Args:
         logger: Optional logger instance (uses method's class logger if None)
     """
+
     def decorator(func):
         def wrapper(self, *args, **kwargs):
             # Use provided logger or class logger
@@ -537,6 +538,7 @@ def log_method_calls(logger: logging.Logger | None = None):
                 raise
 
         return wrapper
+
     return decorator
 
 
@@ -546,6 +548,7 @@ def log_performance(operation_name: str | None = None):
     Args:
         operation_name: Optional custom name for the operation
     """
+
     def decorator(func):
         def wrapper(self, *args, **kwargs):
             # Use provided name or function name
@@ -564,4 +567,5 @@ def log_performance(operation_name: str | None = None):
                 perf_logger.end_timer(op_name)
 
         return wrapper
+
     return decorator

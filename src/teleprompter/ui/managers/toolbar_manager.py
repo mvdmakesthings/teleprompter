@@ -44,7 +44,11 @@ class ModernToolBar(QToolBar):
         super().actionEvent(event)
         # Trigger extension button check when actions change
         if hasattr(self, "_extension_button_timer") and self._extension_button_timer:
-            self._extension_button_timer.start(75)
+            try:
+                self._extension_button_timer.start(75)
+            except RuntimeError:
+                # Timer was deleted, safely ignore
+                pass
 
     def _force_layout_update(self):
         """Force a complete layout update using Qt's layout system."""

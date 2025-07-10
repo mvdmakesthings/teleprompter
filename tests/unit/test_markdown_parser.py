@@ -88,9 +88,9 @@ And inline `code` too.
         markdown = "![Alt text](image.png)"
         html = parser.parse(markdown)
 
-        assert '<img' in html
-        assert 'image.png' in html
-        assert 'Alt text' in html
+        assert "<img" in html
+        assert "image.png" in html
+        assert "Alt text" in html
 
     def test_parse_blockquotes(self, parser):
         """Test parsing blockquotes."""
@@ -231,7 +231,9 @@ This is a separate paragraph."""
 
         # Links and images
         markdown = "Check [this link](https://example.com) and ![image](img.png)"
-        assert parser.get_word_count(markdown) == 5  # "Check this link and" (image alt text is empty)
+        assert (
+            parser.get_word_count(markdown) == 5
+        )  # "Check this link and" (image alt text is empty)
 
         # Code blocks should be excluded
         markdown = "Text before\n```\ncode block content\n```\nText after"
