@@ -16,10 +16,12 @@ class ModernToolBar(QToolBar):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._extension_button_timer = QTimer()
-        self._extension_button_timer.timeout.connect(self._find_and_style_extension_button)
+        self._extension_button_timer.timeout.connect(
+            self._find_and_style_extension_button
+        )
         self._extension_button_timer.setSingleShot(True)
         self._extension_button = None
-        
+
         # Set up toolbar for proper extension button handling
         self.setMovable(False)  # Prevent moving which can affect layout
         self.setFloatable(False)  # Prevent floating which can affect layout
@@ -27,13 +29,13 @@ class ModernToolBar(QToolBar):
     def resizeEvent(self, event):
         """Override resize event to handle extension button styling."""
         super().resizeEvent(event)
-        
+
         # Force layout invalidation and recalculation
         self.updateGeometry()
-        
+
         # Schedule extension button search after Qt finishes internal layout
         self._extension_button_timer.start(150)
-        
+
         # Force immediate layout update
         self._force_layout_update()
 
@@ -48,28 +50,31 @@ class ModernToolBar(QToolBar):
         # Invalidate the toolbar's layout
         if self.layout():
             self.layout().invalidate()
-        
+
         # Force geometry recalculation
         self.updateGeometry()
-        
+
         # Force immediate repaint
         self.update()
 
     def _find_and_style_extension_button(self):
         """Find and style the extension button using proper Qt methods."""
         toolbar_buttons = self.findChildren(QToolButton)
-        
+
         if not toolbar_buttons:
             return
-        
+
         # Try multiple detection methods to identify the extension button
         extension_button = self._detect_extension_button(toolbar_buttons)
-        
-        if extension_button and extension_button.objectName() != "toolbarExtensionButton":
+
+        if (
+            extension_button
+            and extension_button.objectName() != "toolbarExtensionButton"
+        ):
             self._apply_extension_button_styling(extension_button)
             self._extension_button = extension_button
             return
-        
+
         # If no extension button detected, clear stored reference
         self._extension_button = None
 
@@ -79,24 +84,28 @@ class ModernToolBar(QToolBar):
             # Method 1: Check for buttons without default actions (most reliable)
             if not button.defaultAction():
                 return button
-            
+
             # Method 2: Check for Qt's internal extension button object names
             obj_name = button.objectName()
             if obj_name in ["qt_toolbar_ext_button", "ExtensionButton"]:
                 return button
-            
+
             # Method 3: Check for Qt internal names containing extension indicators
-            if obj_name.startswith("qt_") and any(keyword in obj_name.lower()
-                                                 for keyword in ["ext", "extension", "overflow", "more"]):
+            if obj_name.startswith("qt_") and any(
+                keyword in obj_name.lower()
+                for keyword in ["ext", "extension", "overflow", "more"]
+            ):
                 return button
-        
+
         # Method 4: Check for buttons that might be extension buttons by properties
         for button in buttons:
             # Extension buttons typically have no text or generic text
-            if (button.text() in ["", "⋯", "...", "More", ">>"] and
-                not button.defaultAction()):
+            if (
+                button.text() in ["", "⋯", "...", "More", ">>"]
+                and not button.defaultAction()
+            ):
                 return button
-        
+
         return None
 
     def _apply_extension_button_styling(self, button):
@@ -127,10 +136,7 @@ class ModernToolBar(QToolBar):
         button.setToolTip("More toolbar options")
 
         # Ensure proper size policy - let Qt handle positioning
-        button.setSizePolicy(
-            QSizePolicy.Policy.Fixed,
-            QSizePolicy.Policy.Fixed
-        )
+        button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
         # Force geometry update to ensure proper sizing
         button.updateGeometry()
@@ -147,7 +153,7 @@ class ModernToolBar(QToolBar):
 
     def _create_more_options_icon(self):
         """Create a modern three-dot icon programmatically."""
-        from PyQt6.QtCore import Qt, QRectF
+        from PyQt6.QtCore import QRectF, Qt
         from PyQt6.QtGui import QBrush, QIcon, QPainter, QPen, QPixmap
 
         # Create a 14x14 pixmap for the smaller icon
@@ -170,7 +176,7 @@ class ModernToolBar(QToolBar):
 
         for i in range(3):
             x = start_x + i * (dot_size + spacing)
-            painter.drawEllipse(QRectF(x, center_y - dot_size/2, dot_size, dot_size))
+            painter.drawEllipse(QRectF(x, center_y - dot_size / 2, dot_size, dot_size))
 
         painter.end()
 
@@ -219,6 +225,7 @@ class ToolbarManager(QObject):
 
         # Set proper icon size for all toolbar buttons
         from PyQt6.QtCore import QSize
+
         self.toolbar.setIconSize(QSize(20, 20))
 
         # Ensure adequate spacing between toolbar items
@@ -251,6 +258,7 @@ class ToolbarManager(QObject):
 
         # Force extension button check after a delay to ensure Qt has initialized everything
         from PyQt6.QtCore import QTimer
+
         QTimer.singleShot(200, self.force_extension_button_update)
 
         # Set up a timer to periodically check and ensure extension button visibility
@@ -264,7 +272,10 @@ class ToolbarManager(QObject):
             return
 
         # Only check if we have an extension button reference
-        if hasattr(self.toolbar, '_extension_button') and self.toolbar._extension_button:
+        if (
+            hasattr(self.toolbar, "_extension_button")
+            and self.toolbar._extension_button
+        ):
             self.toolbar._ensure_extension_button_visibility()
 
     def _add_file_controls(self):
@@ -479,31 +490,33 @@ class ToolbarManager(QObject):
         """Force an update of the extension button styling using proper Qt layout system."""
         if not self.toolbar:
             return
-            
+
         # Force layout invalidation and recalculation
         self.toolbar._force_layout_update()
-        
+
         # Immediately check for and style extension buttons
         self.toolbar._find_and_style_extension_button()
-        
+
         # Schedule additional checks to catch extension buttons that appear after layout changes
         self.toolbar._extension_button_timer.start(100)
-        
+
         # Additional verification after layout stabilizes
         from PyQt6.QtCore import QTimer
+
         QTimer.singleShot(250, self._verify_extension_button_layout)
 
     def _verify_extension_button_layout(self):
         """Verify the extension button layout is correct after all updates."""
-        if (self.toolbar and
-            hasattr(self.toolbar, '_extension_button') and
-            self.toolbar._extension_button):
-            
+        if (
+            self.toolbar
+            and hasattr(self.toolbar, "_extension_button")
+            and self.toolbar._extension_button
+        ):
             # Final style refresh to ensure proper appearance
             button = self.toolbar._extension_button
             button.style().unpolish(button)
             button.style().polish(button)
             button.update()
-            
+
             # Force final toolbar update
             self.toolbar.update()

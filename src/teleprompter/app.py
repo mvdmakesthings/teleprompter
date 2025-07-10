@@ -59,10 +59,11 @@ class TeleprompterApp(QMainWindow):
         """Handle window resize events to ensure toolbar extension button visibility."""
         super().resizeEvent(event)
         # Notify toolbar manager about resize to handle extension button
-        if hasattr(self, 'toolbar_manager') and self.toolbar_manager:
+        if hasattr(self, "toolbar_manager") and self.toolbar_manager:
             # Use a timer to avoid excessive calls during resize
-            if not hasattr(self, '_resize_timer'):
+            if not hasattr(self, "_resize_timer"):
                 from PyQt6.QtCore import QTimer
+
                 self._resize_timer = QTimer()
                 self._resize_timer.setSingleShot(True)
                 self._resize_timer.timeout.connect(self._on_resize_finished)
@@ -70,16 +71,18 @@ class TeleprompterApp(QMainWindow):
 
     def _on_resize_finished(self):
         """Handle completed window resize to update toolbar layout."""
-        if hasattr(self, 'toolbar_manager') and self.toolbar_manager:
+        if hasattr(self, "toolbar_manager") and self.toolbar_manager:
             self.toolbar_manager.force_extension_button_update()
 
     def closeEvent(self, event):
         """Handle application close event to save preferences."""
         self._save_preferences()
         # Clean up timers
-        if hasattr(self, '_resize_timer'):
+        if hasattr(self, "_resize_timer"):
             self._resize_timer.stop()
-        if hasattr(self, 'toolbar_manager') and hasattr(self.toolbar_manager, '_visibility_timer'):
+        if hasattr(self, "toolbar_manager") and hasattr(
+            self.toolbar_manager, "_visibility_timer"
+        ):
             self.toolbar_manager._visibility_timer.stop()
         super().closeEvent(event)
 

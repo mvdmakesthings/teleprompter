@@ -24,6 +24,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.12.2"
+poethepoet = "^0.36.0"
 
 [tool.ruff]
 # Same as Black
@@ -50,3 +51,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"] # unused imports in __init__ files are ok
+
+[tool.poe.tasks]
+lint = { cmd = "ruff check --fix .", help = "Run ruff linter and fix issues automatically" }
+format = { cmd = "ruff format .", help = "Format code using ruff" }
+check = { sequence = ["lint", "format"], help = "Run both linting and formatting" }
