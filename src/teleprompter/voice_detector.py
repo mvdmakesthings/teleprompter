@@ -61,20 +61,111 @@ class VoiceActivityDetector(QObject):
         self.voice_threshold = 0.01  # Default, will be updated by set_sensitivity
         self.set_sensitivity(self.sensitivity)  # Apply initial sensitivity settings
 
-        # State tracking
-        self.is_running = False
-        self.is_speaking = False
-        self.is_speech_detected = False  # Current speech detection state
-        self.last_voice_time = 0
-        self.last_silence_time = 0
-        self.audio_level = 0.0
+        # State tracking (thread-safe access required)
+        self._state_lock = threading.RLock()
+        self._is_running = False
+        self._is_speaking = False
+        self._is_speech_detected = False  # Current speech detection state
+        self._last_voice_time = 0.0
+        self._last_silence_time = 0.0
+        self._audio_level = 0.0
 
         # Threading
         self.audio_thread: threading.Thread | None = None
         self.audio_stream: sd.InputStream | None = None
 
-        # Audio buffer
-        self.audio_buffer = np.array([], dtype=np.float32)
+        # Audio buffer with thread-safe access
+        self._buffer_lock = threading.Lock()
+        self._audio_buffer = np.array([], dtype=np.float32)
+
+        # Signal emission queue for thread safety
+        self._signal_lock = threading.Lock()
+        self._pending_signals = []
+
+    # Thread-safe property accessors
+    @property
+    def is_running(self) -> bool:
+        """Get running state (thread-safe)."""
+        with self._state_lock:
+            return self._is_running
+
+    @is_running.setter
+    def is_running(self, value: bool):
+        """Set running state (thread-safe)."""
+        with self._state_lock:
+            self._is_running = value
+
+    @property
+    def is_speaking(self) -> bool:
+        """Get speaking state (thread-safe)."""
+        with self._state_lock:
+            return self._is_speaking
+
+    @is_speaking.setter
+    def is_speaking(self, value: bool):
+        """Set speaking state (thread-safe)."""
+        with self._state_lock:
+            self._is_speaking = value
+
+    @property
+    def is_speech_detected(self) -> bool:
+        """Get speech detection state (thread-safe)."""
+        with self._state_lock:
+            return self._is_speech_detected
+
+    @is_speech_detected.setter
+    def is_speech_detected(self, value: bool):
+        """Set speech detection state (thread-safe)."""
+        with self._state_lock:
+            self._is_speech_detected = value
+
+    @property
+    def audio_level(self) -> float:
+        """Get audio level (thread-safe)."""
+        with self._state_lock:
+            return self._audio_level
+
+    @audio_level.setter
+    def audio_level(self, value: float):
+        """Set audio level (thread-safe)."""
+        with self._state_lock:
+            self._audio_level = value
+
+    @property
+    def last_voice_time(self) -> float:
+        """Get last voice time (thread-safe)."""
+        with self._state_lock:
+            return self._last_voice_time
+
+    @last_voice_time.setter
+    def last_voice_time(self, value: float):
+        """Set last voice time (thread-safe)."""
+        with self._state_lock:
+            self._last_voice_time = value
+
+    @property
+    def last_silence_time(self) -> float:
+        """Get last silence time (thread-safe)."""
+        with self._state_lock:
+            return self._last_silence_time
+
+    @last_silence_time.setter
+    def last_silence_time(self, value: float):
+        """Set last silence time (thread-safe)."""
+        with self._state_lock:
+            self._last_silence_time = value
+
+    def _emit_signal_safely(self, signal_name: str, *args):
+        """Emit a signal safely from any thread.
+
+        This ensures signals are emitted from the main thread to avoid
+        Qt threading issues.
+        """
+        # For simplicity, we'll emit directly since PyQt6 handles cross-thread signals
+        # In a more complex scenario, you might queue signals for the main thread
+        signal = getattr(self, signal_name, None)
+        if signal:
+            signal.emit(*args)
 
     def set_sensitivity(self, sensitivity: float):
         """Set VAD sensitivity (0.0-3.0, higher = more sensitive)."""
@@ -132,53 +223,77 @@ class VoiceActivityDetector(QObject):
             self.audio_thread.start()
 
         except Exception as e:
-            self.error_occurred.emit(f"Failed to start voice detection: {str(e)}")
+            self._emit_signal_safely(
+                "error_occurred", f"Failed to start voice detection: {str(e)}"
+            )
             self.stop_detection()
 
     def stop_detection(self):
-        """Stop voice activity detection."""
+        """Stop voice activity detection (thread-safe)."""
+        # Set running to False to signal threads to stop
         self.is_running = False
 
+        # Stop audio stream
         if self.audio_stream:
-            self.audio_stream.stop()
-            self.audio_stream.close()
+            try:
+                self.audio_stream.stop()
+                self.audio_stream.close()
+            except Exception:
+                pass  # Ignore errors during cleanup
             self.audio_stream = None
 
+        # Wait for thread to finish
         if self.audio_thread and self.audio_thread.is_alive():
             self.audio_thread.join(timeout=1.0)
+            if self.audio_thread.is_alive():
+                # Thread didn't stop cleanly, but we can't do much about it
+                print("Warning: Audio processing thread did not stop cleanly")
             self.audio_thread = None
 
-        # Reset state
-        if self.is_speaking:
-            self.is_speaking = False
-            self.voice_stopped.emit()
+        # Reset state (thread-safe)
+        with self._state_lock:
+            was_speaking = self._is_speaking
+            was_speech_detected = self._is_speech_detected
+            self._is_speaking = False
+            self._is_speech_detected = False
 
-        if self.is_speech_detected:
-            self.is_speech_detected = False
-            self.speech_detected.emit(False)
+        # Emit final signals if needed
+        if was_speaking:
+            self._emit_signal_safely("voice_stopped")
+        if was_speech_detected:
+            self._emit_signal_safely("speech_detected", False)
+
+        # Clear audio buffer
+        with self._buffer_lock:
+            self._audio_buffer = np.array([], dtype=np.float32)
 
     def _audio_callback(self, indata, frames, time_info, status):
         """Callback for audio input stream."""
         if status:
             print(f"Audio callback status: {status}")
 
-        # Add audio data to buffer
+        # Add audio data to buffer (thread-safe)
         audio_data = indata[:, 0]  # Get mono channel
-        self.audio_buffer = np.append(self.audio_buffer, audio_data)
+        with self._buffer_lock:
+            self._audio_buffer = np.append(self._audio_buffer, audio_data)
 
     def _process_audio(self):
         """Process audio data in a separate thread."""
         while self.is_running:
             try:
-                # Check if we have enough data for processing
-                if len(self.audio_buffer) >= self.frame_size:
-                    # Extract frame for processing
-                    frame_data = self.audio_buffer[: self.frame_size]
-                    self.audio_buffer = self.audio_buffer[self.frame_size :]
+                # Check if we have enough data for processing (thread-safe)
+                with self._buffer_lock:
+                    buffer_length = len(self._audio_buffer)
+
+                if buffer_length >= self.frame_size:
+                    # Extract frame for processing (thread-safe)
+                    with self._buffer_lock:
+                        frame_data = self._audio_buffer[: self.frame_size].copy()
+                        self._audio_buffer = self._audio_buffer[self.frame_size :]
 
                     # Calculate audio level (RMS)
                     self.audio_level = float(np.sqrt(np.mean(frame_data**2)))
-                    self.voice_level_changed.emit(self.audio_level)
+                    self._emit_signal_safely("voice_level_changed", self.audio_level)
 
                     # Determine if speech is detected using hybrid approach
                     if self.use_simple_vad:
@@ -199,7 +314,7 @@ class VoiceActivityDetector(QObject):
                     # Emit speech detection signal if state changed
                     if is_speech != self.is_speech_detected:
                         self.is_speech_detected = is_speech
-                        self.speech_detected.emit(is_speech)
+                        self._emit_signal_safely("speech_detected", is_speech)
 
                     current_time = time.time()
 
@@ -213,7 +328,7 @@ class VoiceActivityDetector(QObject):
                             >= self.start_delay
                         ):
                             self.is_speaking = True
-                            self.voice_started.emit()
+                            self._emit_signal_safely("voice_started")
                     else:
                         self.last_silence_time = current_time
 
@@ -223,13 +338,15 @@ class VoiceActivityDetector(QObject):
                             and current_time - self.last_voice_time >= self.stop_delay
                         ):
                             self.is_speaking = False
-                            self.voice_stopped.emit()
+                            self._emit_signal_safely("voice_stopped")
                 else:
                     # Not enough data, wait a bit
                     time.sleep(0.01)
 
             except Exception as e:
-                self.error_occurred.emit(f"Audio processing error: {str(e)}")
+                self._emit_signal_safely(
+                    "error_occurred", f"Audio processing error: {str(e)}"
+                )
                 break
 
     def get_audio_devices(self):
@@ -249,7 +366,9 @@ class VoiceActivityDetector(QObject):
                     )
             return input_devices
         except Exception as e:
-            self.error_occurred.emit(f"Failed to get audio devices: {str(e)}")
+            self._emit_signal_safely(
+                "error_occurred", f"Failed to get audio devices: {str(e)}"
+            )
             return []
 
     def set_audio_device(self, device_index: int | None):
@@ -258,7 +377,9 @@ class VoiceActivityDetector(QObject):
             if device_index is not None:
                 sd.default.device[0] = device_index  # Set input device
         except Exception as e:
-            self.error_occurred.emit(f"Failed to set audio device: {str(e)}")
+            self._emit_signal_safely(
+                "error_occurred", f"Failed to set audio device: {str(e)}"
+            )
 
     def is_detection_running(self) -> bool:
         """Check if voice detection is currently running."""
