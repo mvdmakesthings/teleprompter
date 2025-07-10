@@ -112,6 +112,7 @@ The teleprompter supports standard markdown files with the following extensions:
 - `.markdown`
 - `.mdown`
 - `.mkd`
+- `.txt`
 
 Maximum file size: 1MB
 

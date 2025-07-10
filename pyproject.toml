@@ -15,7 +15,8 @@ dependencies = [
     "webrtcvad (>=2.0.10,<3.0.0)",
     "sounddevice (>=0.5.1,<1.0.0)",
     "numpy (>=1.26.0,<2.0.0)",
-    "setuptools (>=80.9.0,<81.0.0)"
+    "setuptools (>=80.9.0,<81.0.0)",
+    "structlog (>=23.1.0,<25.0.0)"
 ]
 
 [build-system]
@@ -25,6 +26,10 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.12.2"
 poethepoet = "^0.36.0"
+pytest = "^8.4.1"
+pytest-cov = "^6.2.1"
+pytest-qt = "^4.5.0"
+pytest-mock = "^3.14.1"
 
 [tool.ruff]
 # Same as Black
@@ -52,8 +57,61 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"] # unused imports in __init__ files are ok
 
+# Test configuration
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src/teleprompter"]
+branch = true
+omit = [
+    "tests/*",
+    "*/__init__.py",
+    "*/migrations/*",
+    "*/venv/*",
+    "*/.tox/*",
+]
+
+[tool.coverage.report]
+# Fail if coverage falls below 10% (matching pytest.ini)
+fail_under = 10
+show_missing = true
+skip_covered = false
+precision = 2
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
 [tool.poe.tasks]
 lint = { cmd = "ruff check --fix .", help = "Run ruff linter and fix issues automatically" }
 format = { cmd = "ruff format .", help = "Format code using ruff" }
 check = { sequence = ["lint", "format"], help = "Run both linting and formatting" }
-run = { cmd = "python -m src.teleprompter.main", help = "Run the teleprompter application" }
+test = { cmd = "pytest", help = "Run all tests" }
+test-unit = { cmd = "pytest -m unit", help = "Run unit tests only" }
+test-integration = { cmd = "pytest -m integration", help = "Run integration tests only" }
+test-cov = { cmd = "pytest --cov=src/teleprompter --cov-report=html --cov-report=term", help = "Run tests with coverage report" }
+test-cov-fail = { cmd = "pytest --cov=src/teleprompter --cov-fail-under=80 --cov-report=term", help = "Run tests with coverage and fail if under 80%" }
+run = { cmd = "python -m teleprompter", help = "Run the teleprompter application" }
