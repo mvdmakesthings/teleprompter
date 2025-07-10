@@ -394,7 +394,7 @@ class TeleprompterWidget(QWidget):
         if not self._is_scrolling:
             # Sync position first
             self.web_view.page().runJavaScript(
-                "window.pageYOffset || document.documentElement.scrollTop",
+                "window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0)",
                 lambda pos: self.scroll_controller.update_scroll_position(pos or 0),
             )
 
@@ -544,7 +544,7 @@ class TeleprompterWidget(QWidget):
         self.setFocus()
         # Sync our position with the current scroll position when user clicks
         self.web_view.page().runJavaScript(
-            "window.pageYOffset || document.documentElement.scrollTop",
+            "window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0)",
             lambda pos: setattr(self, "current_position", pos or 0),
         )
         super().mousePressEvent(event)
@@ -617,7 +617,7 @@ class TeleprompterWidget(QWidget):
 
         # Check if user has manually scrolled and update our position
         self.web_view.page().runJavaScript(
-            "window.manualScrollPosition || window.pageYOffset || document.documentElement.scrollTop",
+            "window.manualScrollPosition || window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0)",
             self._update_position_from_manual_scroll,
         )
 
@@ -663,6 +663,10 @@ class TeleprompterWidget(QWidget):
         self.web_view.page().runJavaScript(
             """
             (function() {
+                // Check if document is ready
+                if (!document.documentElement) {
+                    return null;
+                }
                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
                 const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
                 const clientHeight = window.innerHeight || document.documentElement.clientHeight || 0;
@@ -752,12 +756,10 @@ class TeleprompterWidget(QWidget):
 
     def _check_resume_auto_scroll(self):
         """Check if we should resume auto-scrolling."""
-        if not self._is_scrolling and self._manual_scroll_active:
-            # Only resume if we haven't reached the end
-            if not self.scroll_controller.has_reached_end():
-                self._manual_scroll_active = False
-                # Optionally auto-resume (you can make this configurable)
-                # self.start_scrolling()
+        if not self._is_scrolling and self._manual_scroll_active and not self.scroll_controller.has_reached_end():
+            self._manual_scroll_active = False
+            # Optionally auto-resume (you can make this configurable)
+            # self.start_scrolling()
 
     def _hide_cursor(self):
         """Hide the cursor."""

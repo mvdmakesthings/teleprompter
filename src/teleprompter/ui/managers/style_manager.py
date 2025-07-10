@@ -254,8 +254,8 @@ class StyleManager:
                 padding: 0px 0px;
                 font-size: 12px;
                 min-width: 60px;
-                min-height: 25px;
-                max-height: 25px;
+                min-height: 38px;
+                max-height: 38px;
             }}
 
             QSpinBox:hover, QDoubleSpinBox:hover {{
@@ -571,6 +571,27 @@ class StyleManager:
             }
         """
 
+    def get_voice_button_loading_stylesheet(self) -> str:
+        """Get voice button loading state stylesheet."""
+        return """
+            QPushButton#voiceButton {
+                background-color: #555555;
+                border: 2px solid #777777;
+                border-radius: 4px;
+                color: white;
+                font-size: 12px;
+                min-width: 25px;
+                max-width: 25px;
+                min-height: 25px;
+                max-height: 25px;
+                padding: 6px;
+            }
+            QPushButton#voiceButton:hover {
+                background-color: #666666;
+                border-color: #888888;
+            }
+        """
+
     def get_progress_bar_stylesheet(self) -> str:
         """Get progress bar stylesheet."""
         return "background: transparent;"
@@ -698,6 +719,7 @@ class StyleManager:
             "voice_button": self.get_voice_button_stylesheet,
             "voice_button_active": self.get_voice_button_active_stylesheet,
             "voice_button_error": self.get_voice_button_error_stylesheet,
+            "voice_button_loading": self.get_voice_button_loading_stylesheet,
             "progress_bar": self.get_progress_bar_stylesheet,
             "main_window_background": self.get_main_window_background_stylesheet,
             "web_view_background": self.get_web_view_background_stylesheet,

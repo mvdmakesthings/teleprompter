@@ -51,18 +51,18 @@ class JavaScriptManager:
                     window.manualScrollDetected();
                 }, 150);
             }, { passive: true });
-            
+
             // Track scroll events for progress updates
             let scrollUpdateTimeout = null;
             let lastScrollTop = -1;
-            
+
             window.addEventListener('scroll', function(e) {
-                const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                
+                const currentScrollTop = window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0);
+
                 // Only trigger update if position actually changed
                 if (Math.abs(currentScrollTop - lastScrollTop) > 1) {
                     lastScrollTop = currentScrollTop;
-                    
+
                     // Throttle scroll events
                     clearTimeout(scrollUpdateTimeout);
                     scrollUpdateTimeout = setTimeout(() => {
@@ -79,7 +79,7 @@ class JavaScriptManager:
                 // Can be used for analytics or other purposes
                 console.log('Manual scroll detected');
             };
-            
+
             // Provide scroll info
             window.getScrollInfo = function() {
                 return {

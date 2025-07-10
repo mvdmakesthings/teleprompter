@@ -91,6 +91,13 @@ class TeleprompterApp(QMainWindow):
     def closeEvent(self, event):
         """Handle application close event to save preferences."""
         self._save_preferences()
+
+        # Stop voice detection if active
+        if (hasattr(self, "toolbar_manager") and self.toolbar_manager and 
+            hasattr(self.toolbar_manager, "voice_control_widget") and 
+            self.toolbar_manager.voice_control_widget):
+            self.toolbar_manager.voice_control_widget.cleanup()
+
         # Clean up timers
         if hasattr(self, "_resize_timer"):
             self._resize_timer.stop()

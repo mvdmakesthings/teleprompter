@@ -175,7 +175,6 @@ class ModernSpinBoxBase(AnimatedWidgetBase):
 
     def get_arrow_style(self, up: bool) -> str:
         """Get arrow button style."""
-        arrow = "▲" if up else "▼"
         return f"""
             QSpinBox::{("up" if up else "down")}-button {{
                 subcontrol-origin: border;

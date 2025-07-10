@@ -31,10 +31,12 @@ class VoiceControlWidget(QWidget):
         self.voice_detector.voice_level_changed.connect(self._update_voice_level)
         self.voice_detector.speech_detected.connect(self._on_speech_detected)
         self.voice_detector.error_occurred.connect(self._handle_error)
+        self.voice_detector.microphone_ready.connect(self._on_microphone_ready)
 
         # Internal state
         self._current_level = 0.0
         self._is_speaking = False
+        self._is_loading = False
 
         self._setup_ui()
 
@@ -119,33 +121,51 @@ class VoiceControlWidget(QWidget):
     def _on_voice_toggled(self, enabled: bool):
         """Handle voice detection toggle."""
         if enabled:
+            # Show loading state immediately
+            self._is_loading = True
+            self._update_voice_button_style()
+
+            # Change button text to indicate loading
+            self.voice_button.setText("⏳")
+            self.voice_button.setToolTip("Requesting microphone access...")
+
             self.voice_detector.start_detection()
         else:
             self.voice_detector.stop_detection()
             # Reset speaking state when disabled
             self._is_speaking = False
+            self._is_loading = False
 
         # Enable/disable controls
         self.sensitivity_slider.setEnabled(enabled)
         self.device_combo.setEnabled(self.device_combo.count() > 0)
 
-        self._update_voice_button_style()
+        if not enabled:
+            self._update_voice_button_style()
         self.voice_detection_enabled.emit(enabled)
 
     def _update_voice_button_style(self):
         """Update the voice button appearance based on state and activity."""
         if not self.voice_button.isChecked():
             # Disabled state - darker gray with flat styling
+            self.voice_button.setText("🎤")
             self.voice_button.setStyleSheet(
                 StyleManager().get_voice_button_disabled_stylesheet()
             )
+        elif self._is_loading:
+            # Loading state - waiting for microphone access
+            self.voice_button.setStyleSheet(
+                StyleManager().get_stylesheet("voice_button_loading")
+            )
         elif self._is_speaking:
             # Active and speaking - green with flat styling
+            self.voice_button.setText("🎤")
             self.voice_button.setStyleSheet(
                 StyleManager().get_voice_button_speaking_stylesheet()
             )
         else:
             # Active but listening (no speech) - blue with flat styling
+            self.voice_button.setText("🎤")
             self.voice_button.setStyleSheet(
                 StyleManager().get_voice_button_listening_stylesheet()
             )
@@ -184,6 +204,9 @@ class VoiceControlWidget(QWidget):
 
     def _handle_error(self, error_message: str):
         """Handle voice detector errors."""
+        # Reset loading state
+        self._is_loading = False
+
         # Show error by setting button to red with flat styling and updating tooltip
         self.voice_button.setStyleSheet(
             StyleManager().get_voice_button_error_stylesheet()
@@ -192,6 +215,22 @@ class VoiceControlWidget(QWidget):
 
         # Disable voice detection on error
         self.voice_button.setChecked(False)
+
+    def _on_microphone_ready(self):
+        """Handle microphone ready signal."""
+        # Clear loading state
+        self._is_loading = False
+
+        # Update button appearance
+        self._update_voice_button_style()
+
+        # Update tooltip
+        self.voice_button.setToolTip(
+            "🎤 Voice Detection\n"
+            + "• Gray: Disabled\n"
+            + "• Blue: Listening for speech\n"
+            + "• Green: Speech detected"
+        )
 
     # Public interface methods
     def get_voice_detector(self) -> VoiceActivityDetector:
@@ -214,3 +253,8 @@ class VoiceControlWidget(QWidget):
         """Set sensitivity value."""
         if 0.0 <= sensitivity <= 3.0:
             self.sensitivity_slider.setValue(int(sensitivity * 10))
+
+    def cleanup(self):
+        """Clean up voice detector resources before closing."""
+        if self.voice_detector and self.voice_detector.is_detection_running():
+            self.voice_detector.stop_detection()

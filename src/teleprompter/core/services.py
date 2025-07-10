@@ -345,7 +345,7 @@ class HtmlContentAnalyzer:
 
             if (targetElement) {{
                 var rect = targetElement.getBoundingClientRect();
-                var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                var scrollTop = window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0);
                 var targetPosition = rect.top + scrollTop - 50; // 50px offset from top
                 window.scrollTo(0, Math.max(0, targetPosition));
                 return targetPosition;

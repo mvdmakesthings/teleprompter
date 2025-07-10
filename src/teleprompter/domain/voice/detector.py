@@ -29,6 +29,7 @@ class VoiceActivityDetector(QObject):
         bool
     )  # True when speech is detected, False when silent
     error_occurred = pyqtSignal(str)
+    microphone_ready = pyqtSignal()  # Emitted when microphone is successfully initialized
 
     def __init__(self, parent=None):
         """Initialize the voice activity detector."""
@@ -163,9 +164,17 @@ class VoiceActivityDetector(QObject):
         """
         # For simplicity, we'll emit directly since PyQt6 handles cross-thread signals
         # In a more complex scenario, you might queue signals for the main thread
-        signal = getattr(self, signal_name, None)
-        if signal:
-            signal.emit(*args)
+        try:
+            # Check if we're still running to avoid emitting after cleanup
+            if not self.is_running and signal_name != "error_occurred":
+                return
+
+            signal = getattr(self, signal_name, None)
+            if signal:
+                signal.emit(*args)
+        except RuntimeError:
+            # Object has been deleted, ignore the signal
+            pass
 
     def set_sensitivity(self, sensitivity: float):
         """Set VAD sensitivity (0.0-3.0, higher = more sensitive)."""
@@ -216,6 +225,9 @@ class VoiceActivityDetector(QObject):
             )
             self.audio_stream.start()
 
+            # Emit signal to indicate microphone is ready
+            self._emit_signal_safely("microphone_ready")
+
             # Start processing thread
             self.audio_thread = threading.Thread(
                 target=self._process_audio, daemon=True
@@ -233,7 +245,7 @@ class VoiceActivityDetector(QObject):
         # Set running to False to signal threads to stop
         self.is_running = False
 
-        # Stop audio stream
+        # Stop audio stream first to prevent new audio callbacks
         if self.audio_stream:
             try:
                 self.audio_stream.stop()
@@ -242,12 +254,18 @@ class VoiceActivityDetector(QObject):
                 pass  # Ignore errors during cleanup
             self.audio_stream = None
 
-        # Wait for thread to finish
+        # Clear audio buffer to unblock processing thread
+        with self._buffer_lock:
+            self._audio_buffer = np.array([], dtype=np.float32)
+
+        # Wait for thread to finish with a longer timeout
         if self.audio_thread and self.audio_thread.is_alive():
-            self.audio_thread.join(timeout=1.0)
+            self.audio_thread.join(timeout=2.0)
             if self.audio_thread.is_alive():
-                # Thread didn't stop cleanly, but we can't do much about it
-                print("Warning: Audio processing thread did not stop cleanly")
+                # Thread didn't stop cleanly, but since it's a daemon thread
+                # it will be forcefully terminated when the process exits
+                import logging
+                logging.warning("Audio processing thread did not stop cleanly")
             self.audio_thread = None
 
         # Reset state (thread-safe)
