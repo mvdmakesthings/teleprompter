@@ -571,3 +571,38 @@ class MarkdownParser:
         </body>
         </html>
         """
+
+    def parse(self, content: str) -> str:
+        """Parse markdown content and return HTML.
+
+        This method provides compatibility with ContentParserProtocol.
+        """
+        return self.parse_content(content)
+
+    def get_word_count(self, content: str) -> int:
+        """Get word count from content.
+
+        Args:
+            content: Markdown content
+
+        Returns:
+            Number of words in the content
+        """
+        # Strip markdown syntax for accurate word count
+        import re
+
+        # Remove markdown headers
+        text = re.sub(r"^#+\s+", "", content, flags=re.MULTILINE)
+        # Remove markdown emphasis
+        text = re.sub(r"[*_]{1,3}([^*_]+)[*_]{1,3}", r"\1", text)
+        # Remove markdown links
+        text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+        # Remove markdown images
+        text = re.sub(r"!\[([^\]]*)\]\([^)]+\)", "", text)
+        # Remove code blocks
+        text = re.sub(r"```[^`]*```", "", text, flags=re.DOTALL)
+        text = re.sub(r"`[^`]+`", "", text)
+
+        # Split by whitespace and count non-empty strings
+        words = text.split()
+        return len(words)

@@ -169,3 +169,16 @@ class FileManager(QObject):
         if self.current_file:
             return os.path.basename(self.current_file)
         return "Untitled"
+
+    # FileLoaderProtocol implementation
+    def validate_file(self, file_path: str) -> bool:
+        """Validate if a file can be loaded."""
+        try:
+            self._validate_file(file_path)
+            return True
+        except (FileNotFoundError, PermissionError, ValueError):
+            return False
+
+    def get_supported_extensions(self) -> list[str]:
+        """Return list of supported file extensions."""
+        return list(config.MARKDOWN_EXTENSIONS)

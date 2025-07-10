@@ -1,6 +1,7 @@
 """Settings management for the teleprompter application."""
 
 import contextlib
+from typing import Any
 
 from PyQt6.QtCore import QSettings
 
@@ -45,3 +46,20 @@ class SettingsManager:
 
         if "speed" in preferences:
             self.settings.setValue("scroll_speed", preferences["speed"])
+
+    # SettingsStorageProtocol implementation
+    def get(self, key: str, default: Any = None) -> Any:
+        """Retrieve a setting value."""
+        return self.settings.value(key, default)
+
+    def set(self, key: str, value: Any) -> None:
+        """Store a setting value."""
+        self.settings.setValue(key, value)
+
+    def remove(self, key: str) -> None:
+        """Remove a setting."""
+        self.settings.remove(key)
+
+    def clear(self) -> None:
+        """Clear all settings."""
+        self.settings.clear()
