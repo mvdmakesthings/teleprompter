@@ -45,6 +45,102 @@ class StyleManager:
                 border-radius: 0.5px;
             }}
 
+            /* Style the QToolBar extension/overflow button */
+            QToolBar QToolButton {{
+                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                    stop: 0 rgba(45, 45, 45, 0.9),
+                    stop: 0.5 rgba(35, 35, 35, 0.95),
+                    stop: 1 rgba(25, 25, 25, 0.9));
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: {config.MATERIAL_BORDER_RADIUS["small"]}px;
+                color: #e0e0e0;
+                padding: 6px 8px;
+                margin: 2px;
+                font-size: 12px;
+                font-weight: 500;
+                min-width: 24px;
+                min-height: 24px;
+            }}
+
+            QToolBar QToolButton:hover {{
+                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                    stop: 0 rgba(60, 60, 60, 0.9),
+                    stop: 0.5 rgba(50, 50, 50, 0.95),
+                    stop: 1 rgba(40, 40, 40, 0.9));
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: #ffffff;
+            }}
+
+            QToolBar QToolButton:pressed {{
+                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                    stop: 0 rgba(25, 25, 25, 0.95),
+                    stop: 0.5 rgba(20, 20, 20, 1.0),
+                    stop: 1 rgba(15, 15, 15, 0.95));
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                color: #e0e0e0;
+            }}
+
+            /* Style any potential menu buttons/arrows in QToolBar */
+            QToolBar QToolButton::menu-button {{
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: {config.MATERIAL_BORDER_RADIUS["small"]}px;
+                width: 16px;
+            }}
+
+            QToolBar QToolButton::menu-arrow {{
+                color: #e0e0e0;
+                width: 8px;
+                height: 8px;
+            }}
+
+            QToolBar QToolButton::menu-arrow:hover {{
+                color: #ffffff;
+            }}
+
+            /* Specific styling for the toolbar extension/overflow button */
+            QToolButton#toolbarExtensionButton {{
+                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                    stop: 0 rgba(70, 70, 70, 0.9),
+                    stop: 0.5 rgba(60, 60, 60, 0.95),
+                    stop: 1 rgba(50, 50, 50, 0.9));
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: {config.MATERIAL_BORDER_RADIUS["small"]}px;
+                color: #ffffff;
+                padding: 6px 10px;
+                margin: 2px 4px;
+                font-size: 16px;
+                font-weight: bold;
+                min-width: 36px;
+                max-width: 48px;
+                min-height: 32px;
+                max-height: 36px;
+                text-align: center;
+                qproperty-toolButtonStyle: "ToolButtonIconOnly";
+            }}
+
+            QToolButton#toolbarExtensionButton:hover {{
+                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                    stop: 0 rgba(90, 90, 90, 0.9),
+                    stop: 0.5 rgba(80, 80, 80, 0.95),
+                    stop: 1 rgba(70, 70, 70, 0.9));
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                color: #ffffff;
+                /* Enhanced hover effect without unsupported transforms */
+                box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
+            }}
+
+            QToolButton#toolbarExtensionButton:pressed {{
+                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                    stop: 0 rgba(40, 40, 40, 0.95),
+                    stop: 0.5 rgba(35, 35, 35, 1.0),
+                    stop: 1 rgba(30, 30, 30, 0.95));
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                color: #e0e0e0;
+                /* Pressed effect with inset appearance */
+                padding: 7px 9px 5px 11px;
+            }}
+
             /* Enhanced button styling with Material Design patterns */
             QPushButton {{
                 background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
@@ -307,6 +403,7 @@ class StyleManager:
                 font-size: 12px;
                 min-height: 25px;
                 max-height: 25px;
+                min-width: 250px;
             }
 
             QComboBox#deviceCombo:hover {
@@ -340,13 +437,21 @@ class StyleManager:
                 color: #e0e0e0;
                 selection-background-color: #0078d4;
                 selection-color: #ffffff;
-                padding: 1px;
+                padding: 2px;
+                min-width: 300px;
+                max-width: 500px;
+                outline: none;
+                show-decoration-selected: 1;
             }
 
             QComboBox#deviceCombo QAbstractItemView::item {
-                padding: 4px 6px;
+                padding: 8px 12px;
                 border: none;
                 border-radius: 1px;
+                min-height: 22px;
+                text-align: left;
+                white-space: nowrap;
+                overflow: visible;
             }
 
             QComboBox#deviceCombo QAbstractItemView::item:hover {

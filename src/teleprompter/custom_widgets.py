@@ -57,9 +57,9 @@ class ModernSpinBox(QSpinBox):
             self._up_button.setIcon(QIcon(up_pixmap))
             self._down_button.setIcon(QIcon(down_pixmap))
         else:
-            # Fallback to Unicode arrows
-            self._up_button.setText("▲")
-            self._down_button.setText("▼")
+            # Fallback to modern Unicode arrows
+            self._up_button.setText("⌃")
+            self._down_button.setText("⌄")
 
     def resizeEvent(self, event):
         """Position the custom buttons with proper margins."""
@@ -130,9 +130,9 @@ class ModernDoubleSpinBox(QDoubleSpinBox):
             self._up_button.setIcon(QIcon(up_pixmap))
             self._down_button.setIcon(QIcon(down_pixmap))
         else:
-            # Fallback to Unicode arrows
-            self._up_button.setText("▲")
-            self._down_button.setText("▼")
+            # Fallback to modern Unicode arrows
+            self._up_button.setText("⌃")
+            self._down_button.setText("⌄")
 
     def resizeEvent(self, event):
         """Position the custom buttons with proper margins."""

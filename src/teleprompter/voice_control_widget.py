@@ -79,12 +79,12 @@ class VoiceControlWidget(QWidget):
 
         # Audio device selection with modern styling
         self.device_combo = QComboBox()
-        self.device_combo.setFixedWidth(110)
+        self.device_combo.setMinimumWidth(150)
+        self.device_combo.setSizePolicy(
+            QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed
+        )
         self.device_combo.setToolTip("Select microphone")
         self.device_combo.setObjectName("deviceCombo")
-        self.device_combo.setSizePolicy(
-            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
-        )
         self._populate_audio_devices()
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
         layout.addWidget(self.device_combo)
@@ -112,10 +112,8 @@ class VoiceControlWidget(QWidget):
 
         self.device_combo.setEnabled(True)
         for device in devices:
-            # Truncate long device names for compact display
+            # Use full device name without truncation
             name = device["name"]
-            if len(name) > 15:
-                name = name[:12] + "..."
             self.device_combo.addItem(name, device["index"])
 
     def _on_voice_toggled(self, enabled: bool):
