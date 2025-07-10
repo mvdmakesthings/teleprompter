@@ -4,14 +4,14 @@
 import sys
 import warnings
 
+from PyQt6.QtWidgets import QApplication
+
+from .app import TeleprompterApp
+
 # Suppress pkg_resources deprecation warning from webrtcvad before any imports
 warnings.filterwarnings(
     "ignore", message="pkg_resources is deprecated", category=UserWarning
 )
-
-from PyQt6.QtWidgets import QApplication
-
-from .app import TeleprompterApp
 
 
 def main():
