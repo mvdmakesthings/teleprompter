@@ -5,8 +5,8 @@ from unittest.mock import Mock
 import pytest
 from PyQt6.QtWidgets import QApplication
 
-from teleprompter.container import ServiceContainer
-from teleprompter.protocols import (
+from src.teleprompter.core.container import ServiceContainer
+from src.teleprompter.core.protocols import (
     ContentParserProtocol,
     FileLoaderProtocol,
     SettingsStorageProtocol,

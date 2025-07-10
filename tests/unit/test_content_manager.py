@@ -1,251 +1,185 @@
 """Unit tests for content manager."""
 
-import tempfile
-from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock
 
 import pytest
 
-from teleprompter.core.exceptions import (
-    ContentLoadError,
-    InvalidFileFormatError,
-)
-from teleprompter.core.exceptions import (
-    FileNotFoundError as TeleprompterFileNotFoundError,
-)
-from teleprompter.domain.content import ContentManager
+from src.teleprompter.domain.content.manager import ContentManager
 
 
 class TestContentManager:
     """Test the ContentManager class."""
 
     @pytest.fixture
-    def manager(self):
+    def mock_parser(self):
+        """Create a mock parser."""
+        parser = Mock()
+        parser.parse.return_value = "<p>Default HTML</p>"
+        parser.get_word_count.return_value = 0
+        return parser
+
+    @pytest.fixture
+    def manager(self, mock_parser):
         """Create a ContentManager instance."""
-        return ContentManager()
+        return ContentManager(mock_parser)
 
     def test_initialization(self, manager):
         """Test manager initialization."""
-        assert manager._current_file is None
-        assert manager._original_content == ""
-        assert manager._html_content == ""
-        assert manager._is_modified is False
+        assert manager._current_content == ""
+        assert manager._parsed_content == ""
+        assert manager._word_count == 0
+        assert manager._sections == []
 
-    def test_load_file_success(self, manager):
-        """Test successful file loading."""
-        # Create a temporary markdown file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
-            tmp.write("# Test Content\n\nThis is a test.")
-            tmp_path = Path(tmp.name)
+    def test_load_content(self, manager, mock_parser):
+        """Test loading content."""
+        # Setup mock parser
+        mock_parser.parse.return_value = "<h1>Test Content</h1><p>This is a test.</p>"
+        mock_parser.get_word_count.return_value = 4
 
-        try:
-            # Mock the markdown parser
-            with patch.object(manager._markdown_parser, "parse") as mock_parse:
-                mock_parse.return_value = "<h1>Test Content</h1><p>This is a test.</p>"
+        # Load content
+        content = "# Test Content\n\nThis is a test."
+        manager.load_content(content)
 
-                # Load the file
-                manager.load_file(tmp_path)
+        # Verify state
+        assert manager._current_content == content
+        assert manager._parsed_content == "<h1>Test Content</h1><p>This is a test.</p>"
+        assert manager._word_count == 4
+        assert manager._sections == [(0, "Test Content")]
 
-                assert manager._current_file == tmp_path
-                assert manager._original_content == "# Test Content\n\nThis is a test."
-                assert (
-                    manager._html_content
-                    == "<h1>Test Content</h1><p>This is a test.</p>"
-                )
-                assert manager._is_modified is False
-                mock_parse.assert_called_once_with("# Test Content\n\nThis is a test.")
-        finally:
-            tmp_path.unlink()
+        # Verify parser was called
+        mock_parser.parse.assert_called_once_with(content)
+        mock_parser.get_word_count.assert_called_once_with(content)
 
-    def test_load_file_not_found(self, manager):
-        """Test loading non-existent file."""
-        with pytest.raises(TeleprompterFileNotFoundError) as exc_info:
-            manager.load_file(Path("/non/existent/file.md"))
-        assert "File not found" in str(exc_info.value)
+    def test_get_parsed_content(self, manager):
+        """Test getting parsed HTML content."""
+        manager._parsed_content = "<p>Test HTML</p>"
+        assert manager.get_parsed_content() == "<p>Test HTML</p>"
 
-    def test_load_file_unsupported_format(self, manager):
-        """Test loading unsupported file format."""
-        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
-            with pytest.raises(InvalidFileFormatError) as exc_info:
-                manager.load_file(Path(tmp.name))
-            assert "Unsupported file format" in str(exc_info.value)
+    def test_get_word_count(self, manager):
+        """Test getting word count."""
+        manager._word_count = 42
+        assert manager.get_word_count() == 42
 
-    def test_load_file_empty(self, manager):
-        """Test loading empty file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
-            tmp.write("")
-            tmp_path = Path(tmp.name)
+    def test_get_sections(self, manager):
+        """Test getting sections."""
+        manager._sections = [(0, "Section 1"), (10, "Section 2")]
+        sections = manager.get_sections()
+        assert sections == [(0, "Section 1"), (10, "Section 2")]
+        # Ensure it returns a copy
+        sections.append((20, "Section 3"))
+        assert len(manager._sections) == 2
 
-        try:
-            with pytest.raises(ContentLoadError) as exc_info:
-                manager.load_file(tmp_path)
-            assert "empty" in str(exc_info.value).lower()
-        finally:
-            tmp_path.unlink()
+    def test_extract_sections(self, manager):
+        """Test section extraction from markdown."""
+        content = """# Main Title
+Some text here.
 
-    def test_load_file_read_error(self, manager):
-        """Test file read error handling."""
-        with tempfile.NamedTemporaryFile(suffix=".md", delete=False) as tmp:
-            tmp_path = Path(tmp.name)
+## Section 1
+More text.
 
-        try:
-            # Remove read permissions
-            tmp_path.chmod(0o000)
+### Subsection 1.1
+Detailed text.
 
-            with pytest.raises(ContentLoadError) as exc_info:
-                manager.load_file(tmp_path)
-            assert "Failed to read file" in str(exc_info.value)
-        finally:
-            # Restore permissions and delete
-            tmp_path.chmod(0o644)
-            tmp_path.unlink()
+## Section 2
+Final text."""
 
-    def test_set_content(self, manager):
-        """Test setting content directly."""
-        # Mock the markdown parser
-        with patch.object(manager._markdown_parser, "parse") as mock_parse:
-            mock_parse.return_value = "<p>New content</p>"
+        manager._current_content = content
+        manager._extract_sections()
 
-            manager.set_content("New content")
+        assert len(manager._sections) == 4
+        assert manager._sections[0] == (0, "Main Title")
+        assert manager._sections[1] == (3, "Section 1")
+        assert manager._sections[2] == (6, "Subsection 1.1")
+        assert manager._sections[3] == (9, "Section 2")
 
-            assert manager._original_content == "New content"
-            assert manager._html_content == "<p>New content</p>"
-            assert manager._is_modified is True
-            assert manager._current_file is None
-            mock_parse.assert_called_once_with("New content")
+    def test_find_section_at_progress(self, manager):
+        """Test finding section at reading progress."""
+        # Setup sections
+        manager._sections = [(0, "Intro"), (10, "Chapter 1"), (20, "Chapter 2")]
+        manager._current_content = "\n" * 30  # 30 lines
 
-    def test_get_html_content(self, manager):
-        """Test getting HTML content."""
-        manager._html_content = "<p>Test</p>"
-        assert manager.get_html_content() == "<p>Test</p>"
+        # Test various progress points
+        assert manager.find_section_at_progress(0.0) == 0  # Start
+        assert manager.find_section_at_progress(0.4) == 1  # Line 12, after Chapter 1
+        assert manager.find_section_at_progress(0.8) == 2  # Line 24, after Chapter 2
+        assert manager.find_section_at_progress(1.0) == 2  # End
 
-    def test_get_plain_text(self, manager):
-        """Test getting plain text content."""
-        manager._original_content = "Test content"
-        assert manager.get_plain_text() == "Test content"
+        # Test with no sections
+        manager._sections = []
+        assert manager.find_section_at_progress(0.5) is None
 
-    def test_has_content(self, manager):
-        """Test checking if content exists."""
-        assert manager.has_content() is False
+    def test_get_section_progress(self, manager):
+        """Test getting progress for a section."""
+        manager._sections = [(0, "Intro"), (10, "Chapter 1"), (20, "Chapter 2")]
+        manager._current_content = "\n" * 30  # 30 lines
 
-        manager._html_content = "<p>Test</p>"
-        assert manager.has_content() is True
+        assert manager.get_section_progress(0) == 0.0  # Line 0 / 30
+        # Line 10 / 31 lines (30 newlines = 31 lines)
+        assert abs(manager.get_section_progress(1) - (10 / 31)) < 0.01
+        assert abs(manager.get_section_progress(2) - (20 / 31)) < 0.01
 
-    def test_is_modified(self, manager):
-        """Test modification status."""
-        assert manager.is_modified() is False
+        # Test invalid indices
+        assert manager.get_section_progress(-1) == 0.0
+        assert manager.get_section_progress(3) == 0.0
 
-        manager._is_modified = True
-        assert manager.is_modified() is True
+        # Test with no sections
+        manager._sections = []
+        assert manager.get_section_progress(0) == 0.0
 
-    def test_get_current_file(self, manager):
-        """Test getting current file path."""
-        assert manager.get_current_file() is None
+    def test_get_section_info(self, manager, mock_parser):
+        """Test getting detailed section information."""
+        # Setup
+        content = "# Section 1\nWord one two.\n\n# Section 2\nWord three four five."
+        manager._current_content = content
+        manager._sections = [(0, "Section 1"), (3, "Section 2")]
 
-        manager._current_file = Path("/test/file.md")
-        assert manager.get_current_file() == Path("/test/file.md")
+        # Mock parser to return different word counts
+        mock_parser.get_word_count.side_effect = [3, 3]  # 3 words per section
 
-    def test_clear(self, manager):
-        """Test clearing content."""
-        # Set up some content
-        manager._current_file = Path("/test/file.md")
-        manager._original_content = "Test"
-        manager._html_content = "<p>Test</p>"
-        manager._is_modified = True
+        # Test first section
+        info = manager.get_section_info(0)
+        assert info["index"] == 0
+        assert info["title"] == "Section 1"
+        assert info["line_number"] == 0
+        assert info["word_count"] == 3
+        assert info["progress"] == 0.0
 
-        # Clear
-        manager.clear()
+        # Test second section
+        info = manager.get_section_info(1)
+        assert info["index"] == 1
+        assert info["title"] == "Section 2"
+        assert info["line_number"] == 3
+        assert info["word_count"] == 3
+        assert info["progress"] == 0.6  # 3/5 lines
 
-        assert manager._current_file is None
-        assert manager._original_content == ""
-        assert manager._html_content == ""
-        assert manager._is_modified is False
+        # Test invalid index
+        assert manager.get_section_info(-1) is None
+        assert manager.get_section_info(2) is None
 
-    def test_save_current_file(self, manager):
-        """Test saving to current file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
-            tmp_path = Path(tmp.name)
+    def test_get_content_summary(self, manager):
+        """Test getting content summary."""
+        manager._word_count = 150
+        manager._sections = [(0, "Intro"), (10, "Chapter 1")]
+        manager._current_content = "Some content"
 
-        try:
-            manager._current_file = tmp_path
-            manager._original_content = "# Updated Content"
-            manager._is_modified = True
+        summary = manager.get_content_summary()
 
-            manager.save()
+        assert summary["total_words"] == 150
+        assert summary["total_sections"] == 2
+        assert summary["has_content"] is True
+        assert summary["content_length"] == 12
+        assert len(summary["sections"]) == 2
+        assert summary["sections"][0] == {"index": 0, "title": "Intro", "line": 0}
+        assert summary["sections"][1] == {"index": 1, "title": "Chapter 1", "line": 10}
 
-            # Verify file was written
-            assert tmp_path.read_text() == "# Updated Content"
-            assert manager._is_modified is False
-        finally:
-            tmp_path.unlink()
+    def test_empty_content(self, manager):
+        """Test behavior with empty content."""
+        # Initial state should be empty
+        assert manager.get_word_count() == 0
+        assert manager.get_sections() == []
+        assert manager.get_parsed_content() == ""
 
-    def test_save_no_current_file(self, manager):
-        """Test saving without current file."""
-        manager._original_content = "Content"
-
-        with pytest.raises(ValueError, match="No file path specified"):
-            manager.save()
-
-    def test_save_as(self, manager):
-        """Test saving to new file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
-            tmp_path = Path(tmp.name)
-
-        try:
-            manager._original_content = "# New Content"
-            manager._is_modified = True
-
-            manager.save_as(tmp_path)
-
-            # Verify file was written
-            assert tmp_path.read_text() == "# New Content"
-            assert manager._current_file == tmp_path
-            assert manager._is_modified is False
-        finally:
-            tmp_path.unlink()
-
-    def test_reload(self, manager):
-        """Test reloading current file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
-            tmp.write("# Original")
-            tmp_path = Path(tmp.name)
-
-        try:
-            # Load initial content
-            with patch.object(manager._markdown_parser, "parse") as mock_parse:
-                mock_parse.return_value = "<h1>Original</h1>"
-                manager.load_file(tmp_path)
-
-            # Modify the file externally
-            tmp_path.write_text("# Updated")
-
-            # Reload
-            with patch.object(manager._markdown_parser, "parse") as mock_parse:
-                mock_parse.return_value = "<h1>Updated</h1>"
-                manager.reload()
-
-                assert manager._original_content == "# Updated"
-                assert manager._html_content == "<h1>Updated</h1>"
-                assert manager._is_modified is False
-        finally:
-            tmp_path.unlink()
-
-    def test_reload_no_current_file(self, manager):
-        """Test reloading without current file."""
-        with pytest.raises(ValueError, match="No file to reload"):
-            manager.reload()
-
-    def test_supported_formats(self, manager):
-        """Test supported file formats."""
-        formats = manager.get_supported_formats()
-        assert ".md" in formats
-        assert ".markdown" in formats
-        assert ".txt" in formats
-
-    def test_is_supported_file(self, manager):
-        """Test checking if file is supported."""
-        assert manager.is_supported_file(Path("test.md")) is True
-        assert manager.is_supported_file(Path("test.markdown")) is True
-        assert manager.is_supported_file(Path("test.txt")) is True
-        assert manager.is_supported_file(Path("test.pdf")) is False
-        assert manager.is_supported_file(Path("test.MD")) is True  # Case insensitive
+        summary = manager.get_content_summary()
+        assert summary["has_content"] is False
+        assert summary["total_words"] == 0
+        assert summary["total_sections"] == 0

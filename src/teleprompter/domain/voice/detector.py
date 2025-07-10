@@ -29,7 +29,9 @@ class VoiceActivityDetector(QObject):
         bool
     )  # True when speech is detected, False when silent
     error_occurred = pyqtSignal(str)
-    microphone_ready = pyqtSignal()  # Emitted when microphone is successfully initialized
+    microphone_ready = (
+        pyqtSignal()
+    )  # Emitted when microphone is successfully initialized
 
     def __init__(self, parent=None):
         """Initialize the voice activity detector."""
@@ -265,6 +267,7 @@ class VoiceActivityDetector(QObject):
                 # Thread didn't stop cleanly, but since it's a daemon thread
                 # it will be forcefully terminated when the process exits
                 import logging
+
                 logging.warning("Audio processing thread did not stop cleanly")
             self.audio_thread = None
 

@@ -93,9 +93,12 @@ class TeleprompterApp(QMainWindow):
         self._save_preferences()
 
         # Stop voice detection if active
-        if (hasattr(self, "toolbar_manager") and self.toolbar_manager and 
-            hasattr(self.toolbar_manager, "voice_control_widget") and 
-            self.toolbar_manager.voice_control_widget):
+        if (
+            hasattr(self, "toolbar_manager")
+            and self.toolbar_manager
+            and hasattr(self.toolbar_manager, "voice_control_widget")
+            and self.toolbar_manager.voice_control_widget
+        ):
             self.toolbar_manager.voice_control_widget.cleanup()
 
         # Clean up timers

@@ -756,7 +756,11 @@ class TeleprompterWidget(QWidget):
 
     def _check_resume_auto_scroll(self):
         """Check if we should resume auto-scrolling."""
-        if not self._is_scrolling and self._manual_scroll_active and not self.scroll_controller.has_reached_end():
+        if (
+            not self._is_scrolling
+            and self._manual_scroll_active
+            and not self.scroll_controller.has_reached_end()
+        ):
             self._manual_scroll_active = False
             # Optionally auto-resume (you can make this configurable)
             # self.start_scrolling()
