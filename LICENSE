@@ -1,5 +1,5 @@
-Teleprompter - Professional Teleprompter Application
-Copyright (C) 2024 Teleprompter Contributors
+CueBird - Professional Teleprompter Application
+Copyright (C) 2024 CueBird Contributors
 
 This program is dual-licensed:
 
@@ -25,9 +25,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 For users who cannot or choose not to comply with the GPL v3 license,
 a commercial license is available. The commercial license allows you to:
 
-- Use Teleprompter in proprietary/closed-source applications
+- Use CueBird in proprietary/closed-source applications
 - Modify the source code without sharing your modifications
-- Distribute Teleprompter as part of commercial products
+- Distribute CueBird as part of commercial products
 - Remove GPL licensing obligations
 
 IMPORTANT NOTES:

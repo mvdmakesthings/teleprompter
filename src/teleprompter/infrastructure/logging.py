@@ -31,14 +31,14 @@ def setup_logging(
 
     Note:
         If not specified, configuration is determined from environment variables:
-        - TELEPROMPTER_LOG_LEVEL: Log level
-        - TELEPROMPTER_LOG_FORMAT: Format type
-        - TELEPROMPTER_LOG_FILE: Log file path
+        - CUEBIRD_LOG_LEVEL: Log level
+        - CUEBIRD_LOG_FORMAT: Format type
+        - CUEBIRD_LOG_FILE: Log file path
     """
     # Get configuration from environment or defaults
-    log_level = level or os.getenv("TELEPROMPTER_LOG_LEVEL", "INFO").upper()
-    log_format = format_type or os.getenv("TELEPROMPTER_LOG_FORMAT", "auto")
-    log_file_path = log_file or os.getenv("TELEPROMPTER_LOG_FILE")
+    log_level = level or os.getenv("CUEBIRD_LOG_LEVEL", "INFO").upper()
+    log_format = format_type or os.getenv("CUEBIRD_LOG_FORMAT", "auto")
+    log_file_path = log_file or os.getenv("CUEBIRD_LOG_FILE")
 
     # Determine if we're in a terminal for auto format selection
     is_terminal = (

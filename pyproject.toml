@@ -1,7 +1,7 @@
 [project]
-name = "teleprompter"
+name = "cuebird"
 version = "0.1.0"
-description = "A simple teleprompter app"
+description = "A professional teleprompter app with voice control"
 authors = [
     {name = "Michael VanDyke",email = "michaeljamesvandyke@gmail.com"}
 ]

@@ -301,18 +301,18 @@ class ConfigurationManager(LoggerMixin):
 class EnvironmentConfig:
     """Manages environment-based configuration overrides."""
 
-    PREFIX = "TELEPROMPTER_"
+    PREFIX = "CUEBIRD_"
 
     @classmethod
     def get_overrides(cls) -> dict[str, Any]:
         """Get configuration overrides from environment variables.
 
-        Environment variables should be prefixed with TELEPROMPTER_
+        Environment variables should be prefixed with CUEBIRD_
         and use double underscores for nested values.
 
         Example:
-            TELEPROMPTER_WINDOW_WIDTH=1920
-            TELEPROMPTER_VOICE__SENSITIVITY=2
+            CUEBIRD_WINDOW_WIDTH=1920
+            CUEBIRD_VOICE__SENSITIVITY=2
         """
         overrides = {}
 

@@ -1,1 +1,1 @@
-"""Teleprompter application for content creators and video producers."""
+"""CueBird - A teleprompter application for content creators and video producers."""

@@ -266,7 +266,7 @@ class MarkdownParser(ContentParserProtocol, LoggerMixin):
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teleprompter</title>
+    <title>CueBird Teleprompter</title>
     {self.css}
 </head>
 <body>
@@ -438,7 +438,7 @@ class MarkdownParser(ContentParserProtocol, LoggerMixin):
         <html>
         <head>
             <meta charset="utf-8">
-            <title>Welcome to Teleprompter</title>
+            <title>Welcome to CueBird Teleprompter</title>
             {self.css}
             <style>
                 .empty-container {{
@@ -548,7 +548,7 @@ class MarkdownParser(ContentParserProtocol, LoggerMixin):
         <body>
             <div class="empty-container">
                 <div class="empty-icon">📖</div>
-                <div class="empty-title">Welcome to Teleprompter</div>
+                <div class="empty-title">Welcome to CueBird Teleprompter</div>
                 <div class="empty-subtitle">
                     Transform your presentations with smooth, professional teleprompter scrolling
                 </div>

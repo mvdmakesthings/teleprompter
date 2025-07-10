@@ -1,12 +1,12 @@
 """Application configuration constants."""
 
 # Application Identity
-APPLICATION_NAME = "Teleprompter"
+APPLICATION_NAME = "CueBird Teleprompter"
 APPLICATION_VERSION = "1.0.0"
-ORGANIZATION_NAME = "Teleprompter"
+ORGANIZATION_NAME = "CueBird"
 
 # Window Configuration
-WINDOW_TITLE = "Teleprompter"
+WINDOW_TITLE = "CueBird Teleprompter"
 DEFAULT_WIDTH = 1000
 DEFAULT_HEIGHT = 700
 MIN_WIDTH = 600

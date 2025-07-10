@@ -1,6 +1,6 @@
 # Contributing to CueBird Teleprompter
 
-First off, thank you for considering contributing to Teleprompter! 🎉 It's people like you that make Teleprompter such a great tool for content creators worldwide.
+First off, thank you for considering contributing to CueBird Teleprompter! 🎉 It's people like you that make CueBird Teleprompter such a great tool for content creators worldwide.
 
 ## Table of Contents
 

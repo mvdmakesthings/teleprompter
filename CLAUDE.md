@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Teleprompter - A professional-grade teleprompter application built with PyQt6 and Python 3.13+. The application provides smooth scrolling text display with voice activity detection, making it ideal for content creators, presenters, and video producers.
+CueBird - A professional-grade teleprompter application built with PyQt6 and Python 3.13+. The application provides smooth scrolling text display with voice activity detection, making it ideal for content creators, presenters, and video producers.
 
 The codebase follows Domain-Driven Design (DDD) principles with a clean layered architecture, dependency injection, and protocol-oriented design for maximum flexibility and testability.
 

@@ -314,7 +314,7 @@ class ErrorRecovery:
         """
         if isinstance(error, FileNotFoundError):
             # Return default content for missing files
-            return "# Welcome to Teleprompter\n\nNo file loaded."
+            return "# Welcome to CueBird\n\nNo file loaded."
         return None
 
     @staticmethod

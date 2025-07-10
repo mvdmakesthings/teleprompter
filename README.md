@@ -1,201 +1,273 @@
-# Teleprompter
+# 🐦 CueBird Teleprompter
 
-A simple, elegant teleprompter application built with Python and PyQt6. Perfect for content creators, video producers, and anyone who needs to deliver scripted content smoothly.
+<div align="center">
 
-## Features
+![Python](https://img.shields.io/badge/python-3.13+-blue.svg)
+![PyQt6](https://img.shields.io/badge/PyQt6-6.9.1+-green.svg)
+![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
+![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
+[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 
-- **📄 Markdown Support**: Load and display markdown files with full formatting support
-- **🎬 Smooth Scrolling**: Automatic scrolling at 60 FPS for professional-quality teleprompting
-- **⚡ Adjustable Speed**: Control scrolling speed from 0.05x to 5x with 0.05 increments
-- **🎤 Voice Control**: Automatic start/stop based on voice activity detection
-- **🔍 Manual Navigation**: Mouse wheel scrolling with auto-pause functionality
-- **🔤 Dynamic Font Sizing**: Adjust text size from 16px to 120px on the fly
-- **🖥️ Fullscreen Mode**: Distraction-free fullscreen display for recording
-- **⌨️ Keyboard Shortcuts**: Quick controls for efficient operation
-- **🎯 Traditional Styling**: Classic white-on-black teleprompter appearance
+<img src="docs/images/logo.png" alt="CueBird Logo" width="150">
 
-## Installation
+**A teleprompter application with voice control start/stop**
+
+[Features](#-features) • [Demo](#-demo) • [Installation](#-installation) • [Usage](#-usage) • [Architecture](#-architecture) • [Contributing](#-contributing)
+
+<img src="docs/images/main-interface.png" alt="CueBird Interface" width="600">
+
+</div>
+
+## 🎬 What is CueBird Teleprompter?
+
+CueBird Teleprompter is a sophisticated yet user-friendly teleprompter application designed for content creators, presenters, and video producers who need to deliver scripted content smoothly. Built with modern Python and PyQt6, it features voice-activated control, smooth 60 FPS scrolling, and a clean Domain-Driven Design architecture.
+
+### ✨ Who is this for?
+- Content Creators
+- YouTubers
+- Social Media Influencers
+
+### ✨ Why Choose CueBird Teleprompter?
+
+- **🎤 Hands-Free Operation**: Advanced voice activity detection automatically starts/stops scrolling
+- **🚀 Blazing Fast**: Hardware-accelerated 60 FPS scrolling for professional results
+- **🏗️ Clean Architecture**: Built with DDD principles for maintainability and extensibility
+- **📱 Responsive**: Adapts seamlessly to any screen size
+- **🔄 Live Reload**: Automatically updates when your script changes
+- **🛡️ Reliable**: Comprehensive error handling and recovery
+
+## 📸 Demo
+
+<details>
+<summary>Click to see CueBird Teleprompter in action</summary>
+
+### Main Interface
+![Main Interface](docs/images/main-interface.png)
+
+### Voice Control Panel
+![Voice Control](docs/images/voice-control.png)
+</details>
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.13 or higher
 - Poetry (for dependency management)
+- Working microphone (for voice control)
 
-### Setup
+### Installation
 
-1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/teleprompter.git
-cd teleprompter
-```
+# Clone the repository
+git clone https://github.com/mvdmakesthings/cuebird-teleprompter.git
+cd cuebird
 
-2. Install dependencies using Poetry:
-```bash
+# Install dependencies
 poetry install
+
+# Run the application
+poetry run poe run
 ```
 
-## Usage
+That's it! CueBird will launch and you can start using it immediately.
 
-### Running the Application
+## 📖 Features
 
+### Core Functionality
+
+| Feature | Description |
+|---------|-------------|
+| **📄 Markdown Support** | Full markdown rendering with custom styling |
+| **⚡ Variable Speed** | Precise control from 0.05x to 5x |
+| **🔤 Dynamic Font** | Adjustable text size from 16px to 120px |
+| **📊 Reading Stats** | Word count, time estimates, progress tracking |
+| **📑 Section Navigation** | Jump between headers with Previous/Next |
+| **🖱️ Manual Override** | Mouse wheel control with auto-pause |
+| **⌨️ Keyboard Shortcuts** | Comprehensive keyboard control |
+
+### Advanced Features
+
+#### 🎤 Voice Activity Detection
+- WebRTC VAD for accurate speech detection
+- Adjustable sensitivity (0.0-3.0)
+- Multiple microphone support
+- Visual status indicators
+- Automatic start/stop based on speech
+
+#### 🔄 File Watching
+- Automatic reload on file changes
+- Debounced updates
+- Preserves scroll position
+
+#### ⚙️ Configuration System
+- JSON-based configuration
+- Environment variable overrides
+- Persistent preferences
+- Type-safe validation
+
+## 💻 Usage
+
+### Basic Controls
+
+| Action | Keyboard | Mouse/Button |
+|--------|----------|--------------|
+| Play/Pause | `Space` | ▶️ button |
+| Reset | `R` | ⏮️ button |
+| Speed Up | `↑` | Speed spinner |
+| Speed Down | `↓` | Speed spinner |
+| Previous Section | `←` | ⏮️ button |
+| Next Section | `→` | ⏭️ button |
+| Fullscreen | `F11` | 🖥️ button |
+| Open File | `Ctrl+O` | 📁 button |
+
+### Voice Control Setup
+
+1. Click the 🎤 button to enable voice detection
+2. Select your microphone from the dropdown
+3. Adjust sensitivity slider as needed
+4. Start speaking - the teleprompter will automatically scroll!
+
+**Status Indicators:**
+- 🔘 Gray: Disabled
+- 🟠 Orange: Listening
+- 🟢 Green: Speech detected
+- 🔴 Red: Error
+
+### Configuration
+
+Create a `config.json` in your app directory:
+
+```json
+{
+  "scroll_speed": 1.0,
+  "font_size": 24,
+  "voice_sensitivity": 1.0,
+  "auto_hide_cursor": true,
+  "file_watch_enabled": true
+}
+```
+
+Or use environment variables:
 ```bash
-poetry run python -m teleprompter.main
+export TELEPROMPTER_SCROLL_SPEED=1.5
+export TELEPROMPTER_FONT_SIZE=32
 ```
 
-Or activate the Poetry shell first:
-```bash
-poetry shell
-python -m teleprompter.main
-```
+## 🏗️ Architecture
 
-### Basic Operation
-
-1. **Load a Script**: Click "Open File" or press Ctrl+O (Cmd+O on Mac) to load a markdown file
-2. **Enable Voice Control** (Optional): Click the 🎤 button to enable voice-activated scrolling
-3. **Start Scrolling**: Click the ▶️ button, press Space, or begin speaking (if voice control is enabled)
-4. **Adjust Speed**: Use Up/Down arrow keys or the speed spinner (e.g., "1.50x") in the toolbar
-5. **Manual Navigation**: Use mouse wheel to scroll to any position (auto-pauses scrolling)
-6. **Change Font Size**: Use the font size spinner (e.g., "24px") in the toolbar
-7. **Go Fullscreen**: Press F11 or click the fullscreen button for recording mode
-
-### Toolbar Controls
-
-The compact toolbar includes:
-- **Open File**: Load markdown scripts
-- **▶️/⏸️**: Play/pause button with dynamic icons
-- **⏮️**: Reset to beginning button
-- **Speed Spinner**: Scrolling speed control (0.05x to 5.00x)
-- **Font Size Spinner**: Text size control (16px to 120px)
-- **🎤 Voice Control**: Complete voice detection interface
-- **Fullscreen**: Distraction-free mode for recording
-
-### Voice Control
-
-The teleprompter includes advanced voice activity detection with a compact toolbar interface:
-
-**🎤 Voice Detection Button**: Toggle voice control and shows activity status
-- Gray: Voice detection disabled
-- Orange: Voice detection active, listening for speech
-- Green: Speech detected, scrolling active
-- Red: Voice detection error occurred
-
-**Sens: Slider**: Adjust voice detection sensitivity (0.0-3.0, higher = more sensitive)
-**Microphone Dropdown**: Choose your preferred audio input device
-
-**How Voice Control Works:**
-- **Starts scrolling** when you begin speaking
-- **Stops scrolling** when you pause or stop speaking
-- **Resumes from current position** when you continue
-
-**Tips for Best Results:**
-- Speak clearly and at a consistent volume
-- Adjust sensitivity based on your environment (lower for noisy environments)
-- Watch the button color to ensure proper voice detection
-- Voice control works alongside all other controls (keyboard, mouse, buttons)
-
-### Keyboard Shortcuts
-
-| Key | Action |
-|-----|--------|
-| **Space** | Play/Pause scrolling |
-| **R** | Reset to beginning |
-| **↑** | Increase speed |
-| **↓** | Decrease speed |
-| **F11** | Toggle fullscreen |
-| **Esc** | Exit fullscreen |
-| **Ctrl+O** / **Cmd+O** | Open file |
-
-## Supported File Formats
-
-The teleprompter supports standard markdown files with the following extensions:
-- `.md`
-- `.markdown`
-- `.mdown`
-- `.mkd`
-- `.txt`
-
-Maximum file size: 1MB
-
-## Markdown Formatting
-
-The application supports standard markdown formatting:
-
-- **Headers** (H1-H6)
-- **Bold** text
-- *Italic* text
-- Bulleted lists
-- Numbered lists
-- [Links](https://example.com)
-
-All text is displayed center-aligned in traditional teleprompter style.
-
-## Configuration
-
-Default settings are optimized for teleprompting but can be adjusted during use:
-
-- **Default Font Size**: 24px
-- **Default Speed**: 1.0x
-- **Font Family**: Helvetica Neue, Arial, sans-serif
-- **Color Scheme**: White text on black background
-- **Window Size**: 800x600 (resizable)
-
-## Development
-
-### Project Structure
+The project follows **Domain-Driven Design** principles:
 
 ```
-teleprompter/
-   src/
-      teleprompter/
-          __init__.py
-          main.py          # Application entry point
-          app.py           # Main window and UI
-          teleprompter.py  # Core teleprompter widget
-          markdown_parser.py # Markdown to HTML conversion
-          config.py        # Configuration constants
-          voice_detector.py # Voice activity detection
-          voice_control_widget.py # Voice control UI
-   docs/
-      teleprompter-prd.md # Product requirements
-   pyproject.toml           # Poetry configuration
-   README.md               # This file
+src/teleprompter/
+├── core/              # Business logic & contracts
+│   ├── protocols.py   # Interface definitions
+│   ├── container.py   # Dependency injection
+│   └── services.py    # Business services
+├── domain/            # Domain models
+│   ├── content/       # Content management
+│   ├── reading/       # Reading control
+│   └── voice/         # Voice detection
+├── infrastructure/    # External services
+└── ui/               # User interface
+    ├── widgets/      # UI components
+    └── managers/     # UI state management
 ```
+
+### Key Design Patterns
+
+- **Dependency Injection** - Centralized service container
+- **Protocol-Oriented** - Interface-based design
+- **Repository Pattern** - Data access abstraction
+- **Observer Pattern** - Event-driven communication
+
+## 🧪 Development
 
 ### Running Tests
 
 ```bash
-poetry run pytest
+# Run all tests
+poetry poe test
+
+# Run with coverage
+poetry poe test-coverage
+
+# Run specific test
+poetry run pytest tests/test_file_manager.py
 ```
 
-### Linting
+### Code Quality
 
 ```bash
-poetry run ruff check .
+# Format code
+poetry poe format
+
+# Run linter
+poetry poe lint
+
+# Run both
+poetry poe check
 ```
 
-## Requirements
+### Available Tasks
 
-- Python 3.13+
-- PyQt6 6.9.1+
-- PyQt6-WebEngine 6.9.0+
-- Markdown 3.8.2+
-- WebRTC VAD 2.0.10+ (for voice control)
-- SoundDevice 0.5.1+ (for voice control)
-- NumPy 2.1.3+ (for voice control)
+```bash
+poetry poe --help  # List all tasks
+```
 
-## License
+## 🤝 Contributing
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+We love contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
-## Contributing
+### Quick Guide
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`poetry poe test`)
+5. Commit (`git commit -m 'Add amazing feature'`)
+6. Push (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-## Acknowledgments
+## 📋 Roadmap
 
-Built with:
-- [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) - GUI framework
-- [Python-Markdown](https://python-markdown.github.io/) - Markdown processing
+- [ ] Multiple script queue management
+- [ ] Custom themes and color schemes
+- [ ] Export to video overlay
+- [ ] Remote control via mobile app
+- [ ] Cloud synchronization
+- [ ] Plugin system
+
+## 📝 License
+
+This project is dual-licensed:
+
+- **Open Source**: GPL v3 License - see the [LICENSE](LICENSE) file for details
+- **Commercial**: A commercial license is available for proprietary use
+
+For commercial licensing inquiries, please submit a Github issue.
+
+## 🙏 Acknowledgments
+
+Built with these excellent open-source projects:
+
+- [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) - Qt bindings for Python
+- [Python-Markdown](https://python-markdown.github.io/) - Markdown parsing
+- [WebRTC VAD](https://github.com/wiseman/py-webrtcvad) - Voice detection
 - [Poetry](https://python-poetry.org/) - Dependency management
-- [WebRTC VAD](https://pypi.org/project/webrtcvad/) - Voice activity detection
-- [SoundDevice](https://pypi.org/project/sounddevice/) - Audio processing
+- [Watchdog](https://github.com/gorakhargosh/watchdog) - File monitoring
+
+## 💬 Support
+
+- 🐛 [Report Issues](https://github.com/yourusername/teleprompter/issues)
+- 💡 [Request Features](https://github.com/yourusername/teleprompter/issues/new?labels=enhancement)
+- 📖 [Documentation](https://github.com/yourusername/teleprompter/wiki)
+- 💬 [Discussions](https://github.com/yourusername/teleprompter/discussions)
+
+---
+
+<div align="center">
+Made with ❤️ by the CueBird Teleprompter Team
+
+<sub>If you find this project useful, please consider giving it a ⭐</sub>
+</div>

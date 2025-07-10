@@ -13,7 +13,7 @@ class SettingsManager:
 
     def __init__(self):
         """Initialize the settings manager."""
-        self.settings = QSettings("Teleprompter", APPLICATION_NAME)
+        self.settings = QSettings("CueBird", APPLICATION_NAME)
 
     def load_preferences(self) -> dict:
         """Load user preferences from application settings.

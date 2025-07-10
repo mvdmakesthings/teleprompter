@@ -22,7 +22,7 @@ def main():
     setup_logging()
 
     app = QApplication(sys.argv)
-    app.setApplicationName("Teleprompter")
+    app.setApplicationName("CueBird")
 
     # Configure dependency injection container
     configure_container()
