@@ -56,3 +56,4 @@ ignore = [
 lint = { cmd = "ruff check --fix .", help = "Run ruff linter and fix issues automatically" }
 format = { cmd = "ruff format .", help = "Format code using ruff" }
 check = { sequence = ["lint", "format"], help = "Run both linting and formatting" }
+run = { cmd = "python -m src.teleprompter.main", help = "Run the teleprompter application" }
