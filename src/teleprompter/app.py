@@ -25,9 +25,6 @@ class TeleprompterApp(QMainWindow):
         self.style_manager = StyleManager()
         self.toolbar_manager = ToolbarManager(self)
 
-        # Initialize state
-        self.current_font_preset_index = 0
-
         # Load preferences and setup UI
         self._load_preferences()
         self._setup_ui()
@@ -39,8 +36,6 @@ class TeleprompterApp(QMainWindow):
         """Load user preferences from settings."""
         preferences = self.settings_manager.load_preferences()
 
-        self.current_font_preset_index = preferences.get("font_preset_index", 0)
-
         # Load window geometry
         geometry = preferences.get("geometry")
         if geometry:
@@ -49,13 +44,9 @@ class TeleprompterApp(QMainWindow):
         # Load speed setting
         config.DEFAULT_SPEED = preferences.get("speed", config.DEFAULT_SPEED)
 
-        # Set initial values in toolbar manager
-        self.toolbar_manager.set_font_preset_index(self.current_font_preset_index)
-
     def _save_preferences(self):
         """Save user preferences to settings."""
         preferences = {
-            "font_preset_index": self.current_font_preset_index,
             "geometry": self.saveGeometry(),
         }
 
@@ -126,10 +117,6 @@ class TeleprompterApp(QMainWindow):
         self.toolbar_manager.reset_requested.connect(self._reset_and_focus)
         self.toolbar_manager.speed_changed.connect(self._on_speed_spinner_changed)
         self.toolbar_manager.font_size_changed.connect(self._on_font_size_changed)
-        self.toolbar_manager.font_preset_cycled.connect(self._cycle_font_preset)
-        self.toolbar_manager.presentation_mode_toggled.connect(
-            self._toggle_presentation_mode
-        )
         self.toolbar_manager.previous_section_requested.connect(
             self._goto_previous_section
         )
@@ -216,18 +203,6 @@ class TeleprompterApp(QMainWindow):
         """Handle font size change."""
         self.teleprompter.set_font_size(size)
 
-    def _cycle_font_preset(self):
-        """Cycle through font presets for different viewing distances."""
-        preset_name = self.toolbar_manager.cycle_font_preset()
-        self.current_font_preset_index = self.toolbar_manager.current_font_preset_index
-
-        # Apply the preset
-        self.teleprompter.set_font_preset(preset_name)
-
-        # Update the font size spinner to reflect the preset size
-        preset_size = config.FONT_PRESETS[preset_name]["size"]
-        self.toolbar_manager.update_font_size_display(preset_size)
-
     def _on_voice_detection_enabled(self, enabled: bool):
         """Handle voice detection enable/disable."""
         # Delegate to toolbar manager for voice control widget management
@@ -264,11 +239,6 @@ class TeleprompterApp(QMainWindow):
     def _goto_next_section(self):
         """Navigate to the next section."""
         self.teleprompter.navigate_to_next_section()
-        self.teleprompter.setFocus()
-
-    def _toggle_presentation_mode(self):
-        """Toggle presentation mode for distraction-free reading."""
-        self.teleprompter.toggle_presentation_mode()
         self.teleprompter.setFocus()
 
     def _increase_speed(self):

@@ -51,12 +51,13 @@ class StyleManager:
                     stop: 0 rgba(42, 42, 42, 0.8),
                     stop: 1 rgba(32, 32, 32, 0.8));
                 border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
                 color: #e0e0e0;
                 padding: 6px 12px;
                 font-size: 12px;
                 font-weight: 500;
-                min-height: 32px;
-                max-height: 32px;
+                min-height: 25px;
+                max-height: 25px;
             }}
 
             QPushButton:hover {{
@@ -88,9 +89,11 @@ class StyleManager:
                     stop: 0 {config.PRIMARY_COLORS["400"]},
                     stop: 1 {config.PRIMARY_COLORS["600"]});
                 border: 2px solid {config.PRIMARY_COLORS["700"]};
+                border-radius: 4px;
                 color: white;
                 min-width: 20px;
-                min-height: 20px;
+                min-height: 25px;
+                max-height: 25px;
                 font-weight: 600;
             }}
 
@@ -111,7 +114,9 @@ class StyleManager:
             /* Secondary action buttons with Material styling */
             QPushButton#resetButton, QPushButton#prevSectionButton, QPushButton#nextSectionButton {{
                 min-width: 20px;
-                min-height: 20px;
+                min-height: 25px;
+                max-height: 25px;
+                border-radius: 4px;
                 background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                     stop: 0 rgba(60, 60, 60, 0.8),
                     stop: 1 rgba(45, 45, 45, 0.8));
@@ -125,37 +130,19 @@ class StyleManager:
                 border: 2px solid rgba(255, 255, 255, 0.2);
             }}
 
-            /* Presentation mode button styling */
-            QPushButton#presentationButton {{
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 {config.SECONDARY_COLORS["400"]},
-                    stop: 1 {config.SECONDARY_COLORS["600"]});
-                border: 2px solid {config.SECONDARY_COLORS["700"]};
-                color: white;
-                padding: 6px 12px;
-                min-height: 32px;
-                max-height: 32px;
-                border-radius: {config.MATERIAL_BORDER_RADIUS["medium"]}px;
-            }}
-
-            QPushButton#presentationButton:hover {{
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 {config.SECONDARY_COLORS["300"]},
-                    stop: 1 {config.SECONDARY_COLORS["500"]});
-                border: 3px solid {config.SECONDARY_COLORS["600"]};
-            }}
-
             /* Enhanced spinbox styling with Material Design */
             QSpinBox, QDoubleSpinBox {{
                 background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                     stop: 0 rgba(32, 32, 32, 0.8),
                     stop: 1 rgba(28, 28, 28, 0.8));
                 border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
                 color: #e0e0e0;
                 padding: 0px 0px;
                 font-size: 12px;
                 min-width: 60px;
-                min-height: 32px;
+                min-height: 25px;
+                max-height: 25px;
             }}
 
             QSpinBox:hover, QDoubleSpinBox:hover {{
@@ -266,10 +253,10 @@ class StyleManager:
                 border-radius: 4px;
                 color: white;
                 font-size: 12px;
-                min-width: 32px;
-                max-width: 32px;
-                min-height: 32px;
-                max-height: 32px;
+                min-width: 25px;
+                max-width: 25px;
+                min-height: 25px;
+                max-height: 25px;
                 padding: 6px;
             }
 
@@ -314,12 +301,12 @@ class StyleManager:
             QComboBox#deviceCombo {
                 background-color: #262626;
                 border: 1px solid #404040;
-                border-radius: 2px;
+                border-radius: 4px;
                 color: #e0e0e0;
                 padding: 6px 8px;
                 font-size: 12px;
-                min-height: 32px;
-                max-height: 32px;
+                min-height: 25px;
+                max-height: 25px;
             }
 
             QComboBox#deviceCombo:hover {
@@ -385,10 +372,10 @@ class StyleManager:
                 border-radius: 4px;
                 color: #666666;
                 font-size: 12px;
-                min-width: 32px;
-                max-width: 32px;
-                min-height: 32px;
-                max-height: 32px;
+                min-width: 25px;
+                max-width: 25px;
+                min-height: 25px;
+                max-height: 25px;
                 padding: 6px;
             }
             QPushButton#voiceButton:hover {
@@ -412,10 +399,10 @@ class StyleManager:
                 border-radius: 4px;
                 color: white;
                 font-size: 12px;
-                min-width: 32px;
-                max-width: 32px;
-                min-height: 32px;
-                max-height: 32px;
+                min-width: 25px;
+                max-width: 25px;
+                min-height: 25px;
+                max-height: 25px;
                 padding: 6px;
             }
             QPushButton#voiceButton:hover {
@@ -438,10 +425,10 @@ class StyleManager:
                 border-radius: 4px;
                 color: white;
                 font-size: 12px;
-                min-width: 32px;
-                max-width: 32px;
-                min-height: 32px;
-                max-height: 32px;
+                min-width: 25px;
+                max-width: 25px;
+                min-height: 25px;
+                max-height: 25px;
                 padding: 6px;
             }
             QPushButton#voiceButton:hover {

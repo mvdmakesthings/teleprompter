@@ -19,14 +19,6 @@ FONT_FAMILIES = {
 }
 DEFAULT_FONT_FAMILY = FONT_FAMILIES["default"]
 
-# Font presets for different viewing distances
-FONT_PRESETS = {
-    "close": {"size": 18, "line_height": 1.4, "weight": "400"},
-    "medium": {"size": 24, "line_height": 1.5, "weight": "400"},
-    "far": {"size": 36, "line_height": 1.6, "weight": "500"},
-    "presentation": {"size": 48, "line_height": 1.7, "weight": "600"},
-}
-
 # Standard teleprompter colors
 BACKGROUND_COLOR = "#000000"
 TEXT_COLOR = "#FFFFFF"

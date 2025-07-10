@@ -119,7 +119,6 @@ class TeleprompterWidget(QWidget):
 
         # Phase 3: Progress tracking and focus management
         self.reading_estimator = ReadingTimeEstimator()
-        self.presentation_mode = False
         self.show_progress = True
         self.auto_hide_cursor = True
 
@@ -149,7 +148,7 @@ class TeleprompterWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Progress bar at top (can be hidden in presentation mode)
+        # Progress bar at top
         self.progress_bar = ProgressBar()
         layout.addWidget(self.progress_bar)
 
@@ -437,13 +436,6 @@ class TeleprompterWidget(QWidget):
             self.navigate_to_next_section()
             event.accept()
         elif (
-            event.key() == Qt.Key.Key_P
-            and event.modifiers() == Qt.KeyboardModifier.ControlModifier
-        ):
-            # Ctrl+P: Toggle presentation mode
-            self.toggle_presentation_mode()
-            event.accept()
-        elif (
             event.key() == Qt.Key.Key_H
             and event.modifiers() == Qt.KeyboardModifier.ControlModifier
         ):
@@ -567,35 +559,6 @@ class TeleprompterWidget(QWidget):
         else:
             return "-0.01em"
 
-    def set_font_preset(self, preset_name: str):
-        """Apply a font preset for different viewing scenarios."""
-        if preset_name in config.FONT_PRESETS:
-            preset = config.FONT_PRESETS[preset_name]
-            self.set_font_size(preset["size"])
-
-            # Apply additional preset properties
-            js_code = f"""
-            var styleId = 'teleprompter-preset-override';
-            var styleEl = document.getElementById(styleId);
-            if (!styleEl) {{
-                styleEl = document.createElement('style');
-                styleEl.id = styleId;
-                document.head.appendChild(styleEl);
-            }}
-
-            styleEl.textContent = `
-                body {{
-                    font-weight: {preset["weight"]} !important;
-                    line-height: {preset["line_height"]} !important;
-                }}
-            `;
-            """
-            self.web_view.page().runJavaScript(js_code)
-
-    def get_available_font_presets(self) -> list:
-        """Get list of available font presets."""
-        return list(config.FONT_PRESETS.keys())
-
     def _setup_focus_management(self):
         """Set up focus management and cursor auto-hide functionality."""
         # Mouse tracking for cursor auto-hide
@@ -616,31 +579,14 @@ class TeleprompterWidget(QWidget):
 
     def _hide_cursor(self):
         """Hide the cursor during reading."""
-        if self.auto_hide_cursor and not self.presentation_mode:
+        if self.auto_hide_cursor:
             self.setCursor(Qt.CursorShape.BlankCursor)
-
-    def toggle_presentation_mode(self):
-        """Toggle presentation mode for distraction-free reading."""
-        self.presentation_mode = not self.presentation_mode
-
-        if self.presentation_mode:
-            # Hide progress indicators and info overlay
-            self.progress_bar.hide()
-            self.info_overlay.hide()
-            self.setCursor(Qt.CursorShape.BlankCursor)
-        else:
-            # Show progress indicators and info overlay
-            if self.show_progress:
-                self.progress_bar.show()
-                self.info_overlay.show()
-            self.setCursor(Qt.CursorShape.ArrowCursor)
 
     def set_progress_visibility(self, visible: bool):
         """Set whether progress indicators are visible."""
         self.show_progress = visible
-        if not self.presentation_mode:
-            self.progress_bar.setVisible(visible)
-            self.info_overlay.setVisible(visible)
+        self.progress_bar.setVisible(visible)
+        self.info_overlay.setVisible(visible)
 
     def jump_to_progress(self, progress: float):
         """Jump to a specific progress point (0.0 to 1.0)."""

@@ -19,8 +19,6 @@ class ToolbarManager(QObject):
     reset_requested = pyqtSignal()
     speed_changed = pyqtSignal(float)
     font_size_changed = pyqtSignal(int)
-    font_preset_cycled = pyqtSignal()
-    presentation_mode_toggled = pyqtSignal()
     previous_section_requested = pyqtSignal()
     next_section_requested = pyqtSignal()
     voice_detection_toggled = pyqtSignal(bool)
@@ -39,12 +37,7 @@ class ToolbarManager(QObject):
         self.play_button = None
         self.speed_spin = None
         self.font_size_spin = None
-        self.font_preset_btn = None
         self.voice_control_widget = None
-
-        # State tracking
-        self.current_font_preset_index = 0
-        self.font_presets = list(config.FONT_PRESETS.keys())
 
     def create_toolbar(self) -> QToolBar:
         """Create and configure the main toolbar.
@@ -68,9 +61,6 @@ class ToolbarManager(QObject):
         self._add_visual_separator("Display")
 
         self._add_voice_controls()
-        self._add_visual_separator("Voice")
-
-        self._add_view_controls()
 
         # Fix toolbar layout rendering issues
         self._fix_toolbar_layout()
@@ -175,17 +165,6 @@ class ToolbarManager(QObject):
         )
         self.toolbar.addWidget(self.font_size_spin)
 
-        # Font preset button
-        self.font_preset_btn = QPushButton("Auto")
-        self.font_preset_btn.setMaximumWidth(70)
-        self.font_preset_btn.setMinimumWidth(70)
-        self.font_preset_btn.setToolTip("Font preset for viewing distance")
-        self.font_preset_btn.clicked.connect(self.font_preset_cycled.emit)
-        self.font_preset_btn.setSizePolicy(
-            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
-        )
-        self.toolbar.addWidget(self.font_preset_btn)
-
     def _add_voice_controls(self):
         """Add voice control group."""
         self.voice_control_widget = VoiceControlWidget()
@@ -197,18 +176,6 @@ class ToolbarManager(QObject):
             QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
         )
         self.toolbar.addWidget(self.voice_control_widget)
-
-    def _add_view_controls(self):
-        """Add view controls group."""
-        # Presentation mode button
-        presentation_button = QPushButton("Present")
-        presentation_button.setObjectName("presentationButton")
-        presentation_button.setToolTip("Toggle presentation mode (Ctrl+P)")
-        presentation_button.clicked.connect(self.presentation_mode_toggled.emit)
-        presentation_button.setSizePolicy(
-            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
-        )
-        self.toolbar.addWidget(presentation_button)
 
     def _add_visual_separator(self, group_name: str):
         """Add a visual separator between control groups."""
@@ -261,45 +228,6 @@ class ToolbarManager(QObject):
             self.font_size_spin.blockSignals(True)
             self.font_size_spin.setValue(size)
             self.font_size_spin.blockSignals(False)
-
-    def cycle_font_preset(self) -> str:
-        """Cycle to the next font preset and return its name.
-
-        Returns:
-            The name of the new preset
-        """
-        self.current_font_preset_index = (self.current_font_preset_index + 1) % len(
-            self.font_presets
-        )
-        preset_name = self.font_presets[self.current_font_preset_index]
-
-        # Update button text
-        preset_display_names = {
-            "close": "Close",
-            "medium": "Med",
-            "far": "Far",
-            "presentation": "Pres",
-        }
-        display_name = preset_display_names.get(preset_name, preset_name.title())
-        if self.font_preset_btn:
-            self.font_preset_btn.setText(display_name)
-
-        return preset_name
-
-    def set_font_preset_index(self, index: int):
-        """Set the font preset index from settings."""
-        self.current_font_preset_index = index
-        preset_name = self.font_presets[index]
-
-        preset_display_names = {
-            "close": "Close",
-            "medium": "Med",
-            "far": "Far",
-            "presentation": "Pres",
-        }
-        display_name = preset_display_names.get(preset_name, preset_name.title())
-        if self.font_preset_btn:
-            self.font_preset_btn.setText(display_name)
 
     def get_voice_detector(self):
         """Get the voice detector from the voice control widget."""
