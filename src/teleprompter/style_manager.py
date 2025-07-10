@@ -52,10 +52,11 @@ class StyleManager:
                     stop: 1 rgba(32, 32, 32, 0.8));
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 color: #e0e0e0;
-                padding: 4px 8px;
+                padding: 6px 12px;
                 font-size: 12px;
                 font-weight: 500;
-                min-height: 30px;
+                min-height: 32px;
+                max-height: 32px;
             }}
 
             QPushButton:hover {{
@@ -131,6 +132,9 @@ class StyleManager:
                     stop: 1 {config.SECONDARY_COLORS["600"]});
                 border: 2px solid {config.SECONDARY_COLORS["700"]};
                 color: white;
+                padding: 6px 12px;
+                min-height: 32px;
+                max-height: 32px;
                 border-radius: {config.MATERIAL_BORDER_RADIUS["medium"]}px;
             }}
 
@@ -262,11 +266,11 @@ class StyleManager:
                 border-radius: 4px;
                 color: white;
                 font-size: 12px;
-                min-width: 24px;
-                max-width: 24px;
-                min-height: 24px;
-                max-height: 24px;
-                padding: 0px;
+                min-width: 32px;
+                max-width: 32px;
+                min-height: 32px;
+                max-height: 32px;
+                padding: 6px;
             }
 
             QPushButton#voiceButton:hover {
@@ -312,9 +316,10 @@ class StyleManager:
                 border: 1px solid #404040;
                 border-radius: 2px;
                 color: #e0e0e0;
-                padding: 2px 4px;
+                padding: 6px 8px;
                 font-size: 12px;
-                min-height: 18px;
+                min-height: 32px;
+                max-height: 32px;
             }
 
             QComboBox#deviceCombo:hover {
@@ -380,11 +385,11 @@ class StyleManager:
                 border-radius: 4px;
                 color: #666666;
                 font-size: 12px;
-                min-width: 24px;
-                max-width: 24px;
-                min-height: 24px;
-                max-height: 24px;
-                padding: 0px;
+                min-width: 32px;
+                max-width: 32px;
+                min-height: 32px;
+                max-height: 32px;
+                padding: 6px;
             }
             QPushButton#voiceButton:hover {
                 background-color: #333333;
@@ -407,11 +412,11 @@ class StyleManager:
                 border-radius: 4px;
                 color: white;
                 font-size: 12px;
-                min-width: 24px;
-                max-width: 24px;
-                min-height: 24px;
-                max-height: 24px;
-                padding: 0px;
+                min-width: 32px;
+                max-width: 32px;
+                min-height: 32px;
+                max-height: 32px;
+                padding: 6px;
             }
             QPushButton#voiceButton:hover {
                 background-color: #66BB6A;
@@ -433,11 +438,11 @@ class StyleManager:
                 border-radius: 4px;
                 color: white;
                 font-size: 12px;
-                min-width: 24px;
-                max-width: 24px;
-                min-height: 24px;
-                max-height: 24px;
-                padding: 0px;
+                min-width: 32px;
+                max-width: 32px;
+                min-height: 32px;
+                max-height: 32px;
+                padding: 6px;
             }
             QPushButton#voiceButton:hover {
                 background-color: #106ebe;

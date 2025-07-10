@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
     QPushButton,
+    QSizePolicy,
     QSlider,
     QWidget,
 )
@@ -44,13 +45,6 @@ class VoiceControlWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         # layout.setSpacing(4)
 
-        # Voice section label
-        voice_label = QPushButton("Voice")
-        voice_label.setEnabled(False)
-        voice_label.setStyleSheet(StyleManager.get_voice_label_stylesheet())
-        layout.addWidget(voice_label)
-
-        # Voice detection toggle button with modern styling
         self.voice_button = QPushButton("🎤")
         self.voice_button.setCheckable(True)
         self.voice_button.setChecked(config.VAD_ENABLED_DEFAULT)
@@ -61,6 +55,9 @@ class VoiceControlWidget(QWidget):
             + "• Green: Speech detected"
         )
         self.voice_button.setObjectName("voiceButton")
+        self.voice_button.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.voice_button.toggled.connect(self._on_voice_toggled)
         layout.addWidget(self.voice_button)
 
@@ -72,6 +69,9 @@ class VoiceControlWidget(QWidget):
             int(config.VAD_SENSITIVITY * 10)
         )  # Convert float to int
         self.sensitivity_slider.setFixedWidth(60)
+        self.sensitivity_slider.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.sensitivity_slider.valueChanged.connect(self._on_sensitivity_changed)
         self.sensitivity_slider.setObjectName("sensitivitySlider")
         self._update_sensitivity_tooltip()
@@ -82,6 +82,9 @@ class VoiceControlWidget(QWidget):
         self.device_combo.setFixedWidth(110)
         self.device_combo.setToolTip("Select microphone")
         self.device_combo.setObjectName("deviceCombo")
+        self.device_combo.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self._populate_audio_devices()
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
         layout.addWidget(self.device_combo)

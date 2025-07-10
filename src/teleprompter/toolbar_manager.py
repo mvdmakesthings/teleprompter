@@ -2,12 +2,11 @@
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtWidgets import QPushButton, QToolBar
+from PyQt6.QtWidgets import QPushButton, QSizePolicy, QToolBar
 
 from . import config
 from .custom_widgets import ModernDoubleSpinBox, ModernSpinBox
 from .icon_manager import icon_manager
-from .style_manager import StyleManager
 from .voice_control_widget import VoiceControlWidget
 
 
@@ -73,6 +72,9 @@ class ToolbarManager(QObject):
 
         self._add_view_controls()
 
+        # Fix toolbar layout rendering issues
+        self._fix_toolbar_layout()
+
         return self.toolbar
 
     def _add_file_controls(self):
@@ -97,6 +99,10 @@ class ToolbarManager(QObject):
         self.play_button.setObjectName("playButton")
         self.play_button.setToolTip("Play/Pause scrolling (Space)")
         self.play_button.clicked.connect(self.playback_toggled.emit)
+        # Set consistent size policy for toolbar buttons
+        self.play_button.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.update_play_button_icon(False)  # Start with play icon
         self.toolbar.addWidget(self.play_button)
 
@@ -105,6 +111,7 @@ class ToolbarManager(QObject):
         reset_button.setObjectName("resetButton")
         reset_button.setToolTip("Reset to beginning (R)")
         reset_button.clicked.connect(self.reset_requested.emit)
+        reset_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
         reset_pixmap = icon_manager.get_themed_pixmap("skip-back", "default", "medium")
         if not reset_pixmap.isNull():
@@ -122,6 +129,9 @@ class ToolbarManager(QObject):
         prev_section_button.setObjectName("prevSectionButton")
         prev_section_button.setToolTip("Previous section (←)")
         prev_section_button.clicked.connect(self.previous_section_requested.emit)
+        prev_section_button.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.toolbar.addWidget(prev_section_button)
 
         # Next section button
@@ -129,14 +139,14 @@ class ToolbarManager(QObject):
         next_section_button.setObjectName("nextSectionButton")
         next_section_button.setToolTip("Next section (→)")
         next_section_button.clicked.connect(self.next_section_requested.emit)
+        next_section_button.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.toolbar.addWidget(next_section_button)
 
     def _add_speed_font_controls(self):
         """Add speed and font controls group."""
-        # Speed control section
-        speed_group = self._create_control_group("Speed")
-        self.toolbar.addWidget(speed_group)
-
+        # Speed control section (label removed for cleaner UI)
         self.speed_spin = ModernDoubleSpinBox()
         self.speed_spin.setMinimum(config.MIN_SPEED)
         self.speed_spin.setMaximum(config.MAX_SPEED)
@@ -146,13 +156,12 @@ class ToolbarManager(QObject):
         self.speed_spin.setSingleStep(config.SPEED_INCREMENT)
         self.speed_spin.setToolTip("Scrolling speed (↑↓ arrows)")
         self.speed_spin.valueChanged.connect(self.speed_changed.emit)
+        self.speed_spin.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.toolbar.addWidget(self.speed_spin)
 
         self.toolbar.addSeparator()
-
-        # Font size control section
-        font_group = self._create_control_group("Font")
-        self.toolbar.addWidget(font_group)
 
         self.font_size_spin = ModernSpinBox()
         self.font_size_spin.setMinimum(config.MIN_FONT_SIZE)
@@ -161,13 +170,20 @@ class ToolbarManager(QObject):
         self.font_size_spin.setSuffix("px")
         self.font_size_spin.setToolTip("Font size")
         self.font_size_spin.valueChanged.connect(self.font_size_changed.emit)
+        self.font_size_spin.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.toolbar.addWidget(self.font_size_spin)
 
         # Font preset button
         self.font_preset_btn = QPushButton("Auto")
-        self.font_preset_btn.setMaximumWidth(50)
+        self.font_preset_btn.setMaximumWidth(70)
+        self.font_preset_btn.setMinimumWidth(70)
         self.font_preset_btn.setToolTip("Font preset for viewing distance")
         self.font_preset_btn.clicked.connect(self.font_preset_cycled.emit)
+        self.font_preset_btn.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.toolbar.addWidget(self.font_preset_btn)
 
     def _add_voice_controls(self):
@@ -175,6 +191,10 @@ class ToolbarManager(QObject):
         self.voice_control_widget = VoiceControlWidget()
         self.voice_control_widget.voice_detection_enabled.connect(
             self.voice_detection_toggled.emit
+        )
+        # Set consistent size policy for voice control widget
+        self.voice_control_widget.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
         )
         self.toolbar.addWidget(self.voice_control_widget)
 
@@ -185,14 +205,10 @@ class ToolbarManager(QObject):
         presentation_button.setObjectName("presentationButton")
         presentation_button.setToolTip("Toggle presentation mode (Ctrl+P)")
         presentation_button.clicked.connect(self.presentation_mode_toggled.emit)
+        presentation_button.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.toolbar.addWidget(presentation_button)
-
-    def _create_control_group(self, label: str) -> QPushButton:
-        """Create a styled group label for controls."""
-        group_label = QPushButton(label)
-        group_label.setEnabled(False)
-        group_label.setStyleSheet(StyleManager.get_toolbar_group_label_stylesheet())
-        return group_label
 
     def _add_visual_separator(self, group_name: str):
         """Add a visual separator between control groups."""
@@ -290,3 +306,36 @@ class ToolbarManager(QObject):
         if self.voice_control_widget:
             return self.voice_control_widget.get_voice_detector()
         return None
+
+    def _fix_toolbar_layout(self):
+        """Fix toolbar layout rendering issues.
+
+        This resolves the issue where extra buttons appear on startup and disappear
+        after resizing by ensuring proper layout calculations and geometry updates.
+        """
+        if not self.toolbar:
+            return
+
+        # Force size policy on the toolbar itself
+        self.toolbar.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed
+        )
+
+        # Update geometry to force layout recalculation
+        self.toolbar.updateGeometry()
+
+        # Force an immediate layout update
+        self.toolbar.adjustSize()
+
+        # Ensure all widgets have consistent minimum sizes
+        for i in range(self.toolbar.layout().count()):
+            item = self.toolbar.layout().itemAt(i)
+            if item and item.widget():
+                widget = item.widget()
+                if isinstance(widget, QPushButton):
+                    # Ensure all buttons have consistent minimum size hints
+                    widget.setMinimumSize(widget.sizeHint())
+                    widget.updateGeometry()
+
+        # Final update to ensure proper rendering
+        self.toolbar.update()
