@@ -43,7 +43,8 @@ class ModernToolBar(QToolBar):
         """Override action event to detect when actions are added/removed."""
         super().actionEvent(event)
         # Trigger extension button check when actions change
-        self._extension_button_timer.start(75)
+        if hasattr(self, "_extension_button_timer") and self._extension_button_timer:
+            self._extension_button_timer.start(75)
 
     def _force_layout_update(self):
         """Force a complete layout update using Qt's layout system."""
