@@ -10,16 +10,25 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from .base_widgets import (
+    DebouncedActionMixin,
+    HoverAnimatedWidget,
+    ModernButtonBase,
+    ModernSpinBoxBase,
+    PulseAnimationBase,
+)
 from .icon_manager import icon_manager
-from .style_manager import StyleManager
+from .style_manager import get_style_manager
 
 
-class ModernSpinBox(QSpinBox):
+class ModernSpinBox(QSpinBox, ModernSpinBoxBase):
     """Modern QSpinBox with proper icon integration and refined styling."""
 
     def __init__(self, parent=None):
-        super().__init__(parent)
+        QSpinBox.__init__(self, parent)
+        ModernSpinBoxBase.__init__(self, parent)
         self._setup_modern_style()
+        self._setup_spinbox_style()
 
     def _setup_modern_style(self):
         """Set up modern styling with proper icon buttons."""
@@ -31,7 +40,7 @@ class ModernSpinBox(QSpinBox):
         self._down_button = QPushButton(self)
 
         # Modern button styling with proper scaling
-        button_style = StyleManager.get_spinbox_button_stylesheet()
+        button_style = get_style_manager().get_spinbox_button_stylesheet()
 
         self._up_button.setStyleSheet(button_style)
         self._down_button.setStyleSheet(button_style)
@@ -86,13 +95,21 @@ class ModernSpinBox(QSpinBox):
         if event.type() == event.Type.PaletteChange:
             self._update_icons()
 
+    def _setup_spinbox_style(self):
+        """Implement abstract method from base class."""
+        # Apply base spinbox styling
+        arrow_style = self.get_arrow_style(True) + self.get_arrow_style(False)
+        self.setStyleSheet(self.styleSheet() + arrow_style)
 
-class ModernDoubleSpinBox(QDoubleSpinBox):
+
+class ModernDoubleSpinBox(QDoubleSpinBox, ModernSpinBoxBase):
     """Modern QDoubleSpinBox with proper icon integration and refined styling."""
 
     def __init__(self, parent=None):
-        super().__init__(parent)
+        QDoubleSpinBox.__init__(self, parent)
+        ModernSpinBoxBase.__init__(self, parent)
         self._setup_modern_style()
+        self._setup_spinbox_style()
 
     def _setup_modern_style(self):
         """Set up modern styling with proper icon buttons."""
@@ -104,7 +121,7 @@ class ModernDoubleSpinBox(QDoubleSpinBox):
         self._down_button = QPushButton(self)
 
         # Modern button styling with proper scaling
-        button_style = StyleManager.get_spinbox_button_stylesheet()
+        button_style = get_style_manager().get_spinbox_button_stylesheet()
 
         self._up_button.setStyleSheet(button_style)
         self._down_button.setStyleSheet(button_style)
@@ -159,23 +176,29 @@ class ModernDoubleSpinBox(QDoubleSpinBox):
         if event.type() == event.Type.PaletteChange:
             self._update_icons()
 
+    def _setup_spinbox_style(self):
+        """Implement abstract method from base class."""
+        # Apply base spinbox styling
+        arrow_style = self.get_arrow_style(True) + self.get_arrow_style(False)
+        self.setStyleSheet(self.styleSheet() + arrow_style)
+
 
 # Phase 4.2: Micro-interactions and Animation Support
 
 
-class AnimatedButton(QPushButton):
+class AnimatedButton(ModernButtonBase):
     """Enhanced button with micro-interactions and animations."""
 
     def __init__(self, text="", parent=None):
         super().__init__(text, parent)
-        self._setup_animations()
+        self._setup_additional_animations()
 
-    def _setup_animations(self):
-        """Set up button animations."""
-        # Scale animation for press/release
-        self.scale_animation = QPropertyAnimation(self, b"geometry")
-        self.scale_animation.setDuration(150)
-        self.scale_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+    def _setup_additional_animations(self):
+        """Set up additional button animations beyond base class."""
+        # Geometry animation for hover effect
+        self.geometry_animation = QPropertyAnimation(self, b"geometry")
+        self.geometry_animation.setDuration(150)
+        self.geometry_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         # Opacity animation for hover
         self.opacity_effect = QGraphicsOpacityEffect()
@@ -196,9 +219,9 @@ class AnimatedButton(QPushButton):
             current_geometry.height() + 4,
         )
 
-        self.scale_animation.setStartValue(current_geometry)
-        self.scale_animation.setEndValue(scaled_geometry)
-        self.scale_animation.start()
+        self.geometry_animation.setStartValue(current_geometry)
+        self.geometry_animation.setEndValue(scaled_geometry)
+        self.geometry_animation.start()
 
         self.opacity_animation.setStartValue(0.8)
         self.opacity_animation.setEndValue(1.0)
@@ -216,16 +239,16 @@ class AnimatedButton(QPushButton):
             current_geometry.height() - 4,
         )
 
-        self.scale_animation.setStartValue(current_geometry)
-        self.scale_animation.setEndValue(normal_geometry)
-        self.scale_animation.start()
+        self.geometry_animation.setStartValue(current_geometry)
+        self.geometry_animation.setEndValue(normal_geometry)
+        self.geometry_animation.start()
 
         self.opacity_animation.setStartValue(1.0)
         self.opacity_animation.setEndValue(0.8)
         self.opacity_animation.start()
 
 
-class SpringAnimatedWidget(QWidget):
+class SpringAnimatedWidget(HoverAnimatedWidget):
     """Widget with spring-based animations for natural motion."""
 
     def __init__(self, parent=None):
@@ -234,47 +257,46 @@ class SpringAnimatedWidget(QWidget):
 
     def _setup_spring_animations(self):
         """Set up spring-like animations."""
-        self.spring_animation = QPropertyAnimation(self, b"pos")
-        self.spring_animation.setDuration(300)
-        # Spring easing curve for natural motion
-        self.spring_animation.setEasingCurve(QEasingCurve.Type.OutElastic)
+        # Create position animation with spring effect
+        self.create_animation("position", self.pos(), self.pos(), 300)
+        position_anim = self._animations.get("position")
+        if position_anim:
+            position_anim.setEasingCurve(QEasingCurve.Type.OutElastic)
 
     def animate_to_position(self, new_pos):
         """Animate widget to new position with spring effect."""
-        self.spring_animation.setStartValue(self.pos())
-        self.spring_animation.setEndValue(new_pos)
-        self.spring_animation.start()
+        position_anim = self._animations.get("position")
+        if position_anim:
+            position_anim.setStartValue(self.pos())
+            position_anim.setEndValue(new_pos)
+            position_anim.start()
 
 
-class PulseAnimation(QWidget):
+class PulseAnimationWidget(QWidget, DebouncedActionMixin):
     """Widget that provides a subtle pulse animation for attention."""
 
     pulse_started = pyqtSignal()
     pulse_finished = pyqtSignal()
 
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self._setup_pulse_animation()
+        QWidget.__init__(self, parent)
+        DebouncedActionMixin.__init__(self)
+        self._pulse_animation = PulseAnimationBase(self, self)
+        self._pulse_animation.start()  # Initialize animation
+        self._pulse_animation.stop()  # But don't start pulsing yet
 
-    def _setup_pulse_animation(self):
-        """Set up pulse animation effect."""
-        self.opacity_effect = QGraphicsOpacityEffect()
-        self.setGraphicsEffect(self.opacity_effect)
-
-        self.pulse_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
-        self.pulse_animation.setDuration(1000)
-        self.pulse_animation.setEasingCurve(QEasingCurve.Type.InOutSine)
-        self.pulse_animation.finished.connect(self.pulse_finished)
-
-    def start_pulse(self, cycles=1):
+    def start_pulse(self, cycles=1, interval=50):
         """Start pulse animation for specified cycles."""
         self.pulse_started.emit()
-        self.pulse_animation.setStartValue(0.3)
-        self.pulse_animation.setEndValue(1.0)
-        self.pulse_animation.setLoopCount(cycles * 2)  # Each cycle = fade out + fade in
-        self.pulse_animation.start()
+        # Use debounce to prevent rapid start/stop
+        self.debounce(lambda: self._start_pulse_internal(interval), 100, "pulse")
+
+    def _start_pulse_internal(self, interval):
+        """Internal method to start pulse."""
+        self._pulse_animation.start(interval)
 
     def stop_pulse(self):
         """Stop pulse animation."""
-        self.pulse_animation.stop()
-        self.opacity_effect.setOpacity(1.0)
+        self.cancel_debounce("pulse")
+        self._pulse_animation.stop()
+        self.pulse_finished.emit()
