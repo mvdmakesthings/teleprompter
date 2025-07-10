@@ -1,0 +1,60 @@
+Teleprompter - Professional Teleprompter Application
+Copyright (C) 2024 Teleprompter Contributors
+
+This program is dual-licensed:
+
+1. OPEN SOURCE LICENSE (GPL v3)
+===============================
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+2. COMMERCIAL LICENSE
+=====================
+
+For users who cannot or choose not to comply with the GPL v3 license,
+a commercial license is available. The commercial license allows you to:
+
+- Use Teleprompter in proprietary/closed-source applications
+- Modify the source code without sharing your modifications
+- Distribute Teleprompter as part of commercial products
+- Remove GPL licensing obligations
+
+IMPORTANT NOTES:
+================
+
+1. This software uses PyQt6, which is also licensed under GPL v3.
+   Commercial users will need to obtain a PyQt6 commercial license
+   from Riverbank Computing (https://riverbankcomputing.com/commercial/pyqt).
+
+2. All contributions to this project are accepted under the condition
+   that they may be licensed under both the GPL v3 and commercial
+   licenses, unless explicitly stated otherwise by the contributor.
+
+3. The GPL v3 license text can be found at:
+   https://www.gnu.org/licenses/gpl-3.0.html
+
+DEPENDENCY LICENSES:
+====================
+
+This software includes the following open-source dependencies:
+- PyQt6 & PyQt6-WebEngine: GPL v3
+- Python-Markdown: BSD 3-Clause
+- NumPy: BSD 3-Clause
+- sounddevice: MIT
+- webrtcvad: MIT
+- structlog: MIT OR Apache-2.0
+- setuptools: MIT
+
+Users of the commercial license must still comply with the licenses
+of these dependencies where applicable.
