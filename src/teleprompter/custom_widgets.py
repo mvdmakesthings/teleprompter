@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 )
 
 from .icon_manager import icon_manager
+from .style_manager import StyleManager
 
 
 class ModernSpinBox(QSpinBox):
@@ -30,35 +31,7 @@ class ModernSpinBox(QSpinBox):
         self._down_button = QPushButton(self)
 
         # Modern button styling with proper scaling
-        button_style = """
-            QPushButton {
-                background-color: transparent;
-                border: 1px solid #404040;
-                color: #c0c0c0;
-                padding: 0px;
-                margin: 0px;
-                min-width: 18px;
-                max-width: 18px;
-                min-height: 12px;
-                max-height: 12px;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #404040;
-                border-color: #0078d4;
-                color: #ffffff;
-            }
-            QPushButton:pressed {
-                background-color: #0078d4;
-                border-color: #106ebe;
-                color: #ffffff;
-            }
-            QPushButton:disabled {
-                background-color: transparent;
-                border-color: #2a2a2a;
-                color: #666666;
-            }
-        """
+        button_style = StyleManager.get_spinbox_button_stylesheet()
 
         self._up_button.setStyleSheet(button_style)
         self._down_button.setStyleSheet(button_style)
@@ -131,35 +104,7 @@ class ModernDoubleSpinBox(QDoubleSpinBox):
         self._down_button = QPushButton(self)
 
         # Modern button styling with proper scaling
-        button_style = """
-            QPushButton {
-                background-color: transparent;
-                border: 1px solid #404040;
-                color: #c0c0c0;
-                padding: 0px;
-                margin: 0px;
-                min-width: 18px;
-                max-width: 18px;
-                min-height: 12px;
-                max-height: 12px;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #404040;
-                border-color: #0078d4;
-                color: #ffffff;
-            }
-            QPushButton:pressed {
-                background-color: #0078d4;
-                border-color: #106ebe;
-                color: #ffffff;
-            }
-            QPushButton:disabled {
-                background-color: transparent;
-                border-color: #2a2a2a;
-                color: #666666;
-            }
-        """
+        button_style = StyleManager.get_spinbox_button_stylesheet()
 
         self._up_button.setStyleSheet(button_style)
         self._down_button.setStyleSheet(button_style)
@@ -333,8 +278,3 @@ class PulseAnimation(QWidget):
         """Stop pulse animation."""
         self.pulse_animation.stop()
         self.opacity_effect.setOpacity(1.0)
-
-
-# Keep backward compatibility with old class names
-IconSpinBox = ModernSpinBox
-IconDoubleSpinBox = ModernDoubleSpinBox

@@ -5,8 +5,9 @@ from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QPushButton, QToolBar
 
 from . import config
-from .custom_widgets import IconDoubleSpinBox, IconSpinBox
+from .custom_widgets import ModernDoubleSpinBox, ModernSpinBox
 from .icon_manager import icon_manager
+from .style_manager import StyleManager
 from .voice_control_widget import VoiceControlWidget
 
 
@@ -20,9 +21,7 @@ class ToolbarManager(QObject):
     speed_changed = pyqtSignal(float)
     font_size_changed = pyqtSignal(int)
     font_preset_cycled = pyqtSignal()
-    color_theme_cycled = pyqtSignal()
     presentation_mode_toggled = pyqtSignal()
-    fullscreen_toggled = pyqtSignal()
     previous_section_requested = pyqtSignal()
     next_section_requested = pyqtSignal()
     voice_detection_toggled = pyqtSignal(bool)
@@ -42,14 +41,11 @@ class ToolbarManager(QObject):
         self.speed_spin = None
         self.font_size_spin = None
         self.font_preset_btn = None
-        self.theme_btn = None
         self.voice_control_widget = None
 
         # State tracking
         self.current_font_preset_index = 0
-        self.current_theme_index = 0
         self.font_presets = list(config.FONT_PRESETS.keys())
-        self.color_themes = list(config.COLOR_THEMES.keys())
 
     def create_toolbar(self) -> QToolBar:
         """Create and configure the main toolbar.
@@ -71,9 +67,6 @@ class ToolbarManager(QObject):
 
         self._add_speed_font_controls()
         self._add_visual_separator("Display")
-
-        self._add_theme_controls()
-        self._add_visual_separator("Theme")
 
         self._add_voice_controls()
         self._add_visual_separator("Voice")
@@ -144,7 +137,7 @@ class ToolbarManager(QObject):
         speed_group = self._create_control_group("Speed")
         self.toolbar.addWidget(speed_group)
 
-        self.speed_spin = IconDoubleSpinBox()
+        self.speed_spin = ModernDoubleSpinBox()
         self.speed_spin.setMinimum(config.MIN_SPEED)
         self.speed_spin.setMaximum(config.MAX_SPEED)
         self.speed_spin.setValue(config.DEFAULT_SPEED)
@@ -161,7 +154,7 @@ class ToolbarManager(QObject):
         font_group = self._create_control_group("Font")
         self.toolbar.addWidget(font_group)
 
-        self.font_size_spin = IconSpinBox()
+        self.font_size_spin = ModernSpinBox()
         self.font_size_spin.setMinimum(config.MIN_FONT_SIZE)
         self.font_size_spin.setMaximum(config.MAX_FONT_SIZE)
         self.font_size_spin.setValue(config.DEFAULT_FONT_SIZE)
@@ -176,17 +169,6 @@ class ToolbarManager(QObject):
         self.font_preset_btn.setToolTip("Font preset for viewing distance")
         self.font_preset_btn.clicked.connect(self.font_preset_cycled.emit)
         self.toolbar.addWidget(self.font_preset_btn)
-
-    def _add_theme_controls(self):
-        """Add theme controls group."""
-        theme_group = self._create_control_group("Theme")
-        self.toolbar.addWidget(theme_group)
-
-        self.theme_btn = QPushButton("Standard")
-        self.theme_btn.setMaximumWidth(80)
-        self.theme_btn.setToolTip("Color theme for different contrast needs")
-        self.theme_btn.clicked.connect(self.color_theme_cycled.emit)
-        self.toolbar.addWidget(self.theme_btn)
 
     def _add_voice_controls(self):
         """Add voice control group."""
@@ -205,29 +187,11 @@ class ToolbarManager(QObject):
         presentation_button.clicked.connect(self.presentation_mode_toggled.emit)
         self.toolbar.addWidget(presentation_button)
 
-        # Fullscreen button
-        fullscreen_button = QPushButton("Fullscreen")
-        fullscreen_button.setToolTip("Toggle fullscreen mode (F11)")
-        fullscreen_button.clicked.connect(self.fullscreen_toggled.emit)
-        self.toolbar.addWidget(fullscreen_button)
-
     def _create_control_group(self, label: str) -> QPushButton:
         """Create a styled group label for controls."""
         group_label = QPushButton(label)
         group_label.setEnabled(False)
-        group_label.setStyleSheet("""
-            QPushButton:disabled {
-                background: transparent;
-                border: none;
-                color: rgba(255, 255, 255, 0.6);
-                font-size: 10px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                padding: 2px 6px;
-                margin-right: 4px;
-            }
-        """)
+        group_label.setStyleSheet(StyleManager.get_toolbar_group_label_stylesheet())
         return group_label
 
     def _add_visual_separator(self, group_name: str):
@@ -306,30 +270,6 @@ class ToolbarManager(QObject):
 
         return preset_name
 
-    def cycle_color_theme(self) -> str:
-        """Cycle to the next color theme and return its name.
-
-        Returns:
-            The name of the new theme
-        """
-        self.current_theme_index = (self.current_theme_index + 1) % len(
-            self.color_themes
-        )
-        theme_name = self.color_themes[self.current_theme_index]
-
-        # Update button text
-        theme_display_names = {
-            "standard": "Std",
-            "high_contrast": "High",
-            "low_light": "Low",
-            "warm": "Warm",
-        }
-        display_name = theme_display_names.get(theme_name, theme_name.title())
-        if self.theme_btn:
-            self.theme_btn.setText(display_name)
-
-        return theme_name
-
     def set_font_preset_index(self, index: int):
         """Set the font preset index from settings."""
         self.current_font_preset_index = index
@@ -344,21 +284,6 @@ class ToolbarManager(QObject):
         display_name = preset_display_names.get(preset_name, preset_name.title())
         if self.font_preset_btn:
             self.font_preset_btn.setText(display_name)
-
-    def set_theme_index(self, index: int):
-        """Set the theme index from settings."""
-        self.current_theme_index = index
-        theme_name = self.color_themes[index]
-
-        theme_display_names = {
-            "standard": "Std",
-            "high_contrast": "High",
-            "low_light": "Low",
-            "warm": "Warm",
-        }
-        display_name = theme_display_names.get(theme_name, theme_name.title())
-        if self.theme_btn:
-            self.theme_btn.setText(display_name)
 
     def get_voice_detector(self):
         """Get the voice detector from the voice control widget."""

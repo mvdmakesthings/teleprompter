@@ -27,19 +27,10 @@ FONT_PRESETS = {
     "presentation": {"size": 48, "line_height": 1.7, "weight": "600"},
 }
 
-# Color themes for different contrast needs
-COLOR_THEMES = {
-    "standard": {"background": "#000000", "text": "#FFFFFF", "accent": "#4A90E2"},
-    "high_contrast": {"background": "#000000", "text": "#FFFFFF", "accent": "#FFFF00"},
-    "low_light": {"background": "#1A1A1A", "text": "#E8E8E8", "accent": "#6A9BD8"},
-    "warm": {"background": "#0F0A05", "text": "#FFF8F0", "accent": "#FFB366"},
-}
-
-# Current theme selection
-DEFAULT_THEME = "standard"
-BACKGROUND_COLOR = COLOR_THEMES[DEFAULT_THEME]["background"]
-TEXT_COLOR = COLOR_THEMES[DEFAULT_THEME]["text"]
-ACCENT_COLOR = COLOR_THEMES[DEFAULT_THEME]["accent"]
+# Standard teleprompter colors
+BACKGROUND_COLOR = "#000000"
+TEXT_COLOR = "#FFFFFF"
+ACCENT_COLOR = "#4A90E2"
 
 # Scrolling settings
 DEFAULT_SPEED = 0.3  # 1x speed

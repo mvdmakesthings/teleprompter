@@ -6,6 +6,7 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from . import config
+from .style_manager import StyleManager
 
 
 class ProgressBar(QWidget):
@@ -15,7 +16,7 @@ class ProgressBar(QWidget):
         super().__init__(parent)
         self.progress = 0.0  # 0.0 to 1.0
         self.setFixedHeight(4)
-        self.setStyleSheet("background: transparent;")
+        self.setStyleSheet(StyleManager.get_progress_bar_stylesheet())
 
     def set_progress(self, progress: float):
         """Set progress value (0.0 to 1.0)."""
@@ -138,7 +139,7 @@ class TeleprompterWidget(QWidget):
 
     def _setup_ui(self):
         """Set up the user interface with progress tracking."""
-        self.setStyleSheet(f"background-color: {config.BACKGROUND_COLOR};")
+        self.setStyleSheet(StyleManager.get_main_window_stylesheet())
 
         # Make widget focusable
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -154,22 +155,14 @@ class TeleprompterWidget(QWidget):
 
         # Web view for displaying HTML content
         self.web_view = QWebEngineView()
-        self.web_view.setStyleSheet(f"background-color: {config.BACKGROUND_COLOR};")
+        self.web_view.setStyleSheet(StyleManager.get_web_view_stylesheet())
         layout.addWidget(self.web_view)
 
         # Reading info overlay (bottom)
         self.info_overlay = QWidget()
-        self.info_overlay.setStyleSheet("""
-            QWidget {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 rgba(0, 0, 0, 0),
-                    stop: 0.7 rgba(0, 0, 0, 0),
-                    stop: 1 rgba(0, 0, 0, 120));
-                color: rgba(255, 255, 255, 180);
-                font-size: 11px;
-                padding: 8px;
-            }
-        """)
+        self.info_overlay.setStyleSheet(
+            StyleManager.get_teleprompter_info_overlay_stylesheet()
+        )
         self.info_overlay.setFixedHeight(40)
 
         info_layout = QHBoxLayout(self.info_overlay)
@@ -177,7 +170,7 @@ class TeleprompterWidget(QWidget):
 
         self.reading_info_label = QLabel("Ready to read")
         self.reading_info_label.setStyleSheet(
-            "background: transparent; color: rgba(255, 255, 255, 180);"
+            StyleManager.get_teleprompter_info_label_stylesheet()
         )
         info_layout.addWidget(self.reading_info_label)
 
@@ -185,7 +178,7 @@ class TeleprompterWidget(QWidget):
 
         self.progress_label = QLabel("0%")
         self.progress_label.setStyleSheet(
-            "background: transparent; color: rgba(255, 255, 255, 180);"
+            StyleManager.get_teleprompter_info_label_stylesheet()
         )
         info_layout.addWidget(self.progress_label)
 
@@ -599,60 +592,9 @@ class TeleprompterWidget(QWidget):
             """
             self.web_view.page().runJavaScript(js_code)
 
-    def set_color_theme(self, theme_name: str):
-        """Apply a color theme for different contrast needs."""
-        if theme_name in config.COLOR_THEMES:
-            theme = config.COLOR_THEMES[theme_name]
-
-            js_code = f"""
-            var styleId = 'teleprompter-theme-override';
-            var styleEl = document.getElementById(styleId);
-            if (!styleEl) {{
-                styleEl = document.createElement('style');
-                styleEl.id = styleId;
-                document.head.appendChild(styleEl);
-            }}
-
-            styleEl.textContent = `
-                body {{
-                    background-color: {theme["background"]} !important;
-                    color: {theme["text"]} !important;
-                }}
-                h1, h2, h3, h4, h5, h6 {{
-                    color: {theme["text"]} !important;
-                }}
-                a {{
-                    color: {theme["accent"]} !important;
-                    border-bottom-color: {theme["accent"]} !important;
-                }}
-                a:hover {{
-                    color: {theme["text"]} !important;
-                    border-bottom-color: {theme["text"]} !important;
-                }}
-                em {{
-                    color: {theme["accent"]} !important;
-                }}
-                blockquote {{
-                    border-left-color: {theme["accent"]} !important;
-                }}
-                hr {{
-                    background: linear-gradient(to right, transparent, {theme["accent"]}, transparent) !important;
-                }}
-            `;
-            """
-            self.web_view.page().runJavaScript(js_code)
-
-            # Update widget background to match
-            self.setStyleSheet(f"background-color: {theme['background']};")
-            self.web_view.setStyleSheet(f"background-color: {theme['background']};")
-
     def get_available_font_presets(self) -> list:
         """Get list of available font presets."""
         return list(config.FONT_PRESETS.keys())
-
-    def get_available_color_themes(self) -> list:
-        """Get list of available color themes."""
-        return list(config.COLOR_THEMES.keys())
 
     def _setup_focus_management(self):
         """Set up focus management and cursor auto-hide functionality."""
@@ -888,12 +830,7 @@ class TeleprompterWidget(QWidget):
         self.info_overlay.setFixedHeight(60)
 
         # Update font sizes for mobile
-        mobile_css = """
-            QLabel {
-                font-size: 14px;
-                padding: 12px;
-            }
-        """
+        mobile_css = StyleManager.get_mobile_info_overlay_stylesheet()
         self.info_overlay.setStyleSheet(self.info_overlay.styleSheet() + mobile_css)
 
     def _apply_tablet_layout(self):
@@ -903,12 +840,7 @@ class TeleprompterWidget(QWidget):
         self.info_overlay.setFixedHeight(50)
 
         # Tablet-specific styling
-        tablet_css = """
-            QLabel {
-                font-size: 13px;
-                padding: 10px;
-            }
-        """
+        tablet_css = StyleManager.get_tablet_info_overlay_stylesheet()
         self.info_overlay.setStyleSheet(self.info_overlay.styleSheet() + tablet_css)
 
     def _apply_desktop_layout(self):

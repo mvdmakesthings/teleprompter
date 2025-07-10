@@ -38,8 +38,6 @@ class MarkdownParser:
 
     def _generate_css(self) -> str:
         """Generate CSS for teleprompter styling with enhanced typography."""
-        theme = config.COLOR_THEMES[config.DEFAULT_THEME]
-
         return f"""
         <style>
             /* Reset and base typography */
@@ -48,8 +46,8 @@ class MarkdownParser:
             }}
 
             body {{
-                background-color: {theme["background"]};
-                color: {theme["text"]};
+                background-color: {config.BACKGROUND_COLOR};
+                color: {config.TEXT_COLOR};
                 font-family: {config.DEFAULT_FONT_FAMILY};
                 font-size: {config.DEFAULT_FONT_SIZE}px;
                 font-weight: 400;
@@ -68,7 +66,7 @@ class MarkdownParser:
 
             /* Enhanced heading typography */
             h1, h2, h3, h4, h5, h6 {{
-                color: {theme["text"]};
+                color: {config.TEXT_COLOR};
                 margin: 1.5em 0 0.8em 0;
                 font-weight: 600;
                 letter-spacing: -0.02em;
@@ -125,15 +123,15 @@ class MarkdownParser:
 
             /* Enhanced link styling */
             a {{
-                color: {theme["accent"]};
+                color: {config.ACCENT_COLOR};
                 text-decoration: none;
-                border-bottom: 1px solid {theme["accent"]};
+                border-bottom: 1px solid {config.ACCENT_COLOR};
                 transition: all 0.2s ease;
             }}
 
             a:hover {{
-                color: {theme["text"]};
-                border-bottom-color: {theme["text"]};
+                color: {config.TEXT_COLOR};
+                border-bottom-color: {config.TEXT_COLOR};
             }}
 
             /* Code styling */
@@ -156,7 +154,7 @@ class MarkdownParser:
 
             /* Blockquote styling */
             blockquote {{
-                border-left: 4px solid {theme["accent"]};
+                border-left: 4px solid {config.ACCENT_COLOR};
                 padding-left: 1.5em;
                 margin: 1.5em auto;
                 font-style: italic;
@@ -185,19 +183,19 @@ class MarkdownParser:
             /* Emphasis styling */
             strong {{
                 font-weight: 600;
-                color: {theme["text"]};
+                color: {config.TEXT_COLOR};
             }}
 
             em {{
                 font-style: italic;
-                color: {theme["accent"]};
+                color: {config.ACCENT_COLOR};
             }}
 
             /* Horizontal rule */
             hr {{
                 border: none;
                 height: 1px;
-                background: linear-gradient(to right, transparent, {theme["accent"]}, transparent);
+                background: linear-gradient(to right, transparent, {config.ACCENT_COLOR}, transparent);
                 margin: 2em auto;
                 max-width: 60%;
             }}
@@ -274,8 +272,6 @@ class MarkdownParser:
         self, error_message: str, error_type: str = "File Error"
     ) -> str:
         """Generate HTML for error display with retry options."""
-        theme = config.COLOR_THEMES[config.DEFAULT_THEME]
-
         return f"""
         <!DOCTYPE html>
         <html>
@@ -312,7 +308,7 @@ class MarkdownParser:
 
                 .error-message {{
                     font-size: 16px;
-                    color: {theme["text"]};
+                    color: {config.TEXT_COLOR};
                     margin-bottom: 24px;
                     line-height: 1.5;
                 }}
@@ -359,8 +355,6 @@ class MarkdownParser:
 
     def _generate_loading_html(self) -> str:
         """Generate HTML for loading state display."""
-        theme = config.COLOR_THEMES[config.DEFAULT_THEME]
-
         return f"""
         <!DOCTYPE html>
         <html>
@@ -393,7 +387,7 @@ class MarkdownParser:
 
                 .loading-text {{
                     font-size: 18px;
-                    color: {theme["text"]};
+                    color: {config.TEXT_COLOR};
                     margin-bottom: 8px;
                 }}
 
@@ -415,8 +409,6 @@ class MarkdownParser:
 
     def _generate_empty_state_html(self) -> str:
         """Generate HTML for empty state display when no file is loaded."""
-        theme = config.COLOR_THEMES[config.DEFAULT_THEME]
-
         return f"""
         <!DOCTYPE html>
         <html>
@@ -441,7 +433,7 @@ class MarkdownParser:
                 .empty-title {{
                     font-size: 28px;
                     font-weight: 600;
-                    color: {theme["text"]};
+                    color: {config.TEXT_COLOR};
                     margin-bottom: 16px;
                 }}
 
@@ -508,7 +500,7 @@ class MarkdownParser:
                     font-size: 16px;
                     font-weight: 600;
                     margin-bottom: 16px;
-                    color: {theme["accent"]};
+                    color: {config.ACCENT_COLOR};
                 }}
 
                 .shortcut-row {{

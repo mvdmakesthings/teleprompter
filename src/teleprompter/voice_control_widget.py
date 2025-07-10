@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
 )
 
 from . import config
+from .style_manager import StyleManager
 from .voice_detector import VoiceActivityDetector
 
 
@@ -41,21 +42,12 @@ class VoiceControlWidget(QWidget):
         # Use horizontal layout for toolbar integration
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        # layout.setSpacing(4)
 
         # Voice section label
         voice_label = QPushButton("Voice")
         voice_label.setEnabled(False)
-        voice_label.setStyleSheet("""
-            QPushButton:disabled {
-                background: transparent;
-                border: none;
-                color: #888888;
-                font-size: 11px;
-                font-weight: normal;
-                padding: 2px 4px;
-            }
-        """)
+        voice_label.setStyleSheet(StyleManager.get_voice_label_stylesheet())
         layout.addWidget(voice_label)
 
         # Voice detection toggle button with modern styling
@@ -103,117 +95,7 @@ class VoiceControlWidget(QWidget):
 
     def _apply_modern_styling(self):
         """Apply minimal flat styling to match the main application theme."""
-        self.setStyleSheet("""
-            /* Voice button styling */
-            QPushButton#voiceButton {
-                background-color: #333333;
-                border: 1px solid #4a4a4a;
-                border-radius: 4px;
-                color: white;
-                font-size: 12px;
-                min-width: 24px;
-                max-width: 24px;
-                min-height: 24px;
-                max-height: 24px;
-                padding: 0px;
-            }
-
-            QPushButton#voiceButton:hover {
-                background-color: #404040;
-                border-color: #5a5a5a;
-            }
-
-            /* Sensitivity slider styling */
-            QSlider#sensitivitySlider {
-                margin: 4px 0px;
-            }
-
-            QSlider#sensitivitySlider::groove:horizontal {
-                border: 1px solid #404040;
-                height: 4px;
-                background-color: #262626;
-                border-radius: 2px;
-            }
-
-            QSlider#sensitivitySlider::handle:horizontal {
-                background-color: #0078d4;
-                border: 1px solid #005a9e;
-                width: 12px;
-                height: 12px;
-                margin: -4px 0;
-                border-radius: 6px;
-            }
-
-            QSlider#sensitivitySlider::handle:horizontal:hover {
-                background-color: #106ebe;
-                border-color: #0052a0;
-            }
-
-            QSlider#sensitivitySlider::sub-page:horizontal {
-                background-color: #0078d4;
-                border: 1px solid #005a9e;
-                border-radius: 2px;
-            }
-
-            /* ComboBox styling */
-            QComboBox#deviceCombo {
-                background-color: #262626;
-                border: 1px solid #404040;
-                border-radius: 2px;
-                color: #e0e0e0;
-                padding: 2px 4px;
-                font-size: 12px;
-                min-height: 18px;
-            }
-
-            QComboBox#deviceCombo:hover {
-                border-color: #505050;
-                background-color: #2e2e2e;
-            }
-
-            QComboBox#deviceCombo:focus {
-                border-color: #0078d4;
-            }
-
-            QComboBox#deviceCombo::drop-down {
-                border: none;
-                width: 16px;
-            }
-
-            QComboBox#deviceCombo::down-arrow {
-                image: none;
-                width: 0px;
-                height: 0px;
-                border-left: 3px solid transparent;
-                border-right: 3px solid transparent;
-                border-top: 4px solid #aaaaaa;
-                margin-right: 4px;
-            }
-
-            QComboBox#deviceCombo QAbstractItemView {
-                background-color: #262626;
-                border: 1px solid #404040;
-                border-radius: 2px;
-                color: #e0e0e0;
-                selection-background-color: #0078d4;
-                selection-color: #ffffff;
-                padding: 1px;
-            }
-
-            QComboBox#deviceCombo QAbstractItemView::item {
-                padding: 4px 6px;
-                border: none;
-                border-radius: 1px;
-            }
-
-            QComboBox#deviceCombo QAbstractItemView::item:hover {
-                background-color: #333333;
-            }
-
-            QComboBox#deviceCombo QAbstractItemView::item:selected {
-                background-color: #0078d4;
-            }
-        """)
+        self.setStyleSheet(StyleManager.get_voice_control_stylesheet())
 
     def _populate_audio_devices(self):
         """Populate the audio device combo box."""
@@ -244,7 +126,7 @@ class VoiceControlWidget(QWidget):
 
         # Enable/disable controls
         self.sensitivity_slider.setEnabled(enabled)
-        self.device_combo.setEnabled(enabled and self.device_combo.count() > 0)
+        self.device_combo.setEnabled(self.device_combo.count() > 0)
 
         self._update_voice_button_style()
         self.voice_detection_enabled.emit(enabled)
@@ -253,65 +135,19 @@ class VoiceControlWidget(QWidget):
         """Update the voice button appearance based on state and activity."""
         if not self.voice_button.isChecked():
             # Disabled state - darker gray with flat styling
-            self.voice_button.setStyleSheet("""
-                QPushButton#voiceButton {
-                    background-color: #2a2a2a;
-                    border: 1px solid #404040;
-                    border-radius: 4px;
-                    color: #666666;
-                    font-size: 12px;
-                    min-width: 24px;
-                    max-width: 24px;
-                    min-height: 24px;
-                    max-height: 24px;
-                    padding: 0px;
-                }
-                QPushButton#voiceButton:hover {
-                    background-color: #333333;
-                    border-color: #505050;
-                    color: #888888;
-                }
-            """)
+            self.voice_button.setStyleSheet(
+                StyleManager.get_voice_button_disabled_stylesheet()
+            )
         elif self._is_speaking:
             # Active and speaking - green with flat styling
-            self.voice_button.setStyleSheet("""
-                QPushButton#voiceButton {
-                    background-color: #4CAF50;
-                    border: 1px solid #388E3C;
-                    border-radius: 4px;
-                    color: white;
-                    font-size: 12px;
-                    min-width: 24px;
-                    max-width: 24px;
-                    min-height: 24px;
-                    max-height: 24px;
-                    padding: 0px;
-                }
-                QPushButton#voiceButton:hover {
-                    background-color: #66BB6A;
-                    border-color: #43A047;
-                }
-            """)
+            self.voice_button.setStyleSheet(
+                StyleManager.get_voice_button_speaking_stylesheet()
+            )
         else:
             # Active but listening (no speech) - blue with flat styling
-            self.voice_button.setStyleSheet("""
-                QPushButton#voiceButton {
-                    background-color: #0078d4;
-                    border: 1px solid #005a9e;
-                    border-radius: 4px;
-                    color: white;
-                    font-size: 12px;
-                    min-width: 24px;
-                    max-width: 24px;
-                    min-height: 24px;
-                    max-height: 24px;
-                    padding: 0px;
-                }
-                QPushButton#voiceButton:hover {
-                    background-color: #106ebe;
-                    border-color: #0052a0;
-                }
-            """)
+            self.voice_button.setStyleSheet(
+                StyleManager.get_voice_button_listening_stylesheet()
+            )
 
     def _on_sensitivity_changed(self, value: int):
         """Handle sensitivity slider change."""
@@ -348,24 +184,9 @@ class VoiceControlWidget(QWidget):
     def _handle_error(self, error_message: str):
         """Handle voice detector errors."""
         # Show error by setting button to red with flat styling and updating tooltip
-        self.voice_button.setStyleSheet("""
-            QPushButton#voiceButton {
-                background-color: #f44336;
-                border: 1px solid #c62828;
-                border-radius: 4px;
-                color: white;
-                font-size: 12px;
-                min-width: 24px;
-                max-width: 24px;
-                min-height: 24px;
-                max-height: 24px;
-                padding: 0px;
-            }
-            QPushButton#voiceButton:hover {
-                background-color: #ef5350;
-                border-color: #d32f2f;
-            }
-        """)
+        self.voice_button.setStyleSheet(
+            StyleManager.get_voice_button_error_stylesheet()
+        )
         self.voice_button.setToolTip(f"Voice detection error: {error_message}")
 
         # Disable voice detection on error

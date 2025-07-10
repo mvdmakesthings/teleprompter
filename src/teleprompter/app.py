@@ -27,7 +27,6 @@ class TeleprompterApp(QMainWindow):
 
         # Initialize state
         self.current_font_preset_index = 0
-        self.current_theme_index = 0
 
         # Load preferences and setup UI
         self._load_preferences()
@@ -41,7 +40,6 @@ class TeleprompterApp(QMainWindow):
         preferences = self.settings_manager.load_preferences()
 
         self.current_font_preset_index = preferences.get("font_preset_index", 0)
-        self.current_theme_index = preferences.get("theme_index", 0)
 
         # Load window geometry
         geometry = preferences.get("geometry")
@@ -53,13 +51,11 @@ class TeleprompterApp(QMainWindow):
 
         # Set initial values in toolbar manager
         self.toolbar_manager.set_font_preset_index(self.current_font_preset_index)
-        self.toolbar_manager.set_theme_index(self.current_theme_index)
 
     def _save_preferences(self):
         """Save user preferences to settings."""
         preferences = {
             "font_preset_index": self.current_font_preset_index,
-            "theme_index": self.current_theme_index,
             "geometry": self.saveGeometry(),
         }
 
@@ -131,11 +127,9 @@ class TeleprompterApp(QMainWindow):
         self.toolbar_manager.speed_changed.connect(self._on_speed_spinner_changed)
         self.toolbar_manager.font_size_changed.connect(self._on_font_size_changed)
         self.toolbar_manager.font_preset_cycled.connect(self._cycle_font_preset)
-        self.toolbar_manager.color_theme_cycled.connect(self._cycle_color_theme)
         self.toolbar_manager.presentation_mode_toggled.connect(
             self._toggle_presentation_mode
         )
-        self.toolbar_manager.fullscreen_toggled.connect(self.toggle_fullscreen)
         self.toolbar_manager.previous_section_requested.connect(
             self._goto_previous_section
         )
@@ -169,18 +163,6 @@ class TeleprompterApp(QMainWindow):
         speed_down_action.setShortcut(Qt.Key.Key_Down)
         speed_down_action.triggered.connect(self._decrease_speed)
         self.addAction(speed_down_action)
-
-        # F11 for fullscreen
-        fullscreen_action = QAction("Fullscreen", self)
-        fullscreen_action.setShortcut(Qt.Key.Key_F11)
-        fullscreen_action.triggered.connect(self.toggle_fullscreen)
-        self.addAction(fullscreen_action)
-
-        # Escape to exit fullscreen
-        exit_fullscreen_action = QAction("Exit Fullscreen", self)
-        exit_fullscreen_action.setShortcut(Qt.Key.Key_Escape)
-        exit_fullscreen_action.triggered.connect(self.exit_fullscreen)
-        self.addAction(exit_fullscreen_action)
 
         # Ctrl+O for open file
         open_action = QAction("Open File", self)
@@ -245,26 +227,6 @@ class TeleprompterApp(QMainWindow):
         # Update the font size spinner to reflect the preset size
         preset_size = config.FONT_PRESETS[preset_name]["size"]
         self.toolbar_manager.update_font_size_display(preset_size)
-
-    def _cycle_color_theme(self):
-        """Cycle through color themes for different contrast needs."""
-        theme_name = self.toolbar_manager.cycle_color_theme()
-        self.current_theme_index = self.toolbar_manager.current_theme_index
-
-        # Apply the theme
-        self.teleprompter.set_color_theme(theme_name)
-
-    def toggle_fullscreen(self):
-        """Toggle fullscreen mode."""
-        if self.isFullScreen():
-            self.showNormal()
-        else:
-            self.showFullScreen()
-
-    def exit_fullscreen(self):
-        """Exit fullscreen mode."""
-        if self.isFullScreen():
-            self.showNormal()
 
     def _on_voice_detection_enabled(self, enabled: bool):
         """Handle voice detection enable/disable."""
