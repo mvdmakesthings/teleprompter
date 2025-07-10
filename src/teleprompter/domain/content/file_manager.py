@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 from ...core.protocols import ContentParserProtocol
 from ...infrastructure.logging import LoggerMixin
+from .file_watcher import FileWatcher
 
 
 class FileManager(QObject, LoggerMixin):
@@ -22,6 +23,7 @@ class FileManager(QObject, LoggerMixin):
     loading_finished = pyqtSignal()
     file_loaded = pyqtSignal(str, str, str)  # html_content, file_path, markdown_content
     error_occurred = pyqtSignal(str, str)  # error_message, error_type
+    file_reload_requested = pyqtSignal(str)  # file_path that needs reloading
 
     def __init__(self, parser: ContentParserProtocol, parent: QObject | None = None):
         """Initialize file manager.
@@ -33,6 +35,13 @@ class FileManager(QObject, LoggerMixin):
         super().__init__(parent)
         self._parser = parser
         self._supported_extensions = [".md", ".markdown", ".txt"]
+        self._current_file_path: str | None = None
+
+        # Initialize file watcher
+        self._file_watcher = FileWatcher(self)
+        self._file_watcher.file_changed.connect(self._on_watched_file_changed)
+        self._file_watcher.file_removed.connect(self._on_watched_file_removed)
+        self._file_watcher.watch_error.connect(self._on_watch_error)
 
     def load_file(self, file_path: str) -> str:
         """Load content from a file.
@@ -145,6 +154,10 @@ class FileManager(QObject, LoggerMixin):
             # Emit success signal
             self.file_loaded.emit(html_content, file_path, markdown_content)
 
+            # Store current file path and start watching
+            self._current_file_path = file_path
+            self._file_watcher.watch_file(file_path)
+
         except FileNotFoundError:
             self._emit_error(f"File not found: {file_path}", "File Not Found")
         except ValueError as e:
@@ -180,3 +193,66 @@ class FileManager(QObject, LoggerMixin):
             HTML content for empty state
         """
         return self._parser._generate_empty_state_html()
+
+    def get_current_file_path(self) -> str | None:
+        """Get the path of the currently loaded file.
+
+        Returns:
+            Path to the current file or None if no file is loaded
+        """
+        return self._current_file_path
+
+    def reload_current_file(self) -> None:
+        """Reload the currently loaded file.
+
+        This is typically called in response to file changes detected by the watcher.
+        """
+        if self._current_file_path:
+            self.log_info(f"Reloading file: {self._current_file_path}")
+            self._load_file_async(self._current_file_path)
+
+    def stop_watching(self) -> None:
+        """Stop watching the current file."""
+        self._file_watcher.stop_watching()
+        self._current_file_path = None
+
+    def set_auto_reload_enabled(self, enabled: bool) -> None:
+        """Enable or disable automatic file reloading.
+
+        Args:
+            enabled: True to enable auto-reload, False to disable
+        """
+        if not enabled:
+            self._file_watcher.stop_watching()
+        elif enabled and self._current_file_path:
+            self._file_watcher.watch_file(self._current_file_path)
+
+    def _on_watched_file_changed(self, file_path: str) -> None:
+        """Handle file change notification from watcher.
+
+        Args:
+            file_path: Path to the changed file
+        """
+        self.log_info(f"File changed: {file_path}")
+        self.file_reload_requested.emit(file_path)
+
+    def _on_watched_file_removed(self, file_path: str) -> None:
+        """Handle file removal notification from watcher.
+
+        Args:
+            file_path: Path to the removed file
+        """
+        self.log_warning(f"Watched file was removed: {file_path}")
+        self._emit_error(
+            f"The file '{Path(file_path).name}' was deleted or moved.", "File Removed"
+        )
+        self._current_file_path = None
+
+    def _on_watch_error(self, error_message: str) -> None:
+        """Handle watch error from file watcher.
+
+        Args:
+            error_message: Error message from the watcher
+        """
+        self.log_error(f"File watch error: {error_message}")
+        # Don't show dialog for watch errors, just log them

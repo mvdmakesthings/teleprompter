@@ -1,14 +1,10 @@
 """Basic unit tests for the application that don't require full Qt setup."""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from src.teleprompter.core.container import ServiceContainer, configure_container
 from src.teleprompter.core.protocols import (
     ContentParserProtocol,
-    FileLoaderProtocol,
-    SettingsStorageProtocol,
-    StyleProviderProtocol,
 )
 
 

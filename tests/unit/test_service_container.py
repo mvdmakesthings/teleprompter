@@ -1,6 +1,7 @@
 """Unit tests for ServiceContainer."""
 
 from unittest.mock import Mock
+
 import pytest
 
 from src.teleprompter.core.container import ServiceContainer

@@ -4,9 +4,11 @@ from src.teleprompter.core.exceptions import (
     AudioDeviceError,
     ContentLoadError,
     ErrorRecovery,
-    FileNotFoundError as TeleprompterFileNotFoundError,
     InvalidFileFormatError,
     TeleprompterError,
+)
+from src.teleprompter.core.exceptions import (
+    FileNotFoundError as TeleprompterFileNotFoundError,
 )
 
 

@@ -1,11 +1,11 @@
 """Unit tests for ToolbarManager."""
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
 from PyQt6.QtWidgets import QApplication, QMainWindow, QToolBar
-from PyQt6.QtCore import Qt, QTimer
 
-from src.teleprompter.ui.managers.toolbar_manager import ToolbarManager, ModernToolBar
+from src.teleprompter.ui.managers.toolbar_manager import ModernToolBar, ToolbarManager
 
 
 class TestToolbarManager:

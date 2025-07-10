@@ -1,7 +1,5 @@
 """Unit tests for scroll controller."""
 
-from unittest.mock import Mock, patch
-
 import pytest
 
 from src.teleprompter.domain.reading.controller import ScrollController

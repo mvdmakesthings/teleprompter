@@ -33,6 +33,9 @@ class SettingsManager:
         if "speed" not in preferences:
             preferences["speed"] = DEFAULT_SPEED
 
+        # Load auto-reload setting (default: enabled)
+        preferences["auto_reload"] = self.settings.value("auto_reload", True, type=bool)
+
         return preferences
 
     def save_preferences(self, preferences: dict):
@@ -46,6 +49,9 @@ class SettingsManager:
 
         if "speed" in preferences:
             self.settings.setValue("scroll_speed", preferences["speed"])
+
+        if "auto_reload" in preferences:
+            self.settings.setValue("auto_reload", preferences["auto_reload"])
 
     # SettingsStorageProtocol implementation
     def get(self, key: str, default: Any = None) -> Any:
@@ -63,3 +69,22 @@ class SettingsManager:
     def clear(self) -> None:
         """Clear all settings."""
         self.settings.clear()
+
+    def toggle_auto_reload(self) -> bool:
+        """Toggle the auto-reload setting and return the new state.
+
+        Returns:
+            bool: The new auto-reload state
+        """
+        current_state = self.get("auto_reload", True)
+        new_state = not current_state
+        self.set("auto_reload", new_state)
+        return new_state
+
+    def is_auto_reload_enabled(self) -> bool:
+        """Check if auto-reload is enabled.
+
+        Returns:
+            bool: True if auto-reload is enabled
+        """
+        return self.get("auto_reload", True)

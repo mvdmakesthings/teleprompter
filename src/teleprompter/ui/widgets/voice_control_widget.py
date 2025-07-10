@@ -16,14 +16,43 @@ from ..managers.style_manager import StyleManager
 
 
 class VoiceControlWidget(QWidget):
-    """Compact voice control widget for toolbar integration."""
+    """Compact voice control widget for toolbar integration.
+
+    This widget provides voice activity detection controls in a compact format
+    suitable for integration into toolbars. It includes a voice detection toggle
+    button, sensitivity slider, and microphone selection dropdown.
+
+    The widget provides visual feedback through button color changes:
+    - Gray: Voice detection disabled
+    - Blue: Listening for speech (voice detection active)
+    - Green: Speech currently detected
+    - Red: Error state (microphone access failed)
+
+    Signals:
+        voice_detection_enabled (bool): Emitted when voice detection is toggled.
+        sensitivity_changed (float): Emitted when sensitivity level changes.
+
+    Attributes:
+        voice_detector: VoiceActivityDetector instance for audio processing.
+        voice_button: Toggle button for enabling/disabling voice detection.
+        sensitivity_slider: Slider for adjusting detection sensitivity (0.0-3.0).
+        device_combo: ComboBox for selecting audio input device.
+    """
 
     # Signals
     voice_detection_enabled = pyqtSignal(bool)
     sensitivity_changed = pyqtSignal(float)
 
     def __init__(self, parent=None):
-        """Initialize the voice control widget."""
+        """Initialize the voice control widget.
+
+        Args:
+            parent: Parent widget, typically the main toolbar.
+
+        Note:
+            The widget automatically populates available audio devices
+            and applies application styling on initialization.
+        """
         super().__init__(parent)
 
         # Voice detector instance
@@ -41,7 +70,18 @@ class VoiceControlWidget(QWidget):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Set up the modern, compact user interface."""
+        """Set up the modern, compact user interface.
+
+        Creates and configures the voice control UI components including:
+        - Voice detection toggle button with visual state indicators
+        - Sensitivity adjustment slider (0.0-3.0 range)
+        - Audio device selection dropdown
+        - Proper layout and sizing for toolbar integration
+
+        Note:
+            All components are styled to match the application theme
+            and sized appropriately for compact toolbar display.
+        """
         # Use horizontal layout for toolbar integration
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -99,11 +139,25 @@ class VoiceControlWidget(QWidget):
         self._on_voice_toggled(self.voice_button.isChecked())
 
     def _apply_modern_styling(self):
-        """Apply minimal flat styling to match the main application theme."""
+        """Apply minimal flat styling to match the main application theme.
+
+        Applies consistent styling from StyleManager to ensure the voice
+        control widget integrates seamlessly with the application's
+        visual design language.
+        """
         self.setStyleSheet(StyleManager().get_voice_control_stylesheet())
 
     def _populate_audio_devices(self):
-        """Populate the audio device combo box."""
+        """Populate the audio device combo box with available microphones.
+
+        Queries the voice detector for available audio input devices and
+        populates the dropdown. If no devices are found, displays an
+        appropriate message and disables the control.
+
+        Note:
+            This method is called during initialization and when the
+            device list needs to be refreshed.
+        """
         devices = self.voice_detector.get_audio_devices()
         self.device_combo.clear()
 
@@ -119,7 +173,16 @@ class VoiceControlWidget(QWidget):
             self.device_combo.addItem(name, device["index"])
 
     def _on_voice_toggled(self, enabled: bool):
-        """Handle voice detection toggle."""
+        """Handle voice detection toggle button state changes.
+
+        Args:
+            enabled: True if voice detection should be enabled, False to disable.
+
+        Note:
+            When enabling, the widget enters a loading state while requesting
+            microphone access. Controls are enabled/disabled appropriately
+            based on the state and device availability.
+        """
         if enabled:
             # Show loading state immediately
             self._is_loading = True
@@ -145,7 +208,18 @@ class VoiceControlWidget(QWidget):
         self.voice_detection_enabled.emit(enabled)
 
     def _update_voice_button_style(self):
-        """Update the voice button appearance based on state and activity."""
+        """Update the voice button appearance based on state and activity.
+
+        Updates the button's visual appearance to reflect current state:
+        - Gray: Voice detection disabled
+        - Loading: Hourglass emoji while requesting microphone access
+        - Blue: Listening for speech (detection active but no speech)
+        - Green: Speech currently detected
+        - Red: Error state (microphone access failed)
+
+        The styling provides immediate visual feedback to users about
+        the current voice detection status.
+        """
         if not self.voice_button.isChecked():
             # Disabled state - darker gray with flat styling
             self.voice_button.setText("🎤")

@@ -12,10 +12,6 @@ from teleprompter.core.configuration import (
     get_config,
     setup_config,
 )
-from teleprompter.core.exceptions import (
-    InvalidConfigurationError,
-    MissingConfigurationError,
-)
 
 
 class TestConfigurationManager:

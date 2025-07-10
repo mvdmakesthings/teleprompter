@@ -3,13 +3,12 @@
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 from PyQt6.QtWidgets import QApplication
 
 from src.teleprompter.domain.content.file_manager import FileManager
-from src.teleprompter.core.protocols import ContentParserProtocol
 
 
 class TestFileManager:

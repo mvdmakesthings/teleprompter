@@ -1,10 +1,6 @@
 """Unit tests for logging infrastructure."""
 
 import logging
-import os
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 import time
 
 import pytest
@@ -15,7 +11,6 @@ from teleprompter.infrastructure.logging import (
     TeleprompterLogger,
     get_logger,
     log_method_calls,
-    log_performance,
 )
 
 

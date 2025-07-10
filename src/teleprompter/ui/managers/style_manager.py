@@ -9,10 +9,35 @@ _style_manager_instance = None
 
 
 class StyleManager:
-    """Manages application styling and themes."""
+    """Manages application styling, themes, and CSS generation.
+
+    The StyleManager centralizes all styling concerns for the teleprompter
+    application, providing consistent Material Design-inspired themes and
+    CSS stylesheets for different UI components.
+
+    Key responsibilities:
+    - Generate CSS stylesheets for different widget types
+    - Manage theme variables and color schemes
+    - Provide consistent styling across the application
+    - Support for responsive design and accessibility
+
+    Attributes:
+        _current_theme (str): Currently active theme name.
+        _theme_variables (dict): Theme-specific variables like colors and fonts.
+
+    Note:
+        The StyleManager follows a singleton-like pattern for consistent
+        styling across the application. All stylesheet methods return
+        CSS strings that can be applied directly to Qt widgets.
+    """
 
     def __init__(self):
-        """Initialize the style manager."""
+        """Initialize the style manager with default theme settings.
+
+        Sets up the default theme variables including background colors,
+        text colors, font families, and other styling parameters from
+        the application configuration.
+        """
         self._current_theme = "default"
         self._theme_variables = {
             "background_color": config.BACKGROUND_COLOR,
@@ -22,10 +47,22 @@ class StyleManager:
         }
 
     def get_application_stylesheet(self) -> str:
-        """Get the complete application stylesheet.
+        """Get the complete application-wide stylesheet.
+
+        Generates a comprehensive CSS stylesheet for the main application
+        window and common UI components including:
+        - Main window background and colors
+        - Enhanced toolbar with Material Design styling
+        - Consistent spacing, borders, and typography
+        - Hover and focus states for interactive elements
 
         Returns:
-            CSS stylesheet as string
+            str: Complete CSS stylesheet ready for application to QMainWindow.
+
+        Note:
+            This stylesheet provides the base styling that applies to the
+            entire application. Individual widgets may override specific
+            styles using their own stylesheet methods.
         """
         return f"""
             /* Main window styling */

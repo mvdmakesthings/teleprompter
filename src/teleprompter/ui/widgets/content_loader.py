@@ -14,7 +14,26 @@ from .javascript_manager import JavaScriptManager
 
 
 class ContentLoadResult:
-    """Result of content loading operation."""
+    """Encapsulates the result of a content loading operation.
+
+    This class provides a structured way to return loading results
+    with all relevant information about the processed content.
+
+    Attributes:
+        success (bool): Whether the loading operation succeeded.
+        html_content (str): Processed HTML content ready for display.
+        word_count (int): Total number of words in the content.
+        sections (list): List of content sections/headings for navigation.
+        error_message (str): Error description if loading failed.
+
+    Example:
+        result = ContentLoadResult(
+            success=True,
+            html_content="<h1>Title</h1><p>Content...</p>",
+            word_count=150,
+            sections=["Introduction", "Main Content"]
+        )
+    """
 
     def __init__(
         self,
@@ -32,7 +51,34 @@ class ContentLoadResult:
 
 
 class ContentLoader(QObject):
-    """Handles content loading and processing for the teleprompter."""
+    """Handles asynchronous content loading and processing for the teleprompter.
+
+    The ContentLoader orchestrates the complete content loading pipeline,
+    from file reading through parsing to final HTML generation ready for
+    display in the teleprompter widget.
+
+    Processing Pipeline:
+    1. File loading via FileManager
+    2. Content parsing (Markdown, text, etc.) to HTML
+    3. HTML analysis for sections and word counting
+    4. Reading metrics calculation and setup
+    5. Result packaging and signal emission
+
+    The loader operates asynchronously to prevent UI blocking during
+    file operations and provides progress signals for UI feedback.
+
+    Signals:
+        content_loaded (ContentLoadResult): Emitted when loading completes.
+        loading_started: Emitted when loading operation begins.
+        loading_finished: Emitted when loading operation ends.
+
+    Attributes:
+        _file_manager: Service for file I/O operations.
+        _parser: Service for content parsing and conversion.
+        _analyzer: Service for HTML analysis and section extraction.
+        _metrics_service: Service for reading time calculations.
+        _loading: Flag indicating if loading is in progress.
+    """
 
     # Signals
     content_loaded = pyqtSignal(ContentLoadResult)
@@ -55,10 +101,25 @@ class ContentLoader(QObject):
         self._loading = False
 
     def load_file(self, file_path: str) -> None:
-        """Load content from a file.
+        """Load and process content from a file asynchronously.
+
+        Initiates the complete content loading pipeline for the specified
+        file. The operation runs asynchronously to prevent UI blocking,
+        with progress signals emitted at key stages.
 
         Args:
-            file_path: Path to the file to load
+            file_path (str): Absolute or relative path to the file to load.
+                Supports various formats including Markdown, HTML, and text files.
+
+        Note:
+            If a loading operation is already in progress, this call is ignored
+            to prevent overlapping operations. The loading process includes
+            file reading, content parsing, HTML analysis, and metrics calculation.
+
+        Signals Emitted:
+            - loading_started: When the operation begins
+            - content_loaded: When processing completes (with results)
+            - loading_finished: When the operation ends
         """
         if self._loading:
             return
@@ -192,11 +253,18 @@ class WebViewContentManager:
         """
         self._sections = sections
 
+        # Clear any cached content first
+        self._web_view.page().profile().clearHttpCache()
+
         # Set HTML content with proper encoding
-        # Use setContent to ensure proper MIME type
+        # Use a unique base URL to prevent caching issues
+        import time
+
         from PyQt6.QtCore import QUrl
 
-        self._web_view.setHtml(html_content, QUrl())
+        # Create a unique URL to bypass any potential caching
+        base_url = QUrl(f"local://content/{int(time.time() * 1000)}")
+        self._web_view.setHtml(html_content, base_url)
 
         # Inject scripts after content loads
         self._web_view.loadFinished.connect(self._on_load_finished)

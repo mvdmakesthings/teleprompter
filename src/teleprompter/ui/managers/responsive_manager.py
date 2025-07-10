@@ -9,13 +9,42 @@ from ...core import config
 
 
 class ResponsiveLayoutManager(QObject):
-    """Manages responsive layout changes based on screen size."""
+    """Manages responsive layout adaptations based on screen size and device type.
+
+    This manager implements responsive design principles for the teleprompter
+    application, automatically adjusting layouts, sizing, and behavior based
+    on the current screen dimensions and device category.
+
+    Device Categories:
+    - mobile: ≤ 768px width - Simplified UI, larger touch targets
+    - tablet: ≤ 1024px width - Medium density UI, touch-friendly
+    - desktop: ≤ 1440px width - Standard desktop interface
+    - large_desktop: > 1440px width - Spacious layout with extra features
+
+    The manager provides callbacks for layout changes and maintains
+    device-specific settings for optimal user experience across
+    different screen sizes and input methods.
+
+    Signals:
+        category_changed (str): Emitted when device category changes.
+
+    Attributes:
+        _current_category (str): Current active device category.
+        _callbacks (dict): Registered callbacks for each device category.
+    """
 
     # Signal emitted when device category changes
     category_changed = pyqtSignal(str)
 
     def __init__(self, parent=None):
-        """Initialize the responsive layout manager."""
+        """Initialize the responsive layout manager.
+
+        Args:
+            parent: Parent QObject for proper Qt object hierarchy.
+
+        Sets up the manager with desktop as the default category and
+        initializes empty callback lists for all device categories.
+        """
         super().__init__(parent)
         self._current_category = "desktop"
         self._callbacks: dict[str, list[Callable]] = {
@@ -28,11 +57,20 @@ class ResponsiveLayoutManager(QObject):
     def get_device_category(self, width: int) -> str:
         """Determine device category based on screen width.
 
+        Uses predefined breakpoints to categorize devices for appropriate
+        UI adaptations. The categorization follows common responsive design
+        patterns and ensures optimal user experience across device types.
+
         Args:
-            width: Screen width in pixels
+            width (int): Screen width in pixels.
 
         Returns:
-            Device category string
+            str: Device category - one of 'mobile', 'tablet', 'desktop',
+                or 'large_desktop'.
+
+        Note:
+            Breakpoints are defined in the application configuration and
+            can be adjusted for different responsive behavior requirements.
         """
         if width <= config.BREAKPOINTS["mobile"]:
             return "mobile"
@@ -44,11 +82,28 @@ class ResponsiveLayoutManager(QObject):
             return "large_desktop"
 
     def register_layout_callback(self, category: str, callback: Callable) -> None:
-        """Register a callback for when a specific layout category is active.
+        """Register a callback function for specific device category activation.
+
+        Allows components to register functions that should be called when
+        the application switches to a particular device category. This enables
+        dynamic layout adjustments and feature toggling based on screen size.
 
         Args:
-            category: Device category ('mobile', 'tablet', 'desktop', 'large_desktop')
-            callback: Function to call when this category becomes active
+            category (str): Target device category - must be one of:
+                'mobile', 'tablet', 'desktop', or 'large_desktop'.
+            callback (Callable): Function to call when the category becomes active.
+                Should accept no arguments and handle layout changes internally.
+
+        Example:
+            def setup_mobile_layout():
+                # Adjust UI for mobile devices
+                pass
+
+            manager.register_layout_callback('mobile', setup_mobile_layout)
+
+        Note:
+            Callbacks are executed immediately when the device category changes.
+            Multiple callbacks can be registered for the same category.
         """
         if category in self._callbacks:
             self._callbacks[category].append(callback)

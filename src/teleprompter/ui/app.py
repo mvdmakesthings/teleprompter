@@ -12,11 +12,12 @@ from ..core.protocols import (
     StyleProviderProtocol,
 )
 from ..domain.content.file_manager import FileManager
+from ..infrastructure.logging import LoggerMixin
 from .managers.toolbar_manager import ToolbarManager
 from .widgets.teleprompter_widget import TeleprompterWidget
 
 
-class TeleprompterApp(QMainWindow):
+class TeleprompterApp(QMainWindow, LoggerMixin):
     """Main application window."""
 
     def __init__(self, container: ServiceContainer):
@@ -92,6 +93,10 @@ class TeleprompterApp(QMainWindow):
         """Handle application close event to save preferences."""
         self._save_preferences()
 
+        # Stop file watching
+        if hasattr(self, "file_manager"):
+            self.file_manager.stop_watching()
+
         # Stop voice detection if active
         if (
             hasattr(self, "toolbar_manager")
@@ -158,6 +163,7 @@ class TeleprompterApp(QMainWindow):
         self.file_manager.loading_finished.connect(self._on_loading_finished)
         self.file_manager.file_loaded.connect(self._on_file_loaded)
         self.file_manager.error_occurred.connect(self._on_file_error)
+        self.file_manager.file_reload_requested.connect(self._on_file_reload_requested)
 
         # Connect toolbar manager signals
         self.toolbar_manager.open_file_requested.connect(
@@ -229,6 +235,37 @@ class TeleprompterApp(QMainWindow):
         """Handle file loading error from file manager."""
         # File manager handles showing error dialog, we just need to ensure focus
         self.teleprompter.ensure_focus()
+
+    def _on_file_reload_requested(self, file_path: str):
+        """Handle file reload request when the file has been modified.
+
+        Args:
+            file_path: Path to the file that needs reloading
+        """
+        # Check if auto-reload is enabled (we'll add this preference later)
+        auto_reload_enabled = self.settings_manager.get("auto_reload", True)
+
+        if not auto_reload_enabled:
+            self.log_info(f"Auto-reload disabled, ignoring file change: {file_path}")
+            return
+
+        self.log_info(f"Processing file reload request: {file_path}")
+
+        # Reload the file content
+        try:
+            # Load the new content
+            markdown_content = self.file_manager.load_file(file_path)
+            self.log_debug(f"Loaded markdown content, length: {len(markdown_content)}")
+
+            html_content = self.file_manager._parser.parse_content(markdown_content)
+            self.log_debug(f"Parsed to HTML, length: {len(html_content)}")
+
+            # Use the teleprompter's reload method that preserves position
+            self.teleprompter.reload_content_with_state(html_content)
+
+            self.log_info(f"File reloaded successfully: {file_path}")
+        except Exception as e:
+            self.log_error(f"Failed to reload file {file_path}: {str(e)}")
 
     def _reset_and_focus(self):
         """Reset teleprompter and ensure focus."""

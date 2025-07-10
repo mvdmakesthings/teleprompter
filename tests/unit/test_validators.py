@@ -2,7 +2,6 @@
 
 import pytest
 
-from teleprompter.core.exceptions import InvalidConfigurationError
 from teleprompter.utils.validators import (
     TeleprompterConfigValidator,
     ValidationError,

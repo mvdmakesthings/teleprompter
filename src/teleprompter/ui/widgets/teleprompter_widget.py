@@ -63,7 +63,47 @@ class ProgressBar(QWidget):
 
 
 class TeleprompterWidget(QWidget):
-    """Modular teleprompter widget with improved architecture."""
+    """Modular teleprompter widget with improved architecture.
+
+    This is the main teleprompter display widget that provides a comprehensive
+    teleprompting experience including content display, auto-scrolling, voice
+    control, progress tracking, and responsive design capabilities.
+
+    The widget integrates multiple components:
+    - Web view for HTML content display with custom CSS styling
+    - Scroll controller for smooth, customizable auto-scrolling
+    - Reading metrics for time estimation and progress tracking
+    - Voice activity detection for hands-free operation
+    - Responsive layout management for different screen sizes
+    - JavaScript integration for advanced content manipulation
+
+    Key Features:
+    - Smooth auto-scrolling with adjustable speed (0.05x - 5.0x)
+    - Voice-activated scrolling with customizable sensitivity
+    - Manual navigation with mouse wheel and keyboard shortcuts
+    - Section/chapter navigation for long documents
+    - Reading progress tracking and time estimation
+    - Responsive design for mobile, tablet, and desktop
+    - Font size adjustment with optimal typography scaling
+    - Full-screen support for distraction-free reading
+
+    Signals:
+        speed_changed (float): Emitted when scroll speed changes.
+        voice_activity_changed (bool): Emitted when voice activity state changes.
+        progress_changed (float): Emitted when reading progress changes.
+        reading_stats_changed (dict): Emitted when reading statistics update.
+        file_loaded (str): Emitted when a new file is loaded.
+        error_occurred (str): Emitted when an error occurs.
+
+    Attributes:
+        web_view: QWebEngineView for displaying HTML content.
+        content_loader: Manages content loading and processing.
+        js_manager: Handles JavaScript execution and DOM manipulation.
+        responsive_manager: Manages responsive layout adaptations.
+        keyboard_registry: Handles keyboard shortcuts and commands.
+        scroll_controller: Manages auto-scrolling behavior.
+        reading_metrics: Tracks reading progress and time estimation.
+    """
 
     # Signals
     speed_changed = pyqtSignal(float)
@@ -74,7 +114,16 @@ class TeleprompterWidget(QWidget):
     error_occurred = pyqtSignal(str)
 
     def __init__(self, parent=None):
-        """Initialize the teleprompter widget."""
+        """Initialize the teleprompter widget.
+
+        Args:
+            parent: Parent widget, typically the main application window.
+
+        Note:
+            The widget automatically sets up all required services, UI components,
+            managers, and signal connections. It initializes with default settings
+            from the configuration and prepares for content loading.
+        """
         super().__init__(parent)
 
         # Initialize components
@@ -101,7 +150,16 @@ class TeleprompterWidget(QWidget):
         self.content_sections = []
 
     def _setup_services(self):
-        """Initialize services from dependency container."""
+        """Initialize services from dependency container.
+
+        Retrieves and initializes all required services from the dependency
+        injection container, including file management, content parsing,
+        HTML analysis, scroll control, and reading metrics.
+
+        Note:
+            This method establishes the service layer dependencies required
+            for the teleprompter widget to function properly.
+        """
         container = get_container()
 
         # Core services
@@ -112,7 +170,17 @@ class TeleprompterWidget(QWidget):
         self.reading_metrics = container.get(ReadingMetricsProtocol)
 
     def _setup_ui_components(self):
-        """Initialize UI components."""
+        """Initialize UI components.
+
+        Creates and configures the core UI elements including:
+        - QWebEngineView for HTML content display with disabled context menu
+        - Progress bar for visual reading progress indication
+        - Info overlay for displaying reading statistics and section information
+        - Reading info label for word count and time estimates
+
+        All components are styled according to the application theme and
+        configured for optimal teleprompter display.
+        """
         # Web view for content display
         self.web_view = QWebEngineView()
         self.web_view.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
@@ -140,7 +208,20 @@ class TeleprompterWidget(QWidget):
         )
 
     def _setup_managers(self):
-        """Initialize manager objects."""
+        """Initialize manager objects and create component instances.
+
+        Creates and configures all necessary manager components for the
+        teleprompter widget including:
+        - Content loaders for file and text processing
+        - Web view content manager for HTML manipulation
+        - Keyboard command registry for shortcuts
+        - Responsive layout manager for adaptive UI
+        - Style manager for consistent theming
+        - JavaScript manager for advanced DOM operations
+
+        These managers work together to provide the complete teleprompter
+        functionality and user experience.
+        """
         # Content management
         self.content_loader = ContentLoader(
             self.file_manager,
@@ -160,7 +241,18 @@ class TeleprompterWidget(QWidget):
         self.js_manager = JavaScriptManager()
 
     def _setup_timers(self):
-        """Initialize timers."""
+        """Initialize timer components for widget functionality.
+
+        Creates and configures multiple QTimer instances for different
+        aspects of the teleprompter operation:
+
+        - scroll_timer: Controls the smooth auto-scrolling at the configured FPS
+        - cursor_timer: Handles automatic cursor hiding during inactive periods
+        - progress_timer: Updates the reading progress display in real-time
+
+        Each timer is configured with appropriate intervals and behaviors
+        to ensure smooth user experience and optimal performance.
+        """
         # Scroll timer
         self.scroll_timer = QTimer()
         self.scroll_timer.timeout.connect(self._perform_scroll_step)
@@ -179,7 +271,19 @@ class TeleprompterWidget(QWidget):
         )  # 20 updates per second for smoother progress
 
     def _setup_ui(self):
-        """Set up the user interface."""
+        """Set up the complete user interface layout and styling.
+
+        Configures the main widget styling, focus policies, and mouse tracking.
+        Creates and arranges the layout hierarchy consisting of:
+
+        1. Progress bar at the top for visual reading progress
+        2. Central web view for content display
+        3. Info overlay at the bottom with reading statistics
+
+        The layout uses zero margins and spacing for a clean, full-screen
+        appearance suitable for teleprompting. All components are styled
+        consistently using the StyleManager.
+        """
         self.setStyleSheet(StyleManager().get_main_window_stylesheet())
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
@@ -205,7 +309,18 @@ class TeleprompterWidget(QWidget):
         layout.addWidget(self.info_overlay)
 
     def _connect_signals(self):
-        """Connect internal signals."""
+        """Connect internal component signals to their respective handlers.
+
+        Establishes the signal-slot connections between different components
+        to ensure proper communication and data flow. Connected signals include:
+
+        - Content loader signals for tracking loading states and content updates
+        - Web view signals for detecting when content is fully rendered
+        - Internal timer and UI update signals for responsive user experience
+
+        This method centralizes all signal connections for maintainability
+        and clear understanding of component interactions.
+        """
         # Content loader signals
         self.content_loader.content_loaded.connect(self._on_content_loaded)
         self.content_loader.loading_started.connect(self._on_loading_started)
@@ -217,22 +332,43 @@ class TeleprompterWidget(QWidget):
     # Properties for backward compatibility
     @property
     def current_speed(self):
-        """Get current scrolling speed."""
+        """Get the current scrolling speed multiplier.
+
+        Returns:
+            float: Current scroll speed as a multiplier (0.05 to 5.0),
+                where 1.0 represents normal speed.
+        """
         return self.scroll_controller.get_speed()
 
     @current_speed.setter
     def current_speed(self, value):
-        """Set scrolling speed."""
+        """Set the scrolling speed multiplier.
+
+        Args:
+            value (float): Speed multiplier to set (0.05 to 5.0).
+                Values below 0.05 will be clamped to minimum,
+                values above 5.0 will be clamped to maximum.
+        """
         self.scroll_controller.set_speed(value)
 
     @property
     def is_playing(self):
-        """Check if currently playing."""
+        """Check if auto-scrolling is currently active.
+
+        Returns:
+            bool: True if the teleprompter is actively scrolling content,
+                False if paused or stopped.
+        """
         return self.scroll_controller.is_scrolling()
 
     @is_playing.setter
     def is_playing(self, value):
-        """Set playing state."""
+        """Set the auto-scrolling state.
+
+        Args:
+            value (bool): True to start scrolling, False to stop/pause.
+                Starting scrolling will also begin reading metrics tracking.
+        """
         if value:
             self.scroll_controller.start_scrolling()
         else:
@@ -303,12 +439,38 @@ class TeleprompterWidget(QWidget):
 
     # Public API methods
     def load_content(self, html_content: str):
-        """Load HTML content into the web view."""
+        """Load HTML content directly into the teleprompter web view.
+
+        Args:
+            html_content (str): Raw HTML content to display. Should be
+                well-formed HTML with proper structure and styling.
+
+        Note:
+            This method bypasses file loading and directly processes
+            the provided HTML content. The content will be analyzed
+            for reading metrics and section navigation.
+        """
         self.current_content = html_content
         self.content_loader.load_text(html_content, is_html=True)
 
     def load_file(self, file_path: str):
-        """Load content from a file."""
+        """Load and display content from a file.
+
+        Args:
+            file_path (str): Path to the file to load. Supports various
+                formats including text, markdown, HTML, and other
+                document types based on the configured file manager.
+
+        Raises:
+            FileNotFoundError: If the specified file does not exist.
+            PermissionError: If the file cannot be read due to permissions.
+            UnicodeDecodeError: If the file encoding is not supported.
+
+        Note:
+            The file content will be processed through the content parser
+            and analyzer to extract sections, estimate reading time, and
+            prepare for optimal teleprompter display.
+        """
         self.content_loader.load_file(file_path)
 
     def play(self):
@@ -337,7 +499,18 @@ class TeleprompterWidget(QWidget):
         self.set_scroll_speed(current + delta)
 
     def set_font_size(self, size: int):
-        """Set the font size for the teleprompter text."""
+        """Set the font size for all teleprompter text content.
+
+        Args:
+            size (int): Font size in points. Should be between 8 and 72
+                for optimal readability and performance.
+
+        Note:
+            The font size change is applied immediately to the web view
+            content using CSS styling. The change affects all text
+            elements while maintaining proper scaling and proportions.
+            This setting persists until changed again or the widget is reset.
+        """
         self.current_font_size = size
         self.web_content_manager.set_font_size(size)
 
@@ -347,7 +520,23 @@ class TeleprompterWidget(QWidget):
         self.activateWindow()
 
     def navigate_to_section(self, section_index: int):
-        """Navigate to a specific section/chapter."""
+        """Navigate directly to a specific section or chapter.
+
+        Args:
+            section_index (int): Zero-based index of the target section.
+                Must be within the range of available sections.
+
+        Note:
+            This method allows quick navigation to different parts of
+            long documents. The section index is validated against the
+            available sections list before navigation. If successful,
+            the current section index is updated and the web view
+            scrolls to the section's beginning.
+
+        Example:
+            # Navigate to the third section (index 2)
+            widget.navigate_to_section(2)
+        """
         if 0 <= section_index < len(self._current_sections):
             self._current_section_index = section_index
             self.web_content_manager.navigate_to_section(section_index)
@@ -365,7 +554,23 @@ class TeleprompterWidget(QWidget):
         return self.content_sections.copy()
 
     def get_current_section_info(self) -> dict:
-        """Get information about the current section."""
+        """Get detailed information about the currently active section.
+
+        Returns:
+            dict: Section information containing:
+                - index (int): Current section index (-1 if no sections)
+                - title (str): Section title or heading text
+                - total (int): Total number of available sections
+
+        Note:
+            This information is useful for displaying navigation state,
+            progress indicators, and section-based controls in the UI.
+            Returns default values if no sections are available.
+
+        Example:
+            info = widget.get_current_section_info()
+            print(f"Section {info['index'] + 1} of {info['total']}: {info['title']}")
+        """
         if not self._current_sections:
             return {"index": -1, "title": "", "total": 0}
 
@@ -390,7 +595,23 @@ class TeleprompterWidget(QWidget):
             self.start_scrolling()
 
     def start_scrolling(self):
-        """Start automatic scrolling."""
+        """Start automatic scrolling of the teleprompter content.
+
+        Initiates the auto-scroll functionality by:
+        1. Syncing the current scroll position with the web view
+        2. Starting the scroll controller and reading metrics
+        3. Beginning the scroll timer for smooth animation
+        4. Updating the status to indicate active reading
+
+        The scrolling will continue at the configured speed until
+        manually paused or stopped. Voice control (if enabled)
+        can also influence the scrolling behavior.
+
+        Note:
+            If scrolling is already active, this method has no effect.
+            The scroll position is synchronized before starting to ensure
+            accurate progress tracking.
+        """
         if not self._is_scrolling:
             # Sync position first
             self.web_view.page().runJavaScript(
@@ -406,7 +627,21 @@ class TeleprompterWidget(QWidget):
             self._update_status("Reading...")
 
     def stop_scrolling(self):
-        """Stop automatic scrolling."""
+        """Stop automatic scrolling and pause reading.
+
+        Halts the auto-scroll functionality by:
+        1. Stopping the scroll controller and reading metrics tracking
+        2. Pausing the scroll timer while maintaining position
+        3. Updating the status to indicate paused state
+
+        The current scroll position is preserved, allowing the user
+        to resume from the same location. Progress tracking continues
+        to monitor any manual scrolling that occurs while paused.
+
+        Note:
+            If scrolling is not currently active, this method has no effect.
+            Manual scrolling via mouse wheel or keyboard remains functional.
+        """
         if self._is_scrolling:
             self._is_scrolling = False
             self.scroll_controller.pause_scrolling()
@@ -416,7 +651,22 @@ class TeleprompterWidget(QWidget):
             self._update_status("Paused")
 
     def reset_position(self):
-        """Reset scroll position to the beginning."""
+        """Reset the teleprompter to the beginning of the content.
+
+        Performs a complete reset by:
+        1. Stopping all scrolling and reading metrics
+        2. Resetting scroll position to the top (0)
+        3. Clearing reading progress and time estimates
+        4. Updating the display to show ready state
+
+        This is useful for restarting a presentation or when switching
+        to new content. All timers except progress tracking are stopped,
+        and the user can begin reading from the start.
+
+        Note:
+            Any unsaved progress or reading statistics will be lost.
+            The content remains loaded and ready for immediate playback.
+        """
         self.scroll_controller.stop_scrolling()
         self.reading_metrics.stop_reading()
         self._is_scrolling = False
@@ -797,3 +1047,164 @@ class TeleprompterWidget(QWidget):
         document.head.appendChild(style);
         """
         self.web_view.page().runJavaScript(js_code)
+
+    def capture_reading_state(self) -> dict:
+        """Capture the current reading state for restoration.
+
+        Returns:
+            Dictionary containing reading state including:
+            - progress: Current progress (0.0 to 1.0)
+            - scroll_position: Absolute scroll position
+            - is_playing: Whether currently scrolling
+            - speed: Current scroll speed
+            - section_index: Current section index
+        """
+        # Get current progress from scroll controller
+        current_progress = 0.0
+        if hasattr(self.scroll_controller, "get_progress"):
+            current_progress = self.scroll_controller.get_progress()
+        elif self.content_height > 0:
+            # Calculate progress manually if method not available
+            current_progress = (
+                self.scroll_controller._scroll_position / self.content_height
+            )
+
+        return {
+            "progress": current_progress,
+            "scroll_position": self.scroll_controller._scroll_position,
+            "is_playing": self._is_scrolling,
+            "speed": self.scroll_controller.get_speed(),
+            "section_index": self._current_section_index,
+            "elapsed_time": self.reading_metrics.get_elapsed_time(),
+        }
+
+    def restore_reading_state(self, state: dict) -> None:
+        """Restore reading state after content reload.
+
+        Args:
+            state: Dictionary containing reading state from capture_reading_state
+        """
+        # Restore scroll speed
+        if "speed" in state:
+            self.set_scroll_speed(state["speed"])
+
+        # Restore section index
+        if "section_index" in state:
+            self._current_section_index = state["section_index"]
+
+        # Restore scroll position - wait for content to load first
+        def restore_position():
+            if "progress" in state and self.content_height > 0:
+                # Use progress-based restoration for better accuracy
+                self._jump_to_progress(state["progress"])
+            elif "scroll_position" in state:
+                # Fallback to absolute position
+                self.web_view.page().runJavaScript(
+                    f"window.scrollTo(0, {int(state['scroll_position'])})"
+                )
+
+            # Update internal state
+            self._update_progress_display()
+
+            # Resume scrolling if it was playing
+            if state.get("is_playing", False):
+                QTimer.singleShot(100, self.start_scrolling)
+
+        # Wait for content to be fully loaded before restoring position
+        QTimer.singleShot(200, restore_position)
+
+    def reload_content_with_state(self, html_content: str) -> None:
+        """Reload content while preserving reading state.
+
+        Args:
+            html_content: New HTML content to display
+        """
+        # Capture current state before reload
+        state = self.capture_reading_state()
+
+        # Stop scrolling during reload
+        was_scrolling = self._is_scrolling
+        if was_scrolling:
+            self.stop_scrolling()
+
+        # Clear web view cache to ensure fresh content
+        self.web_view.page().profile().clearHttpCache()
+
+        # Force reload by using a different base URL each time
+        import time
+
+        from PyQt6.QtCore import QUrl
+
+        # Use timestamp to ensure unique URL and bypass any caching
+        base_url = QUrl(f"local://reload/{int(time.time() * 1000)}")
+        self.web_view.setHtml(html_content, base_url)
+
+        # Update current content
+        self.current_content = html_content
+
+        # Restore state after content loads
+        def on_load_finished(ok):
+            if ok:
+                # Re-parse content to update sections
+                self.content_loader.load_text(html_content, is_html=True)
+                # Restore reading state
+                self.restore_reading_state(state)
+                # Show notification that content was updated
+                self._show_reload_notification()
+
+        # Connect one-time to load finished signal
+        self.web_view.loadFinished.connect(
+            on_load_finished, Qt.ConnectionType.SingleShotConnection
+        )
+
+    def _show_reload_notification(self) -> None:
+        """Show a subtle notification that content was reloaded."""
+        # Create notification overlay
+        from PyQt6.QtCore import QPropertyAnimation, QRect
+        from PyQt6.QtWidgets import QLabel
+
+        notification = QLabel("Content updated", self)
+        notification.setStyleSheet("""
+            QLabel {
+                background-color: rgba(0, 120, 212, 200);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+        """)
+        notification.adjustSize()
+
+        # Position at top-right corner
+        x = self.width() - notification.width() - 20
+        notification.move(x, -notification.height())
+        notification.show()
+
+        # Animate slide in
+        slide_in = QPropertyAnimation(notification, b"geometry")
+        slide_in.setDuration(300)
+        slide_in.setStartValue(
+            QRect(
+                x, -notification.height(), notification.width(), notification.height()
+            )
+        )
+        slide_in.setEndValue(QRect(x, 20, notification.width(), notification.height()))
+
+        # Auto-hide after 2 seconds
+        def hide_notification():
+            slide_out = QPropertyAnimation(notification, b"geometry")
+            slide_out.setDuration(300)
+            slide_out.setStartValue(notification.geometry())
+            slide_out.setEndValue(
+                QRect(
+                    x,
+                    -notification.height(),
+                    notification.width(),
+                    notification.height(),
+                )
+            )
+            slide_out.finished.connect(notification.deleteLater)
+            slide_out.start()
+
+        QTimer.singleShot(2000, hide_notification)
+        slide_in.start()

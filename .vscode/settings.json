@@ -1,30 +1,40 @@
 {
-    // Disable Pylance type checking
-    "python.analysis.typeCheckingMode": "off",
-    
-    // Enable Ruff linter
-    "python.linting.enabled": true,
-    "python.linting.ruffEnabled": true,
-    
-    // Disable other linters
-    "python.linting.pylintEnabled": false,
-    "python.linting.flake8Enabled": false,
-    "python.linting.mypyEnabled": false,
-    "python.linting.pycodestyleEnabled": false,
-    "python.linting.prospectorEnabled": false,
-    "python.linting.pydocstyleEnabled": false,
-    "python.linting.banditEnabled": false,
-    
-    // Format with Ruff
-    "python.formatting.provider": "none",
-    "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff",
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit"
-        }
-    },
-    
-    // Ruff specific settings
-    "ruff.organizeImports": true
+  // Disable Pylance type checking
+  "python.analysis.typeCheckingMode": "off",
+  // Enable Ruff linter
+  "python.linting.enabled": true,
+  "python.linting.ruffEnabled": true,
+  // Enable Ruff extension
+  "ruff.enable": true,
+  "ruff.lint.enable": true,
+  "ruff.format.enable": true,
+  // Disable other linters
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": false,
+  "python.linting.mypyEnabled": false,
+  "python.linting.pycodestyleEnabled": false,
+  "python.linting.prospectorEnabled": false,
+  "python.linting.pydocstyleEnabled": false,
+  "python.linting.banditEnabled": false,
+  // Enable mypy type checking
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy-type-checker.args": [
+    "--config-file=${workspaceFolder}/pyproject.toml"
+  ],
+  // Auto-save settings
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  // Use Ruff for formatting
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "always",
+      "source.fixAll.ruff": "always"
+    }
+  },
+  // Optional: Respect project's ruff configuration
+  "ruff.configuration": "${workspaceFolder}/pyproject.toml",
+  // Ruff specific settings
+  "ruff.organizeImports": true
 }

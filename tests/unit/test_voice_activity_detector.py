@@ -1,7 +1,7 @@
 """Unit tests for VoiceActivityDetector."""
 
 from unittest.mock import Mock, patch
-import numpy as np
+
 import pytest
 
 from src.teleprompter.domain.voice.detector import VoiceActivityDetector
