@@ -7,6 +7,7 @@ import warnings
 from PyQt6.QtWidgets import QApplication
 
 from .app import TeleprompterApp
+from .container import configure_container, get_container
 
 # Suppress pkg_resources deprecation warning from webrtcvad before any imports
 warnings.filterwarnings(
@@ -19,8 +20,12 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Teleprompter")
 
+    # Configure dependency injection container
+    configure_container()
+
     # Create and show main window
-    window = TeleprompterApp()
+    container = get_container()
+    window = TeleprompterApp(container)
     window.show()
 
     # Run event loop

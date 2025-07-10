@@ -5,9 +5,12 @@ from PyQt6.QtGui import QAction, QKeySequence
 from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QWidget
 
 from . import config
+from .container import ServiceContainer
 from .file_manager import FileManager
-from .settings_manager import SettingsManager
-from .style_manager import StyleManager
+from .protocols import (
+    SettingsStorageProtocol,
+    StyleProviderProtocol,
+)
 from .teleprompter import TeleprompterWidget
 from .toolbar_manager import ToolbarManager
 
@@ -15,14 +18,24 @@ from .toolbar_manager import ToolbarManager
 class TeleprompterApp(QMainWindow):
     """Main application window."""
 
-    def __init__(self):
-        """Initialize the application."""
+    def __init__(self, container: ServiceContainer):
+        """Initialize the application with dependency injection.
+
+        Args:
+            container: The dependency injection container
+        """
         super().__init__()
 
-        # Initialize managers
-        self.settings_manager = SettingsManager()
+        # Resolve dependencies from container
+        self.container = container
+        self.settings_manager = container.get(SettingsStorageProtocol)
+        self.style_manager = container.get(StyleProviderProtocol)
+
+        # Create file manager with parent reference
+        # Note: FileManager needs QWidget parent, so we create it separately
         self.file_manager = FileManager(self)
-        self.style_manager = StyleManager()
+
+        # Create toolbar manager with parent reference
         self.toolbar_manager = ToolbarManager(self)
 
         # Load preferences and setup UI
@@ -92,7 +105,7 @@ class TeleprompterApp(QMainWindow):
         self.resize(config.DEFAULT_WIDTH, config.DEFAULT_HEIGHT)
 
         # Apply theme using style manager
-        stylesheet = self.style_manager.get_application_stylesheet()
+        stylesheet = self.style_manager.get_stylesheet("application")
         self.setStyleSheet(stylesheet)
 
         # Central widget
