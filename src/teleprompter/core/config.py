@@ -46,6 +46,7 @@ VAD_SENSITIVITY = 1
 VAD_START_DELAY = 0.3  # seconds
 VAD_STOP_DELAY = 1.0  # seconds
 VAD_ENABLED_DEFAULT = False  # Voice detection disabled by default
+SIMPLE_VAD_THRESHOLD = 0.02  # Audio level threshold for simple VAD
 
 # File Handling
 MAX_FILE_SIZE = 1048576  # 1MB in bytes

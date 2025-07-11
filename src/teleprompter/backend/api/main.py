@@ -6,7 +6,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from ...core.container import configure_container, get_container
+from ...core.container import get_container
 from ...core.protocols import (
     ContentParserProtocol,
     FileManagerProtocol,

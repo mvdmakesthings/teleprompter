@@ -1,15 +1,19 @@
 """Service adapters to interface between the API and domain layers."""
 
 import asyncio
+import contextlib
 from typing import Any
 
-from ...core.container import get_container
-from ...core.protocols import (
-    FileWatcherProtocol,
-    VoiceDetectorProtocol,
-)
 from ..api.models import WebSocketMessage
+from ..api.models.domain import (
+    FileWatchEvent,
+    ScrollState,
+    VoiceActivity,
+    VoiceActivityState,
+)
 from ..api.websocket import WebSocketManager
+from .file_watcher_adapter import FileWatcherAdapter as FileWatcherImpl
+from .voice_adapter import VoiceDetectorAdapter as VoiceDetectorImpl
 
 
 class FileWatcherAdapter:
@@ -18,37 +22,30 @@ class FileWatcherAdapter:
     def __init__(self, ws_manager: WebSocketManager):
         """Initialize the file watcher adapter."""
         self.ws_manager = ws_manager
-        self._file_watcher = None
-        self._watched_file = None
+        self._file_watcher: FileWatcherImpl | None = None
+        self._watched_file: str | None = None
 
     async def start_watching(self, file_path: str) -> bool:
         """Start watching a file for changes."""
         try:
-            container = get_container()
-            self._file_watcher = container.get(FileWatcherProtocol)
+            # Create a new file watcher with callback
+            self._file_watcher = FileWatcherImpl(
+                on_file_event=lambda event: asyncio.create_task(self._handle_file_event(event))
+            )
 
-            # Stop any existing watch
-            if self._file_watcher.is_watching():
-                self._file_watcher.stop_watching()
-
-            # Start watching the new file
+            # Start watching the file
             success = self._file_watcher.watch_file(file_path)
             if success:
                 self._watched_file = file_path
 
-                # Connect signals to WebSocket broadcasts
-                # Note: In the refactored version, we'll need to adapt
-                # Qt signals to async callbacks
-                await self._setup_signal_handlers()
-
             return success
         except Exception as e:
-            await self.ws_manager.broadcast(
-                WebSocketMessage(
-                    event="file_watch_error",
-                    data={"error": str(e), "file": file_path},
-                )
+            event = FileWatchEvent(
+                event_type="error",
+                file_path=file_path,
+                error=str(e)
             )
+            await self._handle_file_event(event)
             return False
 
     async def stop_watching(self):
@@ -57,27 +54,21 @@ class FileWatcherAdapter:
             self._file_watcher.stop_watching()
             self._watched_file = None
 
-    async def _setup_signal_handlers(self):
-        """Set up handlers for file watcher signals."""
-        # In the refactored version, this will connect to async callbacks
-        # For now, this is a placeholder
-        pass
+    async def _handle_file_event(self, event: FileWatchEvent):
+        """Handle file event and broadcast via WebSocket."""
+        # Map event types to WebSocket events
+        event_map = {
+            "changed": "file_changed",
+            "removed": "file_removed",
+            "error": "file_watch_error"
+        }
 
-    async def _on_file_changed(self):
-        """Handle file change event."""
+        ws_event = event_map.get(event.event_type, "file_event")
+
         await self.ws_manager.broadcast(
             WebSocketMessage(
-                event="file_changed",
-                data={"file": self._watched_file},
-            )
-        )
-
-    async def _on_file_removed(self):
-        """Handle file removal event."""
-        await self.ws_manager.broadcast(
-            WebSocketMessage(
-                event="file_removed",
-                data={"file": self._watched_file},
+                event=ws_event,
+                data=event.model_dump(),
             )
         )
 
@@ -88,14 +79,17 @@ class VoiceDetectorAdapter:
     def __init__(self, ws_manager: WebSocketManager):
         """Initialize the voice detector adapter."""
         self.ws_manager = ws_manager
-        self._voice_detector = None
-        self._detection_task = None
+        self._voice_detector: VoiceDetectorImpl | None = None
 
     async def start_detection(self, sensitivity: int = 2) -> bool:
         """Start voice detection."""
         try:
-            container = get_container()
-            self._voice_detector = container.get(VoiceDetectorProtocol)
+            # Create voice detector with callback
+            self._voice_detector = VoiceDetectorImpl(
+                on_voice_activity=lambda activity: asyncio.create_task(
+                    self._handle_voice_activity(activity)
+                )
+            )
 
             # Set sensitivity
             self._voice_detector.set_sensitivity(sensitivity)
@@ -103,57 +97,50 @@ class VoiceDetectorAdapter:
             # Start detection
             self._voice_detector.start()
 
-            # Start monitoring task
-            self._detection_task = asyncio.create_task(self._monitor_voice())
-
             return True
-        except Exception as e:
-            await self.ws_manager.broadcast(
-                WebSocketMessage(
-                    event="voice_error",
-                    data={"error": str(e)},
-                )
+        except Exception:
+            activity = VoiceActivity(
+                state=VoiceActivityState.ERROR,
+                is_speaking=False,
+                audio_level=0.0,
+                sensitivity=sensitivity
             )
+            await self._handle_voice_activity(activity)
             return False
 
     async def stop_detection(self):
         """Stop voice detection."""
-        if self._detection_task:
-            self._detection_task.cancel()
-            self._detection_task = None
-
         if self._voice_detector:
             self._voice_detector.stop()
+            self._voice_detector = None
 
-    async def _monitor_voice(self):
-        """Monitor voice activity and broadcast updates."""
-        # In the refactored version, this will poll the voice detector
-        # and broadcast updates via WebSocket
-        # For now, this is a placeholder that would be implemented
-        # when we remove Qt dependencies
-        while True:
-            try:
-                await asyncio.sleep(0.1)  # Poll every 100ms
+    async def _handle_voice_activity(self, activity: VoiceActivity):
+        """Handle voice activity and broadcast via WebSocket."""
+        await self.ws_manager.broadcast(
+            WebSocketMessage(
+                event="voice_activity",
+                data=activity.model_dump(),
+            )
+        )
 
-                if self._voice_detector and self._voice_detector.is_running():
-                    audio_level = self._voice_detector.get_audio_level()
-
-                    # Broadcast audio level
-                    await self.ws_manager.broadcast(
-                        WebSocketMessage(
-                            event="voice_level",
-                            data={"level": audio_level},
-                        )
-                    )
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                await self.ws_manager.broadcast(
-                    WebSocketMessage(
-                        event="voice_error",
-                        data={"error": str(e)},
-                    )
+        # Also send specific events for state changes
+        if activity.state == VoiceActivityState.SPEAKING:
+            await self.ws_manager.broadcast(
+                WebSocketMessage(
+                    event="voice_started",
+                    data={"timestamp": activity.timestamp.isoformat()},
                 )
+            )
+        elif activity.state == VoiceActivityState.LISTENING and hasattr(self, '_was_speaking'):
+            await self.ws_manager.broadcast(
+                WebSocketMessage(
+                    event="voice_stopped",
+                    data={"timestamp": activity.timestamp.isoformat()},
+                )
+            )
+
+        # Track speaking state
+        self._was_speaking = activity.state == VoiceActivityState.SPEAKING
 
 
 class ScrollControllerAdapter:
@@ -178,6 +165,8 @@ class ScrollControllerAdapter:
         self._is_playing = False
         if self._scroll_task:
             self._scroll_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._scroll_task
             self._scroll_task = None
         self._position = 0.0
 
@@ -195,11 +184,11 @@ class ScrollControllerAdapter:
 
     def get_state(self) -> dict[str, Any]:
         """Get current scroll state."""
-        return {
-            "is_playing": self._is_playing,
-            "speed": self._speed,
-            "position": self._position,
-        }
+        return ScrollState(
+            position=self._position,
+            speed=self._speed,
+            is_playing=self._is_playing
+        ).model_dump()
 
     async def _scroll_loop(self):
         """Main scrolling loop."""
@@ -212,10 +201,16 @@ class ScrollControllerAdapter:
                     self._position = min(1.0, self._position + increment)
 
                     # Broadcast position update
+                    state = ScrollState(
+                        position=self._position,
+                        speed=self._speed,
+                        is_playing=self._is_playing
+                    )
+
                     await self.ws_manager.broadcast(
                         WebSocketMessage(
                             event="scroll_position",
-                            data={"position": self._position},
+                            data=state.model_dump(),
                         )
                     )
 

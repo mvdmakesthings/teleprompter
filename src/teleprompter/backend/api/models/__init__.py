@@ -1,5 +1,14 @@
 """Pydantic models for API requests and responses."""
 
+from .domain import (
+    ContentInfo,
+    FileWatchEvent,
+    ReadingSession,
+    ScrollState,
+    ServiceEvent,
+    VoiceActivity,
+    VoiceActivityState,
+)
 from .requests import (
     ContentAnalyzeRequest,
     ContentLoadRequest,
@@ -25,6 +34,14 @@ from .responses import (
 )
 
 __all__ = [
+    # Domain models
+    "ContentInfo",
+    "FileWatchEvent",
+    "ReadingSession",
+    "ScrollState",
+    "ServiceEvent",
+    "VoiceActivity",
+    "VoiceActivityState",
     # Requests
     "ContentAnalyzeRequest",
     "ContentLoadRequest",
