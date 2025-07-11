@@ -7,8 +7,8 @@ import warnings
 from PyQt6.QtWidgets import QApplication
 
 from .core.container import configure_container, get_container
-from .utils.logging import setup_logging
 from .ui.app import TeleprompterApp
+from .utils.logging import setup_logging
 
 # Suppress pkg_resources deprecation warning from webrtcvad before any imports
 warnings.filterwarnings(

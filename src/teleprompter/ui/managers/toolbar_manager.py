@@ -5,9 +5,9 @@ from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QPushButton, QSizePolicy, QToolBar, QToolButton
 
 from ...core import config
-from .icon_manager import icon_manager
 from ..widgets.custom_widgets import ModernDoubleSpinBox, ModernSpinBox
 from ..widgets.voice_control_widget import VoiceControlWidget
+from .icon_manager import icon_manager
 
 
 class ModernToolBar(QToolBar):

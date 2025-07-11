@@ -178,8 +178,8 @@ def configure_container() -> ServiceContainer:
     from ..domain.reading.controller import ScrollController
     from ..domain.reading.metrics import ReadingMetricsService
     from ..ui.managers.icon_manager import IconManager
-    from ..utils.settings_manager import SettingsManager
     from ..ui.managers.style_manager import StyleManager
+    from ..utils.settings_manager import SettingsManager
     from .protocols import (
         ContentParserProtocol,
         FileManagerProtocol,
