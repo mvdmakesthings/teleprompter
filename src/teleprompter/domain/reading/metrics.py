@@ -3,7 +3,7 @@
 import time
 
 from teleprompter.core.protocols import ReadingMetricsProtocol
-from teleprompter.infrastructure.logging import LoggerMixin
+from teleprompter.utils.logging import LoggerMixin
 
 
 class ReadingMetricsService(ReadingMetricsProtocol, LoggerMixin):

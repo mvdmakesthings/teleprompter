@@ -4,7 +4,7 @@ import os
 
 from PyQt6.QtCore import QFileSystemWatcher, QObject, QTimer, pyqtSignal
 
-from ...infrastructure.logging import LoggerMixin
+from ...utils.logging import LoggerMixin
 
 
 class FileWatcher(QObject, LoggerMixin):

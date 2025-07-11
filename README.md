@@ -12,7 +12,7 @@
 
 **A teleprompter application with voice control start/stop**
 
-[Features](#-features) • [Demo](#-demo) • [Installation](#-installation) • [Usage](#-usage) • [Architecture](#-architecture) • [Contributing](#-contributing)
+[Features](#-features) • [Demo](#-demo) • [Installation](#-installation) • [Downloads](#-downloads) • [Usage](#-usage) • [Architecture](#-architecture) • [Contributing](#-contributing)
 
 <img src="docs/images/main-interface.png" alt="CueBird Interface" width="600">
 
@@ -71,6 +71,32 @@ poetry run poe run
 ```
 
 That's it! CueBird will launch and you can start using it immediately.
+
+## 📦 Downloads
+
+### Pre-built Installers
+
+For users who prefer not to build from source, pre-built installers are available:
+
+| Platform | Download | Requirements |
+|----------|----------|--------------|
+| **macOS** | [Latest Release](https://github.com/mvdmakesthings/teleprompter/releases/latest) | macOS 10.13+ |
+| **Windows** | [Latest Release](https://github.com/mvdmakesthings/teleprompter/releases/latest) | Windows 10+ (64-bit) |
+
+#### Installation Instructions
+
+**macOS:**
+1. Download the `.dmg` file
+2. Open the DMG and drag CueBird to your Applications folder
+3. Right-click and select "Open" on first launch (security warning bypass)
+4. Grant microphone access when prompted
+
+**Windows:**
+1. Download either the installer (`.exe`) or portable (`.zip`) version
+2. For installer: Run the setup and follow the wizard
+3. For portable: Extract the ZIP and run `CueBird.exe`
+4. Allow through Windows Defender if prompted
+5. Grant microphone access in Windows Settings if needed
 
 ## 📖 Features
 

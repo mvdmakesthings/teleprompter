@@ -11,7 +11,7 @@ from teleprompter.core.exceptions import (
     InvalidConfigurationError,
     MissingConfigurationError,
 )
-from teleprompter.infrastructure.logging import LoggerMixin
+from teleprompter.utils.logging import LoggerMixin
 from teleprompter.utils.validators import TeleprompterConfigValidator
 
 

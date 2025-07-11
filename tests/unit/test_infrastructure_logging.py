@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from teleprompter.infrastructure.logging import (
+from teleprompter.utils.logging import (
     LoggerMixin,
     PerformanceLogger,
     TeleprompterLogger,

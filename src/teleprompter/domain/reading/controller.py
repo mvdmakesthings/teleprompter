@@ -1,7 +1,7 @@
 """Scroll controller for managing scrolling behavior and state."""
 
 from teleprompter.core.protocols import ScrollControllerProtocol
-from teleprompter.infrastructure.logging import LoggerMixin, log_method_calls
+from teleprompter.utils.logging import LoggerMixin, log_method_calls
 
 
 class ScrollController(ScrollControllerProtocol, LoggerMixin):

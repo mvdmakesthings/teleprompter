@@ -2,7 +2,7 @@
 
 import re
 
-from teleprompter.infrastructure.logging import LoggerMixin
+from teleprompter.utils.logging import LoggerMixin
 
 
 class HtmlContentAnalyzer(LoggerMixin):

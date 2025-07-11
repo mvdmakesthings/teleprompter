@@ -1,7 +1,7 @@
 """Content management for handling text and markdown operations."""
 
 from teleprompter.core.protocols import ContentParserProtocol
-from teleprompter.infrastructure.logging import LoggerMixin
+from teleprompter.utils.logging import LoggerMixin
 
 
 class ContentManager(LoggerMixin):

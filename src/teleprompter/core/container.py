@@ -177,8 +177,8 @@ def configure_container() -> ServiceContainer:
     from ..domain.content.parser import MarkdownParser
     from ..domain.reading.controller import ScrollController
     from ..domain.reading.metrics import ReadingMetricsService
-    from ..infrastructure.icon_manager import IconManager
-    from ..infrastructure.settings_manager import SettingsManager
+    from ..ui.managers.icon_manager import IconManager
+    from ..utils.settings_manager import SettingsManager
     from ..ui.managers.style_manager import StyleManager
     from .protocols import (
         ContentParserProtocol,

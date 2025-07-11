@@ -7,7 +7,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 from ...core.protocols import ContentParserProtocol
-from ...infrastructure.logging import LoggerMixin
+from ...utils.logging import LoggerMixin
 from .file_watcher import FileWatcher
 
 

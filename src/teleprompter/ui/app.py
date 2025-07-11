@@ -12,7 +12,7 @@ from ..core.protocols import (
     StyleProviderProtocol,
 )
 from ..domain.content.file_manager import FileManager
-from ..infrastructure.logging import LoggerMixin
+from ..utils.logging import LoggerMixin
 from .managers.toolbar_manager import ToolbarManager
 from .widgets.teleprompter_widget import TeleprompterWidget
 

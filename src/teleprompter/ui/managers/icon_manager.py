@@ -8,7 +8,8 @@ from PyQt6.QtCore import QByteArray, Qt
 from PyQt6.QtGui import QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
 
-from ..core.protocols import IconProviderProtocol
+from ...core.protocols import IconProviderProtocol
+from ...utils.resource_path import get_resource_path
 
 
 class IconManager(IconProviderProtocol):
@@ -36,7 +37,8 @@ class IconManager(IconProviderProtocol):
 
     def __init__(self):
         """Initialize the icon manager with modern defaults."""
-        self.icons_dir = Path(__file__).parent / "icons"
+        # Use resource path helper to handle both dev and bundled environments
+        self.icons_dir = Path(get_resource_path("src/teleprompter/infrastructure/icons"))
         self._icon_cache = {}
 
     def get_svg_content(self, icon_name: str) -> str:

@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ...infrastructure.icon_manager import icon_manager
+from ..managers.icon_manager import icon_manager
 from ..managers.style_manager import StyleManager
 from .base.base_widgets import (
     DebouncedActionMixin,

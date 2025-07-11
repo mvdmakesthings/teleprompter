@@ -1,0 +1,243 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write  # Needed to create releases
+
+jobs:
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-macos-${{ runner.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        
+    - name: Install dependencies
+      run: poetry install --no-interaction --no-root
+      
+    - name: Build macOS app
+      run: |
+        chmod +x build_macos.sh
+        ./build_macos.sh
+        
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-build
+        path: |
+          dist/*.dmg
+          dist/INSTALL_INSTRUCTIONS.txt
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-windows-${{ runner.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        
+    - name: Install dependencies
+      run: poetry install --no-interaction --no-root
+      
+    - name: Build Windows exe
+      shell: cmd
+      run: build_windows.bat
+      
+    - name: Download and install Inno Setup
+      shell: pwsh
+      run: |
+        Invoke-WebRequest -Uri "https://jrsoftware.org/download.php/is.exe" -OutFile "innosetup.exe"
+        Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT /NORESTART" -Wait
+        
+    - name: Build Windows installer
+      shell: cmd
+      run: |
+        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" cuebird_installer.iss
+        
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-build
+        path: |
+          dist/*.exe
+          dist/*.zip
+          dist/INSTALL_INSTRUCTIONS.txt
+
+  create-release:
+    name: Create Release
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download macOS artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: macos-build
+        path: ./macos-build
+        
+    - name: Download Windows artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-build
+        path: ./windows-build
+        
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        name: CueBird ${{ steps.get_version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+        body: |
+          # CueBird ${{ steps.get_version.outputs.VERSION }}
+          
+          Professional teleprompter application with voice control.
+          
+          ## Downloads
+          
+          ### macOS
+          - **Installer**: `CueBird-*-macOS.dmg` - Recommended for most users
+          - Requires macOS 10.13 (High Sierra) or later
+          
+          ### Windows  
+          - **Installer**: `CueBird-*-Windows-Setup.exe` - Recommended for most users
+          - **Portable**: `CueBird-*-Windows.zip` - No installation required
+          - Requires Windows 10 or later (64-bit)
+          
+          ## Installation Instructions
+          
+          See the included `INSTALL_INSTRUCTIONS.txt` files for detailed installation steps.
+          
+          ## What's New
+          
+          See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+          
+        files: |
+          macos-build/*.dmg
+          macos-build/INSTALL_INSTRUCTIONS.txt
+          windows-build/*.exe
+          windows-build/*.zip
+          windows-build/INSTALL_INSTRUCTIONS.txt
+
+  # Optional: Build for Linux (Ubuntu/Debian)
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    if: false  # Disabled by default, enable if needed
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          python3-pyqt6 \
+          python3-pyqt6.qtwebengine \
+          portaudio19-dev \
+          libasound2-dev
+          
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        
+    - name: Install dependencies
+      run: poetry install --no-interaction --no-root
+      
+    - name: Build Linux executable
+      run: |
+        poetry run pyinstaller cuebird.spec --clean --noconfirm
+        
+    - name: Create AppImage
+      run: |
+        # Download AppImage tools
+        wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+        chmod +x appimagetool-x86_64.AppImage
+        
+        # Create AppDir structure
+        mkdir -p AppDir/usr/bin
+        cp -r dist/cuebird/* AppDir/usr/bin/
+        
+        # Create desktop entry
+        cat > AppDir/cuebird.desktop << EOF
+        [Desktop Entry]
+        Name=CueBird
+        Exec=cuebird
+        Icon=cuebird
+        Type=Application
+        Categories=AudioVideo;
+        EOF
+        
+        # Create AppRun script
+        cat > AppDir/AppRun << EOF
+        #!/bin/bash
+        HERE="$(dirname "$(readlink -f "${0}")")"
+        exec "${HERE}/usr/bin/cuebird" "$@"
+        EOF
+        chmod +x AppDir/AppRun
+        
+        # Build AppImage
+        ./appimagetool-x86_64.AppImage AppDir CueBird-x86_64.AppImage
+        
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-build
+        path: |
+          *.AppImage

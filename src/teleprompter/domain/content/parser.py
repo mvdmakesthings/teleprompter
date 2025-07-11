@@ -6,7 +6,7 @@ import markdown
 
 from teleprompter.core.configuration import get_config
 from teleprompter.core.protocols import ContentParserProtocol
-from teleprompter.infrastructure.logging import LoggerMixin
+from teleprompter.utils.logging import LoggerMixin
 
 
 class LoadingState:

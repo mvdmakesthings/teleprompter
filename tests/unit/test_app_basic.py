@@ -99,7 +99,7 @@ class TestApplicationBasics:
 
     def test_settings_manager_unit(self):
         """Test SettingsManager in isolation."""
-        from src.teleprompter.infrastructure.settings_manager import SettingsManager
+        from teleprompter.utils.settings_manager import SettingsManager
 
         with patch("src.teleprompter.infrastructure.settings_manager.QSettings"):
             manager = SettingsManager()
