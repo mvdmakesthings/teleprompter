@@ -1,0 +1,11 @@
+{
+  "name": "@cuebird/backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CueBird Teleprompter Python Backend",
+  "scripts": {
+    "dev": "cd ../../.. && poetry run python -m teleprompter.backend.main",
+    "build": "poetry build && pyinstaller --onefile --name teleprompter-backend --add-data '../../../src/teleprompter/backend:teleprompter/backend' --hidden-import uvicorn --hidden-import fastapi main.py",
+    "clean": "rm -rf dist build"
+  }
+}

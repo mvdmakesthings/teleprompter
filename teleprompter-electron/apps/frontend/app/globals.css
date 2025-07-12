@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Teleprompter-specific styles */
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 0, 0, 0;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+/* Hide scrollbars for teleprompter display */
+.teleprompter-display::-webkit-scrollbar {
+  display: none;
+}
+
+.teleprompter-display {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth scrolling */
+.teleprompter-display {
+  scroll-behavior: smooth;
+}

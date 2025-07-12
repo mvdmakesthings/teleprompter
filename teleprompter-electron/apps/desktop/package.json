@@ -1,0 +1,63 @@
+{
+  "name": "@cuebird/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CueBird Teleprompter Desktop Application",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "npm run build && electron .",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts",
+    "package": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "@cuebird/ipc": "*",
+    "@cuebird/shared": "*",
+    "electron-store": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.0.0"
+  },
+  "build": {
+    "appId": "com.cuebird.teleprompter",
+    "productName": "CueBird",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend/dist/teleprompter-backend",
+        "to": "python/teleprompter-backend"
+      },
+      {
+        "from": "../frontend/out",
+        "to": "frontend"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "AudioVideo",
+      "icon": "assets/icon.png"
+    }
+  }
+}

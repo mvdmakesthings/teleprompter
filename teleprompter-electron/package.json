@@ -1,0 +1,30 @@
+{
+  "name": "teleprompter-electron",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CueBird Teleprompter - Electron + Next.js + Python",
+  "author": "CueBird Team",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "desktop:dev": "npm run dev -w @cuebird/desktop",
+    "frontend:dev": "npm run dev -w @cuebird/frontend",
+    "backend:dev": "npm run dev -w @cuebird/backend"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

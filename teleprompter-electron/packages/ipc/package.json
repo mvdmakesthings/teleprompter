@@ -1,0 +1,20 @@
+{
+  "name": "@cuebird/ipc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "IPC definitions for CueBird Electron app",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@cuebird/shared": "*"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "typescript": "^5.0.0"
+  }
+}
