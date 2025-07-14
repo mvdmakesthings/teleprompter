@@ -2,46 +2,37 @@
 
 import os
 from pathlib import Path
-
-from PyQt6.QtCore import QObject, pyqtSignal
-from PyQt6.QtWidgets import QFileDialog, QMessageBox
+from typing import Callable, Optional
 
 from ...core.protocols import ContentParserProtocol
 from ...utils.logging import LoggerMixin
 from .file_watcher import FileWatcher
 
 
-class FileManager(QObject, LoggerMixin):
+class FileManager(LoggerMixin):
     """Manages file operations and content loading for the teleprompter.
 
-    This class handles file loading, validation, and provides UI integration
-    for file selection dialogs.
+    This class handles file loading, validation, and content processing.
     """
 
-    # Signals
-    loading_started = pyqtSignal()
-    loading_finished = pyqtSignal()
-    file_loaded = pyqtSignal(str, str, str)  # html_content, file_path, markdown_content
-    error_occurred = pyqtSignal(str, str)  # error_message, error_type
-    file_reload_requested = pyqtSignal(str)  # file_path that needs reloading
-
-    def __init__(self, parser: ContentParserProtocol, parent: QObject | None = None):
+    def __init__(self, parser: ContentParserProtocol):
         """Initialize file manager.
 
         Args:
             parser: Content parser for markdown processing
-            parent: Parent QObject
         """
-        super().__init__(parent)
+        super().__init__()
         self._parser = parser
         self._supported_extensions = [".md", ".markdown", ".txt"]
         self._current_file_path: str | None = None
 
         # Initialize file watcher
-        self._file_watcher = FileWatcher(self)
-        self._file_watcher.file_changed.connect(self._on_watched_file_changed)
-        self._file_watcher.file_removed.connect(self._on_watched_file_removed)
-        self._file_watcher.watch_error.connect(self._on_watch_error)
+        self._file_watcher = FileWatcher()
+        
+        # Callback functions that can be set by consumers
+        self.on_file_changed: Optional[Callable[[str], None]] = None
+        self.on_file_removed: Optional[Callable[[str], None]] = None
+        self.on_watch_error: Optional[Callable[[str], None]] = None
 
     def load_file(self, file_path: str) -> str:
         """Load content from a file.
@@ -115,76 +106,39 @@ class FileManager(QObject, LoggerMixin):
         """
         return self._supported_extensions.copy()
 
-    def open_file_dialog(self) -> None:
-        """Open file dialog for selecting a file to load."""
-        file_filters = (
-            "Markdown Files (*.md *.markdown);;Text Files (*.txt);;All Files (*)"
-        )
-
-        file_path, _ = QFileDialog.getOpenFileName(
-            self.parent(), "Open File", "", file_filters
-        )
-
-        if file_path:
-            self._load_file_async(file_path)
-
-    def _load_file_async(self, file_path: str) -> None:
-        """Load file asynchronously with progress signals.
+    def load_file_with_processing(self, file_path: str) -> tuple[str, str]:
+        """Load file and process it to HTML.
 
         Args:
             file_path: Path to the file to load
+
+        Returns:
+            Tuple of (html_content, markdown_content)
+            
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            ValueError: If file format is not supported
         """
-        self.loading_started.emit()
+        # Validate file
+        if not self.validate_file(file_path):
+            raise ValueError(f"Unsupported file format: {Path(file_path).suffix}")
 
-        try:
-            # Validate file
-            if not self.validate_file(file_path):
-                self._emit_error(
-                    f"Unsupported file format: {Path(file_path).suffix}",
-                    "File Format Error",
-                )
-                return
+        # Load raw content
+        markdown_content = self.load_file(file_path)
 
-            # Load raw content
-            markdown_content = self.load_file(file_path)
+        # Parse to HTML
+        html_content = self._parser.parse_content(markdown_content)
 
-            # Parse to HTML
-            html_content = self._parser.parse_content(markdown_content)
+        # Store current file path and start watching
+        self._current_file_path = file_path
+        self._file_watcher.watch_file(file_path)
+        
+        # Set up file watcher callbacks
+        self._file_watcher.on_file_changed = self._on_watched_file_changed
+        self._file_watcher.on_file_removed = self._on_watched_file_removed
+        self._file_watcher.on_watch_error = self._on_watch_error
 
-            # Emit success signal
-            self.file_loaded.emit(html_content, file_path, markdown_content)
-
-            # Store current file path and start watching
-            self._current_file_path = file_path
-            self._file_watcher.watch_file(file_path)
-
-        except FileNotFoundError:
-            self._emit_error(f"File not found: {file_path}", "File Not Found")
-        except ValueError as e:
-            self._emit_error(str(e), "File Processing Error")
-        except Exception as e:
-            self._emit_error(
-                f"Unexpected error loading file: {str(e)}", "Loading Error"
-            )
-        finally:
-            self.loading_finished.emit()
-
-    def _emit_error(self, message: str, error_type: str) -> None:
-        """Emit error signal and show error dialog.
-
-        Args:
-            message: Error message
-            error_type: Type of error for categorization
-        """
-        self.log_error(f"{error_type}: {message}")
-        self.error_occurred.emit(message, error_type)
-
-        # Show error dialog
-        msg_box = QMessageBox(self.parent())
-        msg_box.setIcon(QMessageBox.Icon.Critical)
-        msg_box.setWindowTitle(error_type)
-        msg_box.setText(message)
-        msg_box.exec()
+        return html_content, markdown_content
 
     def get_empty_state_html(self) -> str:
         """Get HTML content for empty state display.
@@ -202,14 +156,22 @@ class FileManager(QObject, LoggerMixin):
         """
         return self._current_file_path
 
-    def reload_current_file(self) -> None:
+    def reload_current_file(self) -> tuple[str, str] | None:
         """Reload the currently loaded file.
 
         This is typically called in response to file changes detected by the watcher.
+        
+        Returns:
+            Tuple of (html_content, markdown_content) if successful, None otherwise
         """
         if self._current_file_path:
             self.log_info(f"Reloading file: {self._current_file_path}")
-            self._load_file_async(self._current_file_path)
+            try:
+                return self.load_file_with_processing(self._current_file_path)
+            except Exception as e:
+                self.log_error(f"Failed to reload file: {str(e)}")
+                return None
+        return None
 
     def stop_watching(self) -> None:
         """Stop watching the current file."""
@@ -234,7 +196,8 @@ class FileManager(QObject, LoggerMixin):
             file_path: Path to the changed file
         """
         self.log_info(f"File changed: {file_path}")
-        self.file_reload_requested.emit(file_path)
+        if self.on_file_changed:
+            self.on_file_changed(file_path)
 
     def _on_watched_file_removed(self, file_path: str) -> None:
         """Handle file removal notification from watcher.
@@ -243,10 +206,9 @@ class FileManager(QObject, LoggerMixin):
             file_path: Path to the removed file
         """
         self.log_warning(f"Watched file was removed: {file_path}")
-        self._emit_error(
-            f"The file '{Path(file_path).name}' was deleted or moved.", "File Removed"
-        )
         self._current_file_path = None
+        if self.on_file_removed:
+            self.on_file_removed(file_path)
 
     def _on_watch_error(self, error_message: str) -> None:
         """Handle watch error from file watcher.
@@ -255,4 +217,5 @@ class FileManager(QObject, LoggerMixin):
             error_message: Error message from the watcher
         """
         self.log_error(f"File watch error: {error_message}")
-        # Don't show dialog for watch errors, just log them
+        if self.on_watch_error:
+            self.on_watch_error(error_message)

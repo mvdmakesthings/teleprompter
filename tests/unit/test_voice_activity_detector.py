@@ -151,10 +151,10 @@ class TestVoiceActivityDetector:
             # Verify device was set
 
     def test_error_handling(self, detector):
-        """Test error signal emission."""
-        # Connect to error signal
+        """Test error callback."""
+        # Set error callback
         error_spy = Mock()
-        detector.error_occurred.connect(error_spy)
-
-        # Emit an error (this would normally happen in audio thread)
-        # We'd need to trigger an error condition
+        detector.on_error_occurred = error_spy
+        
+        # Test that callback is set
+        assert detector.on_error_occurred is error_spy

@@ -4,10 +4,8 @@ This module defines interfaces (protocols) that establish contracts for various
 components in the application, promoting loose coupling and testability.
 """
 
+from collections.abc import Callable
 from typing import Any, Protocol, runtime_checkable
-
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QWidget
 
 
 @runtime_checkable
@@ -213,56 +211,7 @@ class ContentParserProtocol(Protocol):
         ...
 
 
-@runtime_checkable
-class StyleProviderProtocol(Protocol):
-    """Protocol for style/theme providers.
-
-    This protocol defines the interface for classes that provide styling
-    and theming capabilities. Implementations should manage CSS stylesheets,
-    theme variables, and theme switching for UI components.
-    """
-
-    def get_stylesheet(self, component: str) -> str:
-        """Get stylesheet for a specific component.
-
-        Args:
-            component: Name of the component to get styles for
-                      (e.g., 'toolbar', 'main-window', 'button').
-
-        Returns:
-            CSS stylesheet string for the specified component.
-
-        Raises:
-            KeyError: If the component is not recognized.
-            ValueError: If the component name is invalid.
-        """
-        ...
-
-    def get_theme_variables(self) -> dict[str, Any]:
-        """Get theme variables.
-
-        Returns:
-            Dictionary of theme variables where keys are variable names
-            and values are the corresponding theme values (colors, sizes, etc.).
-            Common keys include:
-            - 'primary_color': Main theme color
-            - 'background_color': Background color
-            - 'text_color': Text color
-            - 'font_family': Default font family
-        """
-        ...
-
-    def set_theme(self, theme_name: str) -> None:
-        """Set the active theme.
-
-        Args:
-            theme_name: Name of the theme to activate (e.g., 'dark', 'light').
-
-        Raises:
-            ValueError: If the theme name is not recognized.
-            RuntimeError: If the theme cannot be applied.
-        """
-        ...
+# UI-related StyleProviderProtocol removed - not needed for backend-only operation
 
 
 @runtime_checkable
@@ -331,24 +280,24 @@ class VoiceDetectorProtocol(Protocol):
 
     This protocol defines the interface for voice activity detection systems.
     Implementations should provide real-time voice detection with configurable
-    sensitivity and emit signals for detected events.
+    sensitivity and use callbacks for detected events.
 
-    Signals:
-        voice_detected: Emitted when voice activity is detected.
-        voice_stopped: Emitted when voice activity stops.
-        error_occurred: Emitted when an error occurs during detection.
+    Callbacks:
+        voice_detected_callback: Called when voice activity is detected.
+        voice_stopped_callback: Called when voice activity stops.
+        error_callback: Called when an error occurs during detection.
     """
 
-    # Signals
-    voice_detected: pyqtSignal
-    voice_stopped: pyqtSignal
-    error_occurred: pyqtSignal
+    # Event callbacks
+    voice_detected_callback: Callable[[], None] | None
+    voice_stopped_callback: Callable[[], None] | None
+    error_callback: Callable[[str], None] | None
 
     def start(self) -> None:
         """Start voice detection.
 
         Begins monitoring audio input for voice activity. The detector
-        will emit signals when voice is detected or stopped.
+        will call the configured callbacks when voice is detected or stopped.
 
         Raises:
             RuntimeError: If detection is already running.
@@ -396,6 +345,31 @@ class VoiceDetectorProtocol(Protocol):
         Note:
             This value represents the instantaneous audio level and may
             fluctuate rapidly. Consider smoothing for display purposes.
+        """
+        ...
+
+    def set_voice_detected_callback(self, callback: Callable[[], None] | None) -> None:
+        """Set callback for voice detection events.
+
+        Args:
+            callback: Function to call when voice is detected, or None to remove.
+        """
+        ...
+
+    def set_voice_stopped_callback(self, callback: Callable[[], None] | None) -> None:
+        """Set callback for voice stopped events.
+
+        Args:
+            callback: Function to call when voice stops, or None to remove.
+        """
+        ...
+
+    def set_error_callback(self, callback: Callable[[str], None] | None) -> None:
+        """Set callback for error events.
+
+        Args:
+            callback: Function to call when an error occurs, or None to remove.
+                     Should accept error message as string parameter.
         """
         ...
 
@@ -551,99 +525,10 @@ class ReadingMetricsProtocol(Protocol):
 
 
 @runtime_checkable
-class ToolbarFactoryProtocol(Protocol):
-    """Protocol for toolbar creation.
-
-    This protocol defines the interface for factory classes that create
-    toolbar widgets. Implementations should create fully configured
-    toolbars with appropriate styling and signal connections.
-    """
-
-    def create_toolbar(self, parent: QWidget) -> QWidget:
-        """Create and return a toolbar widget.
-
-        Args:
-            parent: Parent widget for the toolbar.
-
-        Returns:
-            Configured toolbar widget ready for use.
-
-        Note:
-            The returned toolbar should include all necessary controls
-            and be properly styled according to the application theme.
-        """
-        ...
-
-    def connect_signals(self, controller: Any) -> None:
-        """Connect toolbar signals to controller.
-
-        Args:
-            controller: Controller object that will handle toolbar events.
-                       Should have appropriate methods for handling toolbar actions.
-
-        Note:
-            This method should connect all toolbar signals (button clicks,
-            value changes, etc.) to the corresponding controller methods.
-        """
-        ...
+# UI-related ToolbarFactoryProtocol removed - not needed for backend-only operation
 
 
-@runtime_checkable
-class IconProviderProtocol(Protocol):
-    """Protocol for icon providers.
-
-    This protocol defines the interface for classes that provide icons
-    for the user interface. Implementations should handle icon loading,
-    sizing, and provide fallbacks for missing icons.
-    """
-
-    def get_icon(self, name: str, size: int | None = None) -> Any:
-        """Get an icon by name.
-
-        Args:
-            name: Name or identifier of the icon to retrieve.
-            size: Optional size in pixels for the icon. If None, uses default size.
-
-        Returns:
-            Icon object (typically QIcon or similar) for the requested icon.
-
-        Raises:
-            KeyError: If the icon name is not found.
-            ValueError: If the size parameter is invalid.
-
-        Note:
-            The exact return type depends on the UI framework being used.
-            For PyQt6, this would typically be a QIcon.
-        """
-        ...
-
-    def has_icon(self, name: str) -> bool:
-        """Check if an icon exists.
-
-        Args:
-            name: Name or identifier of the icon to check.
-
-        Returns:
-            True if the icon exists and can be loaded, False otherwise.
-        """
-        ...
-
-    def get_fallback_icon(self, name: str) -> str:
-        """Get fallback text/unicode for an icon.
-
-        Args:
-            name: Name or identifier of the icon.
-
-        Returns:
-            Unicode character or text that can be used as a fallback
-            when the icon is not available.
-
-        Note:
-            This method should always return a valid string, even for
-            unknown icon names. Common fallbacks include emoji or
-            Unicode symbols.
-        """
-        ...
+# UI-related IconProviderProtocol removed - not needed for backend-only operation
 
 
 class ManagerProtocol(Protocol):
@@ -681,47 +566,7 @@ class ManagerProtocol(Protocol):
         ...
 
 
-class AnimatedWidgetProtocol(Protocol):
-    """Protocol for animated widgets.
-
-    This protocol defines the interface for widgets that support animation.
-    Implementations should provide smooth, configurable animations with
-    proper start/stop controls.
-    """
-
-    def start_animation(self) -> None:
-        """Start the widget animation.
-
-        Begins the animation sequence from its current state. If animation
-        is already running, this method should have no effect.
-
-        Note:
-            The specific animation behavior depends on the widget implementation.
-            Common animations include fading, sliding, or rotating effects.
-        """
-        ...
-
-    def stop_animation(self) -> None:
-        """Stop the widget animation.
-
-        Immediately stops any running animation and leaves the widget
-        in its current state. Safe to call even if no animation is running.
-        """
-        ...
-
-    def set_animation_duration(self, duration: int) -> None:
-        """Set animation duration in milliseconds.
-
-        Args:
-            duration: Animation duration in milliseconds. Must be positive.
-
-        Raises:
-            ValueError: If duration is not positive.
-
-        Note:
-            Duration changes typically take effect on the next animation cycle.
-        """
-        ...
+# UI-related AnimatedWidgetProtocol removed - not needed for backend-only operation
 
 
 @runtime_checkable
@@ -729,20 +574,20 @@ class FileWatcherProtocol(Protocol):
     """Protocol for file watching implementations.
 
     This protocol defines the interface for classes that monitor files
-    for changes and emit signals when modifications occur. Implementations
+    for changes and use callbacks when modifications occur. Implementations
     should support debouncing to prevent rapid reloads and handle file
     system edge cases gracefully.
 
-    Signals:
-        file_changed: Emitted when watched file is modified.
-        file_removed: Emitted when watched file is deleted.
-        watch_error: Emitted when watching fails.
+    Callbacks:
+        file_changed_callback: Called when watched file is modified.
+        file_removed_callback: Called when watched file is deleted.
+        watch_error_callback: Called when watching fails.
     """
 
-    # Signals
-    file_changed: pyqtSignal
-    file_removed: pyqtSignal
-    watch_error: pyqtSignal
+    # Event callbacks
+    file_changed_callback: Callable[[str], None] | None
+    file_removed_callback: Callable[[str], None] | None
+    watch_error_callback: Callable[[str, str], None] | None
 
     def watch_file(self, file_path: str) -> bool:
         """Start watching a file for changes.
@@ -798,114 +643,30 @@ class FileWatcherProtocol(Protocol):
         """
         ...
 
-
-@runtime_checkable
-class ResponsiveLayoutProtocol(Protocol):
-    """Protocol for responsive layout management.
-
-    This protocol defines the interface for classes that handle responsive
-    UI layouts that adapt to different screen sizes and device types.
-    Implementations should provide device categorization and layout adjustment
-    capabilities.
-    """
-
-    def get_device_category(self, width: int) -> str:
-        """Determine device category based on width.
+    def set_file_changed_callback(self, callback: Callable[[str], None] | None) -> None:
+        """Set callback for file changed events.
 
         Args:
-            width: Screen width in pixels.
-
-        Returns:
-            Device category string such as 'mobile', 'tablet', or 'desktop'.
-
-        Note:
-            Categories are typically determined by standard breakpoints:
-            - mobile: < 768px
-            - tablet: 768px - 1024px
-            - desktop: > 1024px
+            callback: Function to call when file changes, receives file path as parameter.
         """
         ...
 
-    def update_layout(self, screen: Any) -> None:
-        """Update layout based on screen properties.
+    def set_file_removed_callback(self, callback: Callable[[str], None] | None) -> None:
+        """Set callback for file removed events.
 
         Args:
-            screen: Screen object containing size and other properties.
-                   Type depends on the UI framework (e.g., QScreen for PyQt6).
-
-        Note:
-            This method should analyze the screen properties and apply
-            appropriate layout adjustments for the current device category.
+            callback: Function to call when file is removed, receives file path as parameter.
         """
         ...
 
-    def get_current_category(self) -> str:
-        """Get current device category.
-
-        Returns:
-            Current device category string based on the last screen analysis.
-        """
-        ...
-
-    def get_responsive_settings(self, category: str | None = None) -> dict:
-        """Get responsive settings for a device category.
+    def set_watch_error_callback(self, callback: Callable[[str, str], None] | None) -> None:
+        """Set callback for watch error events.
 
         Args:
-            category: Device category. If None, uses current category.
-
-        Returns:
-            Dictionary of responsive settings for the category, including:
-            - font_size_multiplier: Font size adjustment factor
-            - padding: UI padding values
-            - control_sizes: Size adjustments for controls
-            - spacing: Element spacing values
-
-        Raises:
-            ValueError: If the category is not recognized.
+            callback: Function to call when watch error occurs.
+                     Receives file path and error message as parameters.
         """
         ...
 
-    def calculate_responsive_font_size(self, base_size: int) -> int:
-        """Calculate responsive font size.
 
-        Args:
-            base_size: Base font size in pixels.
-
-        Returns:
-            Adjusted font size appropriate for the current device category.
-
-        Note:
-            Calculations should consider readability requirements for
-            different screen sizes and viewing distances.
-        """
-        ...
-
-    def get_optimal_line_height(self, font_size: int) -> float:
-        """Get optimal line height for the given font size.
-
-        Args:
-            font_size: Font size in pixels.
-
-        Returns:
-            Optimal line height multiplier (e.g., 1.5 for 150% line height).
-
-        Note:
-            Line height should be optimized for readability in teleprompter
-            usage, considering the reading distance and scroll speed.
-        """
-        ...
-
-    def get_optimal_letter_spacing(self, font_size: int) -> str:
-        """Get optimal letter spacing for the given font size.
-
-        Args:
-            font_size: Font size in pixels.
-
-        Returns:
-            CSS letter-spacing value (e.g., '0.02em', '1px').
-
-        Note:
-            Letter spacing should be optimized for readability, with larger
-            fonts typically requiring tighter spacing.
-        """
-        ...
+# UI-related ResponsiveLayoutProtocol removed - not needed for backend-only operation

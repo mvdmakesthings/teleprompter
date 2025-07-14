@@ -177,38 +177,22 @@ def configure_container() -> ServiceContainer:
     from ..domain.content.parser import MarkdownParser
     from ..domain.reading.controller import ScrollController
     from ..domain.reading.metrics import ReadingMetricsService
-    from ..ui.managers.icon_manager import IconManager
-    from ..ui.managers.style_manager import StyleManager
-    from ..utils.settings_manager import SettingsManager
+    from .json_settings import JsonSettingsStorage
     from .protocols import (
         ContentParserProtocol,
         FileManagerProtocol,
         HtmlContentAnalyzerProtocol,
-        IconProviderProtocol,
         ReadingMetricsProtocol,
         ScrollControllerProtocol,
         SettingsStorageProtocol,
-        StyleProviderProtocol,
     )
 
-    # Register services
+    # Register core services (Qt-agnostic)
     container.register(ContentParserProtocol, MarkdownParser)
-    container.register(SettingsStorageProtocol, SettingsManager)
-    container.register(StyleProviderProtocol, StyleManager)
-    container.register(IconProviderProtocol, IconManager)
     container.register(HtmlContentAnalyzerProtocol, HtmlContentAnalyzer)
     container.register(ScrollControllerProtocol, ScrollController)
     container.register(ReadingMetricsProtocol, ReadingMetricsService)
-
-    # Register file manager with parser dependency
-    def create_file_manager():
-        parser = container.get(ContentParserProtocol)
-        return FileManager(parser)
-
-    container.register_factory(FileManagerProtocol, create_file_manager)
-
-    # Also register concrete implementations for backwards compatibility
-    container.register(StyleManager, StyleManager)
-    container.register(IconManager, IconManager)
+    container.register(SettingsStorageProtocol, JsonSettingsStorage)
+    container.register(FileManagerProtocol, FileManager)
 
     return container

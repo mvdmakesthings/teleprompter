@@ -98,36 +98,18 @@ class TestApplicationBasics:
         assert "bold" in html
 
     def test_settings_manager_unit(self):
-        """Test SettingsManager in isolation."""
-        from teleprompter.utils.settings_manager import SettingsManager
+        """Test JsonSettingsStorage in isolation."""
+        from src.teleprompter.core.json_settings import JsonSettingsStorage
 
-        with patch("src.teleprompter.infrastructure.settings_manager.QSettings"):
-            manager = SettingsManager()
+        # Use a temporary file for testing
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
+            manager = JsonSettingsStorage(settings_file=tmp.name)
 
             # Test get with default
             value = manager.get("test_key", "default_value")
-            assert value is not None
+            assert value == "default_value"
 
-    def test_style_manager_unit(self):
-        """Test StyleManager in isolation."""
-        from src.teleprompter.ui.managers.style_manager import StyleManager
-
-        manager = StyleManager()
-
-        # Test basic functionality
-        stylesheet = manager.get_stylesheet("application")
-        assert stylesheet is not None
-        assert len(stylesheet) > 0
-        assert "QMainWindow" in stylesheet  # Changed from QWidget
-
-        # Test that we can get progress bar stylesheet too
-        progress_style = manager.get_stylesheet("progress_bar")
-        assert progress_style is not None
-        assert len(progress_style) > 0
-
-        # Test web view stylesheet
-        web_style = manager.get_stylesheet("web_view_background")
-        assert web_style is not None
 
     def test_reading_metrics_unit(self):
         """Test ReadingMetricsService in isolation."""

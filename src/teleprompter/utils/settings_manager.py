@@ -1,11 +1,12 @@
 """Settings management for the teleprompter application."""
 
 import contextlib
+import json
+import os
+from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QSettings
-
-from ..core.config import APPLICATION_NAME, DEFAULT_SPEED
+from ..core.config import DEFAULT_SPEED
 
 
 class SettingsManager:
@@ -13,7 +14,33 @@ class SettingsManager:
 
     def __init__(self):
         """Initialize the settings manager."""
-        self.settings = QSettings("CueBird", APPLICATION_NAME)
+        # Create settings directory in user config directory
+        if os.name == 'nt':  # Windows
+            config_dir = Path(os.environ['APPDATA']) / 'CueBird'
+        else:  # macOS/Linux
+            config_dir = Path.home() / '.config' / 'cuebird'
+
+        config_dir.mkdir(parents=True, exist_ok=True)
+        self.settings_file = config_dir / 'settings.json'
+        self._settings = self._load_settings()
+
+    def _load_settings(self) -> dict:
+        """Load settings from JSON file."""
+        try:
+            if self.settings_file.exists():
+                with open(self.settings_file) as f:
+                    return json.load(f)
+        except (OSError, json.JSONDecodeError):
+            pass
+        return {}
+
+    def _save_settings(self):
+        """Save settings to JSON file."""
+        try:
+            with open(self.settings_file, 'w') as f:
+                json.dump(self._settings, f, indent=2)
+        except OSError:
+            pass
 
     def load_preferences(self) -> dict:
         """Load user preferences from application settings.
@@ -23,18 +50,18 @@ class SettingsManager:
         """
         preferences = {}
 
-        # Load window geometry
-        preferences["geometry"] = self.settings.value("geometry")
+        # Load window geometry (ignore for backend-only)
+        preferences["geometry"] = self._settings.get("geometry")
 
         # Load speed setting
-        saved_speed = self.settings.value("scroll_speed", DEFAULT_SPEED)
+        saved_speed = self._settings.get("scroll_speed", DEFAULT_SPEED)
         with contextlib.suppress(ValueError, TypeError):
             preferences["speed"] = float(saved_speed)
         if "speed" not in preferences:
             preferences["speed"] = DEFAULT_SPEED
 
         # Load auto-reload setting (default: enabled)
-        preferences["auto_reload"] = self.settings.value("auto_reload", True, type=bool)
+        preferences["auto_reload"] = self._settings.get("auto_reload", True)
 
         return preferences
 
@@ -45,30 +72,35 @@ class SettingsManager:
             preferences: Dictionary containing preferences to save
         """
         if "geometry" in preferences:
-            self.settings.setValue("geometry", preferences["geometry"])
+            self._settings["geometry"] = preferences["geometry"]
 
         if "speed" in preferences:
-            self.settings.setValue("scroll_speed", preferences["speed"])
+            self._settings["scroll_speed"] = preferences["speed"]
 
         if "auto_reload" in preferences:
-            self.settings.setValue("auto_reload", preferences["auto_reload"])
+            self._settings["auto_reload"] = preferences["auto_reload"]
+
+        self._save_settings()
 
     # SettingsStorageProtocol implementation
     def get(self, key: str, default: Any = None) -> Any:
         """Retrieve a setting value."""
-        return self.settings.value(key, default)
+        return self._settings.get(key, default)
 
     def set(self, key: str, value: Any) -> None:
         """Store a setting value."""
-        self.settings.setValue(key, value)
+        self._settings[key] = value
+        self._save_settings()
 
     def remove(self, key: str) -> None:
         """Remove a setting."""
-        self.settings.remove(key)
+        self._settings.pop(key, None)
+        self._save_settings()
 
     def clear(self) -> None:
         """Clear all settings."""
-        self.settings.clear()
+        self._settings.clear()
+        self._save_settings()
 
     def toggle_auto_reload(self) -> bool:
         """Toggle the auto-reload setting and return the new state.

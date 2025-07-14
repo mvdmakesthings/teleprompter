@@ -72,7 +72,7 @@ class TestErrorRecovery:
         error = TeleprompterFileNotFoundError("File not found: /missing.txt")
         result = ErrorRecovery.recover_from_file_error(error)
         assert result is not None
-        assert "# Welcome to Teleprompter" in result
+        assert "# Welcome to CueBird" in result
         assert "No file loaded." in result
 
     def test_recover_from_content_load_error(self):

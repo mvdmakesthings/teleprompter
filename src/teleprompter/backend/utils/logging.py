@@ -191,11 +191,10 @@ class LoggingConfig:
 
     # Logger names for different components
     MAIN = "teleprompter.main"
-    UI = "teleprompter.ui"
+    BACKEND = "teleprompter.backend"
     CORE = "teleprompter.core"
     DOMAIN = "teleprompter.domain"
     INFRA = "teleprompter.infrastructure"
-    BACKEND = "teleprompter.backend"
 
     # Default log format
     DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

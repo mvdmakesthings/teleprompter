@@ -6,10 +6,10 @@ import sys
 
 def get_resource_path(relative_path: str) -> str:
     """Get absolute path to resource, works for dev and PyInstaller bundle.
-    
+
     Args:
         relative_path: Path relative to the application root
-        
+
     Returns:
         Absolute path to the resource
     """
@@ -24,7 +24,7 @@ def get_resource_path(relative_path: str) -> str:
 
 def is_bundled() -> bool:
     """Check if we're running in a PyInstaller bundle.
-    
+
     Returns:
         True if running as a bundled application, False otherwise
     """

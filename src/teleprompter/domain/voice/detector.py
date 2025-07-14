@@ -2,10 +2,10 @@
 
 import threading
 import time
+from typing import Callable, Optional
 
 import numpy as np
 import sounddevice as sd
-from PyQt6.QtCore import QObject, pyqtSignal
 
 try:
     import webrtcvad
@@ -18,24 +18,20 @@ except ImportError:
 from ...core import config
 
 
-class VoiceActivityDetector(QObject):
+class VoiceActivityDetector:
     """Voice activity detector using WebRTC VAD."""
 
-    # Signals for voice activity events
-    voice_started = pyqtSignal()
-    voice_stopped = pyqtSignal()
-    voice_level_changed = pyqtSignal(float)  # Audio level (0.0 to 1.0)
-    speech_detected = pyqtSignal(
-        bool
-    )  # True when speech is detected, False when silent
-    error_occurred = pyqtSignal(str)
-    microphone_ready = (
-        pyqtSignal()
-    )  # Emitted when microphone is successfully initialized
-
-    def __init__(self, parent=None):
+    def __init__(self):
         """Initialize the voice activity detector."""
-        super().__init__(parent)
+        super().__init__()
+        
+        # Callback functions
+        self.on_voice_started: Optional[Callable[[], None]] = None
+        self.on_voice_stopped: Optional[Callable[[], None]] = None
+        self.on_voice_level_changed: Optional[Callable[[float], None]] = None  # Audio level (0.0 to 1.0)
+        self.on_speech_detected: Optional[Callable[[bool], None]] = None  # True when speech is detected, False when silent
+        self.on_error_occurred: Optional[Callable[[str], None]] = None
+        self.on_microphone_ready: Optional[Callable[[], None]] = None
 
         # Check if WebRTC VAD is available
         if not WEBRTC_AVAILABLE:
@@ -159,23 +155,27 @@ class VoiceActivityDetector(QObject):
             self._last_silence_time = value
 
     def _emit_signal_safely(self, signal_name: str, *args):
-        """Emit a signal safely from any thread.
-
-        This ensures signals are emitted from the main thread to avoid
-        Qt threading issues.
-        """
-        # For simplicity, we'll emit directly since PyQt6 handles cross-thread signals
-        # In a more complex scenario, you might queue signals for the main thread
+        """Emit a signal safely from any thread via callbacks."""
         try:
             # Check if we're still running to avoid emitting after cleanup
             if not self.is_running and signal_name != "error_occurred":
                 return
 
-            signal = getattr(self, signal_name, None)
-            if signal:
-                signal.emit(*args)
-        except RuntimeError:
-            # Object has been deleted, ignore the signal
+            # Map signal names to callback functions
+            callback_map = {
+                "voice_started": self.on_voice_started,
+                "voice_stopped": self.on_voice_stopped,
+                "voice_level_changed": self.on_voice_level_changed,
+                "speech_detected": self.on_speech_detected,
+                "error_occurred": self.on_error_occurred,
+                "microphone_ready": self.on_microphone_ready,
+            }
+            
+            callback = callback_map.get(signal_name)
+            if callback:
+                callback(*args)
+        except Exception:
+            # Ignore errors during callback execution
             pass
 
     def set_sensitivity(self, sensitivity: float):

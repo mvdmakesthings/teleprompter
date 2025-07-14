@@ -203,22 +203,6 @@ class MissingConfigurationError(ConfigurationError):
         super().__init__(f"Required configuration missing: '{key}'", {"key": key})
 
 
-class UIError(TeleprompterError):
-    """Base exception for UI-related errors."""
-
-    pass
-
-
-class WidgetInitializationError(UIError):
-    """Raised when a widget fails to initialize."""
-
-    def __init__(self, widget_name: str, reason: str):
-        """Initialize with widget details."""
-        super().__init__(
-            f"Failed to initialize {widget_name}: {reason}",
-            {"widget_name": widget_name, "reason": reason},
-        )
-
 
 class ServiceError(TeleprompterError):
     """Base exception for service-related errors."""

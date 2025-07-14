@@ -6,21 +6,12 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from PyQt6.QtWidgets import QApplication
 
 from src.teleprompter.domain.content.file_manager import FileManager
 
 
 class TestFileManager:
     """Test the FileManager class."""
-
-    @pytest.fixture
-    def qapp(self):
-        """Ensure QApplication exists."""
-        app = QApplication.instance()
-        if not app:
-            app = QApplication([])
-        return app
 
     @pytest.fixture
     def parser(self):
@@ -32,7 +23,7 @@ class TestFileManager:
         return mock
 
     @pytest.fixture
-    def manager(self, qapp, parser):
+    def manager(self, parser):
         """Create a FileManager instance."""
         return FileManager(parser)
 
@@ -40,7 +31,7 @@ class TestFileManager:
         """Test manager initialization."""
         assert manager._parser is parser
 
-    def test_validate_file_extension(self, manager, qapp):
+    def test_validate_file_extension(self, manager):
         """Test checking if file extension is supported."""
         # Create temporary files with different extensions
         with tempfile.NamedTemporaryFile(suffix=".md") as tmp_md:

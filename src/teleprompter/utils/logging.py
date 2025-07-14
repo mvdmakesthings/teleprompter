@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any
 
 import structlog
-from PyQt6.QtCore import QtMsgType, qInstallMessageHandler
 
 
 def setup_logging(
@@ -101,8 +100,8 @@ def setup_logging(
     # Configure third-party logging
     _configure_third_party_logging()
 
-    # Install Qt message handler
-    _install_qt_handler()
+    # Qt message handler not needed for backend-only operation
+    pass
 
 
 def _setup_file_logging(file_path: str, level: int, shared_processors: list) -> None:
@@ -150,31 +149,10 @@ def _configure_third_party_logging() -> None:
     logging.getLogger("PIL").setLevel(logging.WARNING)
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
-    # PyQt can be very verbose
-    logging.getLogger("PyQt6").setLevel(logging.WARNING)
-    logging.getLogger("qt").setLevel(logging.WARNING)
+    # Third-party library logging configuration
 
 
-def _install_qt_handler() -> None:
-    """Install custom Qt message handler to integrate with Python logging."""
-
-    def qt_message_handler(msg_type: QtMsgType, context, message: str) -> None:
-        """Handle Qt messages and route to Python logging."""
-        logger = get_logger("teleprompter.qt")
-
-        # Map Qt message types to logging levels
-        if msg_type == QtMsgType.QtDebugMsg:
-            logger.debug("Qt message", message=message)
-        elif msg_type == QtMsgType.QtInfoMsg:
-            logger.info("Qt message", message=message)
-        elif msg_type == QtMsgType.QtWarningMsg:
-            logger.warning("Qt message", message=message)
-        elif msg_type == QtMsgType.QtCriticalMsg:
-            logger.error("Qt message", message=message)
-        elif msg_type == QtMsgType.QtFatalMsg:
-            logger.critical("Qt message", message=message)
-
-    qInstallMessageHandler(qt_message_handler)
+# Message handling configuration completed
 
 
 def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
@@ -199,7 +177,7 @@ class TeleprompterLogger:
 
     # Logger names for different components
     MAIN = "teleprompter.main"
-    UI = "teleprompter.ui"
+    BACKEND = "teleprompter.backend"
     CORE = "teleprompter.core"
     DOMAIN = "teleprompter.domain"
     INFRA = "teleprompter.infrastructure"
@@ -252,8 +230,8 @@ class TeleprompterLogger:
             file_handler.setFormatter(file_formatter)
             root_logger.addHandler(file_handler)
 
-        # Install Qt message handler
-        cls._install_qt_handler()
+        # Qt message handler not needed for backend-only operation
+        pass
 
         root_logger.info("Logging configured successfully")
 
@@ -269,27 +247,7 @@ class TeleprompterLogger:
         """
         return logging.getLogger(name)
 
-    @classmethod
-    def _install_qt_handler(cls) -> None:
-        """Install custom Qt message handler to integrate with Python logging."""
-
-        def qt_message_handler(msg_type: QtMsgType, context, message: str) -> None:
-            """Handle Qt messages and route to Python logging."""
-            logger = cls.get_logger("teleprompter.qt")
-
-            # Map Qt message types to logging levels
-            if msg_type == QtMsgType.QtDebugMsg:
-                logger.debug(f"Qt: {message}")
-            elif msg_type == QtMsgType.QtInfoMsg:
-                logger.info(f"Qt: {message}")
-            elif msg_type == QtMsgType.QtWarningMsg:
-                logger.warning(f"Qt: {message}")
-            elif msg_type == QtMsgType.QtCriticalMsg:
-                logger.error(f"Qt: {message}")
-            elif msg_type == QtMsgType.QtFatalMsg:
-                logger.critical(f"Qt: {message}")
-
-        qInstallMessageHandler(qt_message_handler)
+    # Message handling configuration completed
 
 
 class LoggerMixin:

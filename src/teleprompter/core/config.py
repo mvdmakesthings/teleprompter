@@ -38,6 +38,8 @@ DEFAULT_SPEED = 1.0
 MIN_SPEED = 0.05
 MAX_SPEED = 5.0
 SPEED_INCREMENT = 0.1
+BASE_SCROLL_RATE = 100  # pixels per second at speed 1.0
+DEFAULT_WPM = 150  # words per minute
 
 # Voice Detection
 VAD_SAMPLE_RATE = 16000
