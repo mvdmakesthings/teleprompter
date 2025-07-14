@@ -11,9 +11,12 @@ export const DEFAULT_SETTINGS = {
   scrollSpeed: 1.0,
   voiceEnabled: false,
   voiceSensitivity: 1,
+  voiceThreshold: -40,
   autoReload: true,
+  autoSave: true,
   cursorAutoHide: true,
   progressBarEnabled: true,
+  theme: 'dark' as const,
 } as const
 
 // Speed limits

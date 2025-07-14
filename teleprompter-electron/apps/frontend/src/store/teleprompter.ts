@@ -32,6 +32,13 @@ interface TeleprompterState {
   voiceSensitivity: number
   voiceThreshold: number
   
+  // Computed getters
+  progress: () => number
+  remainingTime: () => number
+  currentSection: () => Section | null
+  canScroll: () => boolean
+  isAtEnd: () => boolean
+  
   // Actions
   setContent: (content: string) => void
   setRawContent: (rawContent: string) => void
@@ -49,6 +56,15 @@ interface TeleprompterState {
   setVoiceSensitivity: (sensitivity: number) => void
   setVoiceThreshold: (threshold: number) => void
   reset: () => void
+  
+  // Batch updates
+  loadContent: (data: {
+    content: string
+    rawContent: string
+    filePath: string
+    wordCount: number
+    sections: Section[]
+  }) => void
 }
 
 const initialState = {
@@ -102,6 +118,61 @@ export const useTeleprompterStore = create<TeleprompterState>()(
       setVoiceThreshold: (voiceThreshold) => set({ voiceThreshold }),
       
       reset: () => set(initialState),
+      
+      // Computed getters
+      progress: () => {
+        const { scrollPosition, contentHeight, viewportHeight } = get()
+        const maxScroll = Math.max(0, contentHeight - viewportHeight)
+        return maxScroll > 0 ? Math.min((scrollPosition / maxScroll) * 100, 100) : 0
+      },
+      
+      remainingTime: () => {
+        const { scrollPosition, contentHeight, viewportHeight, scrollSpeed } = get()
+        const remainingPixels = Math.max(0, contentHeight - viewportHeight - scrollPosition)
+        // Avoid division by zero and return Infinity for very slow speeds
+        if (scrollSpeed <= 0 || !isFinite(scrollSpeed)) return Infinity
+        return remainingPixels / (scrollSpeed * 60)
+      },
+      
+      currentSection: () => {
+        const { sections, scrollPosition } = get()
+        if (!sections.length) return null
+        
+        // Find the section that the current scroll position is in
+        let current = sections[0]
+        for (const section of sections) {
+          if (section.position <= scrollPosition) {
+            current = section
+          } else {
+            break
+          }
+        }
+        return current
+      },
+      
+      canScroll: () => {
+        const { contentHeight, viewportHeight } = get()
+        return contentHeight > viewportHeight
+      },
+      
+      isAtEnd: () => {
+        const { scrollPosition, contentHeight, viewportHeight } = get()
+        const maxScroll = Math.max(0, contentHeight - viewportHeight)
+        return scrollPosition >= maxScroll
+      },
+      
+      // Batch update for loading content
+      loadContent: (data) => {
+        set({
+          content: data.content,
+          rawContent: data.rawContent,
+          currentFile: data.filePath,
+          wordCount: data.wordCount,
+          sections: data.sections,
+          scrollPosition: 0,
+          isPlaying: false,
+        })
+      },
     }),
     {
       name: 'teleprompter-store',

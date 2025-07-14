@@ -44,7 +44,10 @@ export interface Settings {
   scrollSpeed: number
   voiceEnabled: boolean
   voiceSensitivity: number
+  voiceThreshold: number
   autoReload: boolean
+  autoSave: boolean
   cursorAutoHide: boolean
   progressBarEnabled: boolean
+  theme: 'light' | 'dark'
 }

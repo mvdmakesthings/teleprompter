@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useTeleprompterStore } from '@/store/teleprompter'
+import { useSettingsStore } from '@/store/settings'
 
 interface SettingsDialogProps {
   open?: boolean
@@ -21,18 +22,19 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
+  // Get current values from teleprompter store
+  const { fontSize, scrollSpeed } = useTeleprompterStore()
+  
+  // Get settings and actions from settings store
   const {
-    scrollSpeed,
-    fontSize,
     voiceEnabled,
     voiceSensitivity,
     voiceThreshold,
-    setScrollSpeed,
-    setFontSize,
-    setVoiceEnabled,
-    setVoiceSensitivity,
-    setVoiceThreshold,
-  } = useTeleprompterStore()
+    updateSettings,
+  } = useSettingsStore()
+  
+  // Also get setters from teleprompter store for immediate updates
+  const { setScrollSpeed, setFontSize, setVoiceEnabled, setVoiceSensitivity, setVoiceThreshold } = useTeleprompterStore()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -3,6 +3,7 @@
 import React from 'react'
 import { cn } from '@/lib/utils'
 import { useTeleprompterStore } from '@/store/teleprompter'
+import { useWebSocketContext } from '@/components/providers/websocket-provider'
 
 interface VoiceIndicatorProps {
   className?: string
@@ -10,6 +11,7 @@ interface VoiceIndicatorProps {
 
 export function VoiceIndicator({ className }: VoiceIndicatorProps) {
   const { voiceEnabled, isVoiceActive } = useTeleprompterStore()
+  const { isConnected } = useWebSocketContext()
 
   if (!voiceEnabled) {
     return null
@@ -21,11 +23,11 @@ export function VoiceIndicator({ className }: VoiceIndicatorProps) {
         <div
           className={cn(
             "h-2 w-2 rounded-full transition-colors",
-            isVoiceActive ? "bg-green-500" : "bg-gray-500"
+            !isConnected ? "bg-red-500" : isVoiceActive ? "bg-green-500" : "bg-gray-500"
           )}
         />
         <span className="text-xs text-muted-foreground">
-          {isVoiceActive ? 'Speaking' : 'Silent'}
+          {!isConnected ? 'Disconnected' : isVoiceActive ? 'Speaking' : 'Silent'}
         </span>
       </div>
       

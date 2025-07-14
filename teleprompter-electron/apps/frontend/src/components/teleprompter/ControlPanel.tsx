@@ -12,9 +12,7 @@ export function ControlPanel() {
     isPlaying,
     scrollSpeed,
     fontSize,
-    scrollPosition,
-    contentHeight,
-    viewportHeight,
+    progress,
     setIsPlaying,
     setScrollSpeed,
     setFontSize,
@@ -38,9 +36,8 @@ export function ControlPanel() {
     setFontSize(value[0])
   }
 
-  // Calculate progress percentage safely
-  const maxScroll = Math.max(0, contentHeight - viewportHeight)
-  const progress = maxScroll > 0 ? Math.min((scrollPosition / maxScroll) * 100, 100) : 0
+  // Get computed progress
+  const currentProgress = progress()
 
   return (
     <Toolbar className="w-full p-4">
@@ -106,7 +103,7 @@ export function ControlPanel() {
 
       <ToolbarGroup>
         <div className="text-sm text-muted-foreground">
-          Progress: {progress.toFixed(0)}%
+          Progress: {currentProgress.toFixed(0)}%
         </div>
       </ToolbarGroup>
     </Toolbar>
