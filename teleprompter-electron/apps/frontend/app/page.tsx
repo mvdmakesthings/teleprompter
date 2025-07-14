@@ -1,74 +1,64 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { Settings } from '@cuebird/shared'
+import { useEffect } from 'react'
+import { 
+  TeleprompterDisplay,
+  ControlPanel,
+  FileLoader,
+  ProgressBar,
+  VoiceIndicator,
+  SettingsDialog
+} from '@/components/teleprompter'
+import { useTeleprompterStore } from '@/store/teleprompter'
 
-export default function Home() {
-  const [backendUrl, setBackendUrl] = useState<string>('')
-  const [settings, setSettings] = useState<Settings | null>(null)
-  const [status, setStatus] = useState<string>('Initializing...')
+export default function HomePage() {
+  const { content } = useTeleprompterStore()
 
+  // Handle keyboard shortcuts
   useEffect(() => {
-    // Check if running in Electron
-    if (typeof window !== 'undefined' && window.electronAPI) {
-      // Get backend URL from Electron
-      window.electronAPI.getBackendUrl()
-        .then(url => {
-          setBackendUrl(url)
-          setStatus('Connected to backend')
-          return window.electronAPI.getSettings()
-        })
-        .then(settings => {
-          setSettings(settings)
-        })
-        .catch(err => {
-          setStatus(`Error: ${err.message}`)
-        })
-    } else {
-      // Development mode - connect to local backend
-      setBackendUrl('http://localhost:8000')
-      setStatus('Development mode')
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && e.target === document.body) {
+        e.preventDefault()
+        const { isPlaying, setIsPlaying } = useTeleprompterStore.getState()
+        setIsPlaying(!isPlaying)
+      }
     }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
   }, [])
 
-  const testBackend = async () => {
-    if (!backendUrl) return
-
-    try {
-      const response = await fetch(`${backendUrl}/health`)
-      const data = await response.json()
-      setStatus(`Backend health: ${data.status}`)
-    } catch (err) {
-      setStatus(`Backend error: ${err.message}`)
-    }
-  }
-
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-8">CueBird Teleprompter</h1>
-        
-        <div className="mb-8">
-          <p className="text-lg mb-2">Status: {status}</p>
-          <p className="text-sm text-gray-400">Backend URL: {backendUrl || 'Not connected'}</p>
+    <main className="flex h-screen flex-col bg-teleprompter-bg">
+      {/* Header */}
+      <header className="flex items-center justify-between border-b border-border p-4">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-xl font-bold text-teleprompter-text">CueBird</h1>
+          <VoiceIndicator />
         </div>
+        <SettingsDialog />
+      </header>
 
-        <button
-          onClick={testBackend}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Test Backend Connection
-        </button>
-
-        {settings && (
-          <div className="mt-8 text-left">
-            <h2 className="text-2xl font-semibold mb-4">Current Settings</h2>
-            <pre className="bg-gray-800 p-4 rounded">
-              {JSON.stringify(settings, null, 2)}
-            </pre>
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {content ? (
+          <TeleprompterDisplay className="flex-1" />
+        ) : (
+          <div className="flex flex-1 items-center justify-center p-8">
+            <FileLoader className="max-w-md w-full" />
           </div>
         )}
       </div>
+
+      {/* Footer Controls */}
+      <footer className="border-t border-border">
+        {content && (
+          <div className="p-4">
+            <ProgressBar className="mb-4" />
+          </div>
+        )}
+        <ControlPanel />
+      </footer>
     </main>
   )
 }
