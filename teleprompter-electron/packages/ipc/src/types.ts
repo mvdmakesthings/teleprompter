@@ -44,7 +44,10 @@ export interface IpcApi {
   getBackendUrl: () => Promise<string>
   
   // File operations
-  openFileDialog: () => Promise<FileDialogResult>
+  showOpenDialog: (options: {
+    properties?: string[]
+    filters?: { name: string; extensions: string[] }[]
+  }) => Promise<{ canceled: boolean; filePaths: string[] }>
   
   // Settings
   getSettings: () => Promise<Settings>

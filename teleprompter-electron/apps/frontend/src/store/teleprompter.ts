@@ -80,9 +80,20 @@ export const useTeleprompterStore = create<TeleprompterState>()(
       setWordCount: (wordCount) => set({ wordCount }),
       setSections: (sections) => set({ sections }),
       setIsPlaying: (isPlaying) => set({ isPlaying }),
-      setScrollSpeed: (scrollSpeed) => set({ scrollSpeed }),
-      setScrollPosition: (scrollPosition) => set({ scrollPosition }),
-      setFontSize: (fontSize) => set({ fontSize }),
+      setScrollSpeed: (scrollSpeed) => {
+        const validated = Math.max(0.1, Math.min(5, scrollSpeed))
+        set({ scrollSpeed: validated })
+      },
+      setScrollPosition: (scrollPosition) => {
+        const { contentHeight, viewportHeight } = get()
+        const maxScroll = Math.max(0, contentHeight - viewportHeight)
+        const validated = Math.max(0, Math.min(maxScroll, scrollPosition))
+        set({ scrollPosition: validated })
+      },
+      setFontSize: (fontSize) => {
+        const validated = Math.max(16, Math.min(120, fontSize))
+        set({ fontSize: validated })
+      },
       setContentHeight: (contentHeight) => set({ contentHeight }),
       setViewportHeight: (viewportHeight) => set({ viewportHeight }),
       setVoiceEnabled: (voiceEnabled) => set({ voiceEnabled }),

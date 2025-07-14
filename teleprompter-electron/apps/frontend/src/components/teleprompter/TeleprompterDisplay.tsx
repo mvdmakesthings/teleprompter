@@ -44,6 +44,12 @@ export function TeleprompterDisplay({ className }: TeleprompterDisplayProps) {
   useEffect(() => {
     if (!containerRef.current || !contentRef.current) return
 
+    // Always cancel any existing animation frame before starting a new one
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current)
+      animationRef.current = undefined
+    }
+
     const scroll = () => {
       if (!isPlaying || !containerRef.current) return
 
@@ -52,7 +58,7 @@ export function TeleprompterDisplay({ className }: TeleprompterDisplayProps) {
       const currentScroll = container.scrollTop
       
       if (currentScroll < maxScroll) {
-        const newPosition = currentScroll + scrollSpeed
+        const newPosition = Math.min(currentScroll + scrollSpeed, maxScroll)
         container.scrollTop = newPosition
         setScrollPosition(newPosition)
         setIsScrolling(true)
@@ -60,22 +66,23 @@ export function TeleprompterDisplay({ className }: TeleprompterDisplayProps) {
       } else {
         setIsScrolling(false)
         useTeleprompterStore.setState({ isPlaying: false })
+        animationRef.current = undefined
       }
     }
 
     if (isPlaying) {
+      setIsScrolling(true)
       animationRef.current = requestAnimationFrame(scroll)
     } else {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
       setIsScrolling(false)
     }
 
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
+        animationRef.current = undefined
       }
+      setIsScrolling(false)
     }
   }, [isPlaying, scrollSpeed, setScrollPosition])
 

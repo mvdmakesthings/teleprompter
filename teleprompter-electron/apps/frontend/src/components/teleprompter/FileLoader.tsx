@@ -13,6 +13,8 @@ interface FileLoaderProps {
 
 export function FileLoader({ className }: FileLoaderProps) {
   const [isDragging, setIsDragging] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { currentFile } = useTeleprompterStore()
   const { apiClient } = useAppStore()
 
@@ -42,9 +44,12 @@ export function FileLoader({ className }: FileLoaderProps) {
 
   const loadFile = useCallback(async (filePath: string) => {
     if (!apiClient) {
-      console.error('API client not initialized')
+      setError('Application not ready. Please try again.')
       return
     }
+
+    setIsLoading(true)
+    setError(null)
 
     try {
       const response = await apiClient.post('/api/content/load', {
@@ -63,9 +68,15 @@ export function FileLoader({ className }: FileLoaderProps) {
           scrollPosition: 0,
           isPlaying: false,
         })
+      } else {
+        setError(response.data.error || 'Failed to load file')
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load file'
+      setError(message)
       console.error('Failed to load file:', error)
+    } finally {
+      setIsLoading(false)
     }
   }, [apiClient])
 
@@ -135,10 +146,20 @@ export function FileLoader({ className }: FileLoaderProps) {
                 Supports .md, .markdown, and .txt files
               </p>
             </div>
-            <Button variant="teleprompter" onClick={handleFileSelect}>
-              Select File
+            <Button 
+              variant="teleprompter" 
+              onClick={handleFileSelect}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Loading...' : 'Select File'}
             </Button>
           </>
+        )}
+        
+        {error && (
+          <div className="mt-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+            {error}
+          </div>
         )}
       </div>
     </div>

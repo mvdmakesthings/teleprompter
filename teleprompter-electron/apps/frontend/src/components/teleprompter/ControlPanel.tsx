@@ -38,9 +38,9 @@ export function ControlPanel() {
     setFontSize(value[0])
   }
 
-  // Calculate progress percentage
+  // Calculate progress percentage safely
   const maxScroll = Math.max(0, contentHeight - viewportHeight)
-  const progress = maxScroll > 0 ? (scrollPosition / maxScroll) * 100 : 0
+  const progress = maxScroll > 0 ? Math.min((scrollPosition / maxScroll) * 100, 100) : 0
 
   return (
     <Toolbar className="w-full p-4">

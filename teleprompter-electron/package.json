@@ -20,7 +20,9 @@
     "backend:dev": "npm run dev -w @cuebird/backend"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@types/node": "^20.19.7",
+    "electron": "^37.2.1",
+    "electron-store": "^10.1.0",
     "typescript": "^5.0.0"
   },
   "engines": {

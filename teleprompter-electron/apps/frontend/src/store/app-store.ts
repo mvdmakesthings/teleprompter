@@ -75,7 +75,7 @@ export const useAppStore = create<AppState>()(
         } catch (error) {
           set({ 
             isConnected: false, 
-            connectionError: error.message 
+            connectionError: error instanceof Error ? error.message : 'Connection failed'
           })
         }
       },
