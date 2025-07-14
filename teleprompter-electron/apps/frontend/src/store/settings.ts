@@ -10,6 +10,12 @@ interface SettingsState extends Settings {
   // Theme
   isDarkMode: boolean
   toggleDarkMode: () => void
+  
+  // Additional UI state
+  cursorHidden: boolean
+  setCursorHidden: (hidden: boolean) => void
+  voiceControlEnabled: boolean
+  setVoiceControlEnabled: (enabled: boolean) => void
 }
 
 const defaultSettings: Settings = {
@@ -23,6 +29,9 @@ const defaultSettings: Settings = {
   cursorAutoHide: true,
   progressBarEnabled: true,
   theme: 'dark',
+  fileWatchEnabled: true,
+  fileWatchDebounce: 500,
+  fileWatchNotifications: 'minimal',
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -31,6 +40,8 @@ export const useSettingsStore = create<SettingsState>()(
       (set, get) => ({
         ...defaultSettings,
         isDarkMode: true,
+        cursorHidden: false,
+        voiceControlEnabled: defaultSettings.voiceEnabled,
         
         updateSettings: async (newSettings) => {
           // Store previous state for rollback
@@ -66,12 +77,21 @@ export const useSettingsStore = create<SettingsState>()(
             theme: isDarkMode ? 'dark' : 'light'
           })
         },
+        
+        setCursorHidden: (hidden) => set({ cursorHidden: hidden }),
+        
+        setVoiceControlEnabled: (enabled) => {
+          set({ voiceControlEnabled: enabled, voiceEnabled: enabled })
+          // Also update the settings
+          const currentState = get()
+          currentState.updateSettings({ voiceEnabled: enabled })
+        },
       }),
       {
         name: 'teleprompter-settings',
         partialize: (state) => {
           // Only persist settings, not actions
-          const { updateSettings, resetToDefaults, toggleDarkMode, ...settings } = state
+          const { updateSettings, resetToDefaults, toggleDarkMode, setCursorHidden, setVoiceControlEnabled, ...settings } = state
           return settings
         },
       }

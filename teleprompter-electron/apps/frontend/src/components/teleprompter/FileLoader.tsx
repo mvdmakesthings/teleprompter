@@ -25,17 +25,10 @@ export function FileLoader({ className }: FileLoaderProps) {
     }
 
     try {
-      const result = await window.electronAPI.showOpenDialog({
-        properties: ['openFile'],
-        filters: [
-          { name: 'Markdown', extensions: ['md', 'markdown'] },
-          { name: 'Text', extensions: ['txt'] },
-          { name: 'All Files', extensions: ['*'] }
-        ]
-      })
+      const result = await window.electronAPI.openFileDialog()
 
-      if (!result.canceled && result.filePaths.length > 0) {
-        await loadFile(result.filePaths[0])
+      if (!result.canceled && result.filePath) {
+        await loadFile(result.filePath)
       }
     } catch (error) {
       console.error('Failed to open file dialog:', error)

@@ -2,31 +2,27 @@
 
 import { useEffect } from 'react'
 import { 
-  TeleprompterDisplay,
-  ControlPanel,
-  FileLoader,
+  OptimizedTeleprompterDisplay,
+  OptimizedControlPanel,
+  OptimizedFileLoader,
   ProgressBar,
   VoiceIndicator,
-  SettingsDialog
+  SettingsDialog,
+  KeyboardHelp,
+  PerformanceMonitor
 } from '@/components/teleprompter'
 import { useTeleprompterStore } from '@/store/teleprompter'
+import { useKeyboard } from '@/hooks/useKeyboard'
+import { useCursorVisibility } from '@/hooks/useCursorVisibility'
 
 export default function HomePage() {
   const { content } = useTeleprompterStore()
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && e.target === document.body) {
-        e.preventDefault()
-        const { isPlaying, setIsPlaying } = useTeleprompterStore.getState()
-        setIsPlaying(!isPlaying)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [])
+  
+  // Initialize keyboard shortcuts
+  useKeyboard()
+  
+  // Initialize cursor visibility management
+  useCursorVisibility()
 
   return (
     <main className="flex h-screen flex-col bg-teleprompter-bg">
@@ -36,16 +32,19 @@ export default function HomePage() {
           <h1 className="text-xl font-bold text-teleprompter-text">CueBird</h1>
           <VoiceIndicator />
         </div>
-        <SettingsDialog />
+        <div className="flex items-center space-x-2">
+          <KeyboardHelp />
+          <SettingsDialog />
+        </div>
       </header>
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {content ? (
-          <TeleprompterDisplay className="flex-1" />
+          <OptimizedTeleprompterDisplay className="flex-1" />
         ) : (
           <div className="flex flex-1 items-center justify-center p-8">
-            <FileLoader className="max-w-md w-full" />
+            <OptimizedFileLoader className="max-w-md w-full" />
           </div>
         )}
       </div>
@@ -57,8 +56,11 @@ export default function HomePage() {
             <ProgressBar className="mb-4" />
           </div>
         )}
-        <ControlPanel />
+        <OptimizedControlPanel />
       </footer>
+
+      {/* Performance Monitor (only in development) */}
+      <PerformanceMonitor />
     </main>
   )
 }

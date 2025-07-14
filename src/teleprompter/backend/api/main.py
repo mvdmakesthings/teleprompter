@@ -34,12 +34,16 @@ from .models import (
     WebSocketMessage,
 )
 from .websocket import WebSocketManager
+from ..services.adapters import FileWatcherAdapter
 
 # Version of the API
 API_VERSION = "0.1.0"
 
 # WebSocket manager for real-time communication
 ws_manager = WebSocketManager()
+
+# File watcher adapter for monitoring file changes
+file_watcher_adapter = FileWatcherAdapter(ws_manager)
 
 
 @asynccontextmanager
@@ -49,6 +53,7 @@ async def lifespan(app: FastAPI):
     # to avoid importing Qt dependencies during API startup
     yield
     # Cleanup on shutdown
+    await file_watcher_adapter.stop_watching()
     container = get_container()
     container.clear()
 
@@ -94,6 +99,9 @@ async def load_content(request: ContentLoadRequest) -> ContentLoadResponse:
         # Get file metadata
         import os
         stat = os.stat(request.file_path)
+        
+        # Start watching the file for changes
+        await file_watcher_adapter.start_watching(request.file_path)
 
         return ContentLoadResponse(
             content=content,
@@ -339,3 +347,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 )
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
+
+
+# Audio WebSocket endpoint
+@app.websocket("/ws/audio")
+async def audio_websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for audio streaming."""
+    await audio_ws_handler.handle_connection(websocket)

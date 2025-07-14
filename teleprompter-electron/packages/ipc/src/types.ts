@@ -31,6 +31,14 @@ export interface WindowState {
   }
 }
 
+// Keyboard shortcut
+export interface ShortcutDefinition {
+  accelerator: string
+  action: string
+  description: string
+  isGlobal?: boolean
+}
+
 // IPC API exposed to renderer
 export interface IpcApi {
   // Window management
@@ -44,10 +52,7 @@ export interface IpcApi {
   getBackendUrl: () => Promise<string>
   
   // File operations
-  showOpenDialog: (options: {
-    properties?: string[]
-    filters?: { name: string; extensions: string[] }[]
-  }) => Promise<{ canceled: boolean; filePaths: string[] }>
+  openFileDialog: () => Promise<FileDialogResult>
   
   // Settings
   getSettings: () => Promise<Settings>
@@ -57,4 +62,10 @@ export interface IpcApi {
   onBackendError: (callback: (error: string) => void) => () => void
   onFileDropped: (callback: (filePath: string) => void) => () => void
   onSettingsChanged: (callback: (settings: Settings) => void) => () => void
+  
+  // Keyboard shortcuts
+  getShortcuts: () => Promise<ShortcutDefinition[]>
+  registerShortcut: (shortcut: ShortcutDefinition) => Promise<boolean>
+  unregisterShortcut: (accelerator: string) => Promise<boolean>
+  onShortcutTriggered: (callback: (data: { action: string }) => void) => () => void
 }

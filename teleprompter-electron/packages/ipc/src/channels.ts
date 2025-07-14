@@ -33,6 +33,12 @@ export const IpcChannels = {
   
   // Dev tools
   DEV_TOOLS_TOGGLE: 'dev:tools-toggle',
+  
+  // Keyboard shortcuts
+  SHORTCUTS_REGISTER: 'shortcuts:register',
+  SHORTCUTS_UNREGISTER: 'shortcuts:unregister',
+  SHORTCUTS_TRIGGERED: 'shortcuts:triggered',
+  SHORTCUTS_GET_ALL: 'shortcuts:get-all',
 } as const
 
 export type IpcChannel = typeof IpcChannels[keyof typeof IpcChannels]

@@ -44,6 +44,19 @@ const electronAPI: IpcApi = {
     return () => {
       ipcRenderer.removeListener(IpcChannels.SETTINGS_CHANGED, subscription)
     }
+  },
+
+  // Keyboard shortcuts
+  getShortcuts: () => ipcRenderer.invoke(IpcChannels.SHORTCUTS_GET_ALL),
+  registerShortcut: (shortcut) => ipcRenderer.invoke(IpcChannels.SHORTCUTS_REGISTER, shortcut),
+  unregisterShortcut: (accelerator) => ipcRenderer.invoke(IpcChannels.SHORTCUTS_UNREGISTER, accelerator),
+  
+  onShortcutTriggered: (callback) => {
+    const subscription = (_event: any, data: { action: string }) => callback(data)
+    ipcRenderer.on(IpcChannels.SHORTCUTS_TRIGGERED, subscription)
+    return () => {
+      ipcRenderer.removeListener(IpcChannels.SHORTCUTS_TRIGGERED, subscription)
+    }
   }
 }
 

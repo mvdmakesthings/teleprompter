@@ -1,10 +1,11 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, session } from 'electron'
 import * as path from 'path'
 import { IpcChannels } from '@cuebird/ipc'
 import { WindowManager } from './windowManager'
 import { PythonManager } from './pythonManager'
 import { SettingsManager } from './settingsManager'
 import { IpcHandlers } from './ipcHandlers'
+import { ShortcutManager } from './shortcutManager'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
 // @ts-ignore - electron-squirrel-startup might not be installed in dev
@@ -37,6 +38,7 @@ if (!gotTheLock) {
 const windowManager = WindowManager.getInstance()
 const pythonManager = PythonManager.getInstance()
 const settingsManager = SettingsManager.getInstance()
+const shortcutManager = ShortcutManager.getInstance()
 
 // Main app initialization
 async function createApp() {
@@ -47,8 +49,12 @@ async function createApp() {
     // Create main window
     const mainWindow = windowManager.createMainWindow()
     
+    // Initialize shortcut manager with main window
+    shortcutManager.setMainWindow(mainWindow)
+    shortcutManager.registerDefaultShortcuts()
+    
     // Initialize IPC handlers
-    IpcHandlers.initialize(windowManager, pythonManager, settingsManager)
+    IpcHandlers.initialize(windowManager, pythonManager, settingsManager, shortcutManager)
     
     // Load frontend
     if (app.isPackaged) {
@@ -78,7 +84,27 @@ async function createApp() {
 }
 
 // App event handlers
-app.whenReady().then(createApp)
+app.whenReady().then(async () => {
+  // Handle microphone permissions
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'media') {
+      // Always grant microphone access for the app
+      callback(true)
+    } else {
+      callback(false)
+    }
+  })
+  
+  // Set permission check handler for better UX
+  session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+    if (permission === 'media') {
+      return true
+    }
+    return false
+  })
+  
+  await createApp()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -94,6 +120,7 @@ app.on('activate', () => {
 
 app.on('before-quit', async () => {
   // Clean shutdown
+  shortcutManager.unregisterAll()
   await pythonManager.stop()
 })
 

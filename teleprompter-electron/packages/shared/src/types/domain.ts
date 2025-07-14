@@ -50,4 +50,7 @@ export interface Settings {
   cursorAutoHide: boolean
   progressBarEnabled: boolean
   theme: 'light' | 'dark'
+  fileWatchEnabled: boolean
+  fileWatchDebounce: number
+  fileWatchNotifications: 'none' | 'minimal' | 'verbose'
 }

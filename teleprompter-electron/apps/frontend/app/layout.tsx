@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { AppProvider } from '@/components/providers/app-provider'
 import { WebSocketProvider } from '@/components/providers/websocket-provider'
+import { NotificationContainer } from '@/components/ui/notifications'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         <AppProvider>
           <WebSocketProvider>
             {children}
+            <NotificationContainer />
           </WebSocketProvider>
         </AppProvider>
       </body>

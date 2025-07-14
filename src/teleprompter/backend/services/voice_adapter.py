@@ -211,3 +211,40 @@ class VoiceDetectorAdapter:
                 sensitivity=self.sensitivity
             )
             self.on_voice_activity(activity)
+    
+    def process_audio_chunk(self, audio_data: np.ndarray, sample_rate: int) -> None:
+        """Process a chunk of audio data for voice detection.
+        
+        Args:
+            audio_data: Audio data as int16 numpy array
+            sample_rate: Sample rate of the audio
+        """
+        # Convert int16 to float32
+        audio_float = audio_data.astype(np.float32) / 32768.0
+        
+        # Calculate audio level
+        self._audio_level = float(np.abs(audio_float).mean())
+        
+        # Process through VAD
+        if self.use_simple_vad:
+            # Simple threshold-based detection
+            is_speech = self._audio_level > config.SIMPLE_VAD_THRESHOLD
+        else:
+            if self.vad and len(audio_data) * 1000 // sample_rate == self.frame_duration:
+                # Process with WebRTC VAD
+                is_speech = self.vad.is_speech(audio_data.tobytes(), sample_rate)
+            else:
+                # Fallback to simple detection if frame size doesn't match
+                is_speech = self._audio_level > config.SIMPLE_VAD_THRESHOLD
+        
+        # Update voice detection state
+        if is_speech != self.is_voice_detected:
+            self.is_voice_detected = is_speech
+            self._state = VoiceActivityState.SPEAKING if is_speech else VoiceActivityState.LISTENING
+            
+            if is_speech:
+                self._voice_start_time = time.time()
+            else:
+                self._voice_stop_time = time.time()
+            
+            self._emit_activity()

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useAppStore } from '@/store/app-store'
+import { PerformanceProvider } from './performance-provider'
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const initialize = useAppStore(state => state.initialize)
@@ -40,5 +41,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [initialize])
 
-  return <>{children}</>
+  return (
+    <PerformanceProvider>
+      {children}
+    </PerformanceProvider>
+  )
 }

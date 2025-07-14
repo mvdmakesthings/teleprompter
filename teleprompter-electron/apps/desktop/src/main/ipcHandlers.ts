@@ -3,13 +3,15 @@ import { IpcChannels, FileDialogResult } from '@cuebird/ipc'
 import { WindowManager } from './windowManager'
 import { PythonManager } from './pythonManager'
 import { SettingsManager } from './settingsManager'
+import { ShortcutManager } from './shortcutManager'
 import { SUPPORTED_EXTENSIONS } from '@cuebird/shared'
 
 export class IpcHandlers {
   static initialize(
     windowManager: WindowManager,
     pythonManager: PythonManager,
-    settingsManager: SettingsManager
+    settingsManager: SettingsManager,
+    shortcutManager: ShortcutManager
   ) {
     // Window management handlers
     ipcMain.handle(IpcChannels.WINDOW_MINIMIZE, () => {
@@ -87,6 +89,19 @@ export class IpcHandlers {
           mainWindow.webContents.openDevTools()
         }
       }
+    })
+
+    // Keyboard shortcut handlers
+    ipcMain.handle(IpcChannels.SHORTCUTS_GET_ALL, () => {
+      return shortcutManager.getLocalShortcuts()
+    })
+
+    ipcMain.handle(IpcChannels.SHORTCUTS_REGISTER, (_, shortcut) => {
+      return shortcutManager.register(shortcut)
+    })
+
+    ipcMain.handle(IpcChannels.SHORTCUTS_UNREGISTER, (_, accelerator) => {
+      return shortcutManager.unregister(accelerator)
     })
 
     // Settings change listener
