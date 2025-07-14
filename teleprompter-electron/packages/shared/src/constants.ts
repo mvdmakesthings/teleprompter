@@ -17,6 +17,9 @@ export const DEFAULT_SETTINGS = {
   cursorAutoHide: true,
   progressBarEnabled: true,
   theme: 'dark' as const,
+  fileWatchEnabled: true,
+  fileWatchDebounce: 500,
+  fileWatchNotifications: 'minimal' as const,
 } as const
 
 // Speed limits

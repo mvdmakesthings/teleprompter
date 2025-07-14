@@ -19,7 +19,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }).catch(err => {
         console.error('Failed to initialize from Electron:', err)
         // Fall back to development defaults
-        initialize('http://localhost:8000', {} as any)
+        initialize('http://localhost:8123', {} as any)
       })
 
       // Listen for settings changes
@@ -36,7 +36,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (initData) {
         initialize(initData.backendUrl, initData.settings)
       } else {
-        initialize('http://localhost:8000', {} as any)
+        initialize('http://localhost:8123', {} as any)
       }
     }
   }, [initialize])

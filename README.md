@@ -2,15 +2,17 @@
 
 <div align="center">
 
-![Python](https://img.shields.io/badge/python-3.13+-blue.svg)
-![PyQt6](https://img.shields.io/badge/PyQt6-6.9.1+-green.svg)
-![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
+![Electron](https://img.shields.io/badge/Electron-32.x-47848F.svg)
+![Next.js](https://img.shields.io/badge/Next.js-14.x-black.svg)
+![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
-[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 
 <img src="docs/images/logo.png" alt="CueBird Logo" width="150">
 
-**A teleprompter application with voice control start/stop**
+**A modern teleprompter application with voice control and real-time features**
 
 [Features](#-features) • [Demo](#-demo) • [Installation](#-installation) • [Downloads](#-downloads) • [Usage](#-usage) • [Architecture](#-architecture) • [Contributing](#-contributing)
 
@@ -20,7 +22,7 @@
 
 ## 🎬 What is CueBird Teleprompter?
 
-CueBird Teleprompter is a sophisticated yet user-friendly teleprompter application designed for content creators, presenters, and video producers who need to deliver scripted content smoothly. Built with modern Python and PyQt6, it features voice-activated control, smooth 60 FPS scrolling, and a clean Domain-Driven Design architecture.
+CueBird Teleprompter is a cutting-edge teleprompter application designed for content creators, presenters, and video producers. Built with modern web technologies (Electron + Next.js + FastAPI), it features voice-activated control, smooth 60 FPS scrolling, virtual scrolling for large texts, and real-time file watching. The application combines the power of a Python backend with a responsive React frontend for the ultimate teleprompter experience.
 
 ### ✨ Who is this for?
 - Content Creators
@@ -29,12 +31,13 @@ CueBird Teleprompter is a sophisticated yet user-friendly teleprompter applicati
 
 ### ✨ Why Choose CueBird Teleprompter?
 
-- **🎤 Hands-Free Operation**: Advanced voice activity detection automatically starts/stops scrolling
-- **🚀 Blazing Fast**: Hardware-accelerated 60 FPS scrolling for professional results
-- **🏗️ Clean Architecture**: Built with DDD principles for maintainability and extensibility
-- **📱 Responsive**: Adapts seamlessly to any screen size
-- **🔄 Live Reload**: Automatically updates when your script changes
-- **🛡️ Reliable**: Comprehensive error handling and recovery
+- **🎤 Hands-Free Operation**: Advanced voice activity detection with dual processing modes (frontend/backend)
+- **🚀 Blazing Fast**: 60 FPS scrolling with virtual scrolling for texts over 10,000 words
+- **🌐 Modern Stack**: Electron + Next.js + FastAPI for cross-platform compatibility
+- **📱 Responsive UI**: Beautiful React-based interface that adapts to any screen
+- **🔄 Real-Time Features**: WebSocket-powered file watching and voice control
+- **⚡ Performance Optimized**: Adaptive performance profiles and real-time monitoring
+- **🛡️ Production Ready**: Comprehensive error handling, reconnection logic, and graceful degradation
 
 ## 📸 Demo
 
@@ -52,8 +55,10 @@ CueBird Teleprompter is a sophisticated yet user-friendly teleprompter applicati
 
 ### Prerequisites
 
+- Node.js 20.x or higher
 - Python 3.13 or higher
-- Poetry (for dependency management)
+- npm or yarn
+- Poetry (for Python dependencies)
 - Working microphone (for voice control)
 
 ### Installation
@@ -63,40 +68,52 @@ CueBird Teleprompter is a sophisticated yet user-friendly teleprompter applicati
 git clone https://github.com/mvdmakesthings/cuebird-teleprompter.git
 cd cuebird
 
-# Install dependencies
+# Install Python backend dependencies
 poetry install
 
-# Run the application
-poetry run poe run
+# Install Electron and frontend dependencies
+cd teleprompter-electron
+npm install
+
+# Start the application in development mode
+npm run dev
 ```
 
-That's it! CueBird will launch and you can start using it immediately.
+The application will launch with hot-reload enabled for both frontend and backend.
 
-## 📦 Downloads
+## 📦 Building & Packaging
+
+### Development Mode
+
+```bash
+# Terminal 1: Start Python backend
+cd src/teleprompter
+poetry run python -m teleprompter.backend.main
+
+# Terminal 2: Start Electron frontend
+cd teleprompter-electron
+npm run dev
+```
+
+### Production Build
+
+```bash
+# Build the Electron app for your platform
+cd teleprompter-electron
+npm run build        # Build for current platform
+npm run build:mac    # Build for macOS
+npm run build:win    # Build for Windows
+npm run build:linux  # Build for Linux
+```
 
 ### Pre-built Installers
 
-For users who prefer not to build from source, pre-built installers are available:
+Coming soon! Pre-built installers will be available for:
+- **macOS**: Universal binary (Intel + Apple Silicon)
+- **Windows**: 64-bit installer and portable versions
+- **Linux**: AppImage, deb, and rpm packages
 
-| Platform | Download | Requirements |
-|----------|----------|--------------|
-| **macOS** | [Latest Release](https://github.com/mvdmakesthings/teleprompter/releases/latest) | macOS 10.13+ |
-| **Windows** | [Latest Release](https://github.com/mvdmakesthings/teleprompter/releases/latest) | Windows 10+ (64-bit) |
-
-#### Installation Instructions
-
-**macOS:**
-1. Download the `.dmg` file
-2. Open the DMG and drag CueBird to your Applications folder
-3. Right-click and select "Open" on first launch (security warning bypass)
-4. Grant microphone access when prompted
-
-**Windows:**
-1. Download either the installer (`.exe`) or portable (`.zip`) version
-2. For installer: Run the setup and follow the wizard
-3. For portable: Extract the ZIP and run `CueBird.exe`
-4. Allow through Windows Defender if prompted
-5. Grant microphone access in Windows Settings if needed
+Check the [Releases](https://github.com/mvdmakesthings/teleprompter/releases) page for updates.
 
 ## 📖 Features
 
@@ -104,142 +121,232 @@ For users who prefer not to build from source, pre-built installers are availabl
 
 | Feature | Description |
 |---------|-------------|
-| **📄 Markdown Support** | Full markdown rendering with custom styling |
-| **⚡ Variable Speed** | Precise control from 0.05x to 5x |
+| **📄 Markdown Support** | Full markdown rendering with syntax highlighting |
+| **⚡ Variable Speed** | Precise control from 0.05x to 5x with smooth transitions |
 | **🔤 Dynamic Font** | Adjustable text size from 16px to 120px |
-| **📊 Reading Stats** | Word count, time estimates, progress tracking |
-| **📑 Section Navigation** | Jump between headers with Previous/Next |
-| **🖱️ Manual Override** | Mouse wheel control with auto-pause |
-| **⌨️ Keyboard Shortcuts** | Comprehensive keyboard control |
+| **📊 Reading Metrics** | Real-time word count, elapsed/remaining time, WPM tracking |
+| **📑 Section Navigation** | Smart navigation between markdown headers |
+| **🖱️ Manual Control** | Mouse wheel scrolling with auto-pause |
+| **⌨️ Keyboard Shortcuts** | Global and local shortcuts for all controls |
+| **🎯 Virtual Scrolling** | Handles texts over 10,000 words smoothly |
 
 ### Advanced Features
 
 #### 🎤 Voice Activity Detection
-- WebRTC VAD for accurate speech detection
-- Adjustable sensitivity (0.0-3.0)
-- Multiple microphone support
-- Visual status indicators
-- Automatic start/stop based on speech
+- **Dual Processing Modes**: Frontend (low latency) or Backend (high accuracy)
+- **WebRTC VAD**: Industry-standard voice detection algorithm
+- **Adjustable Sensitivity**: Fine-tune from 0.0 to 3.0
+- **Multi-Device Support**: Select from available microphones
+- **Real-time Visualization**: Audio level meters and status indicators
+- **Auto-Control**: Start/stop scrolling based on speech with debouncing
 
 #### 🔄 File Watching
-- Automatic reload on file changes
-- Debounced updates
-- Preserves scroll position
+- **Real-time Updates**: WebSocket-powered file change notifications
+- **Smart Reloading**: Debounced updates to prevent excessive reloads
+- **State Preservation**: Maintains scroll position and playback state
+- **User Control**: Enable/disable and configure reload behavior
+- **Error Handling**: Graceful handling of file deletion/permission issues
 
-#### ⚙️ Configuration System
-- JSON-based configuration
-- Environment variable overrides
-- Persistent preferences
-- Type-safe validation
+#### ⚡ Performance Features
+- **Virtual Scrolling**: Efficient rendering for large documents
+- **Adaptive Performance**: Automatic performance profile selection
+- **Real-time Monitoring**: FPS counter and performance metrics
+- **Request Optimization**: Debouncing and caching for API calls
+- **Memoized Components**: React optimization for smooth UI
+
+#### 🔧 Configuration System
+- **Multi-layer Config**: JSON files + environment variables
+- **Type-safe Validation**: Pydantic models for all settings
+- **Persistent Storage**: User preferences saved between sessions
+- **Hot Reload**: Changes apply without restart
+- **Cross-platform**: Works on Windows, macOS, and Linux
 
 ## 💻 Usage
 
 ### Basic Controls
 
-| Action | Keyboard | Mouse/Button |
-|--------|----------|--------------|
-| Play/Pause | `Space` | ▶️ button |
-| Reset | `R` | ⏮️ button |
-| Speed Up | `↑` | Speed spinner |
-| Speed Down | `↓` | Speed spinner |
-| Previous Section | `←` | ⏮️ button |
-| Next Section | `→` | ⏭️ button |
-| Fullscreen | `F11` | 🖥️ button |
-| Open File | `Ctrl+O` | 📁 button |
+| Action | Keyboard | Global Shortcut | UI Control |
+|--------|----------|-----------------|------------|
+| Play/Pause | `Space` | `Cmd/Ctrl+Space` | Play button |
+| Reset Position | `R` | `Cmd/Ctrl+R` | Reset button |
+| Speed Up | `↑` or `+` | - | Speed slider |
+| Speed Down | `↓` or `-` | - | Speed slider |
+| Previous Section | `←` | - | Previous button |
+| Next Section | `→` | - | Next button |
+| Toggle Voice | `V` | - | Voice button |
+| Toggle Cursor | `C` | - | Settings menu |
+| Exit/Stop | `Escape` | - | - |
+| Show Help | - | - | Keyboard icon |
 
 ### Voice Control Setup
 
-1. Click the 🎤 button to enable voice detection
-2. Select your microphone from the dropdown
-3. Adjust sensitivity slider as needed
-4. Start speaking - the teleprompter will automatically scroll!
+1. Click the microphone button in the control panel
+2. Grant microphone permissions when prompted
+3. Select your preferred microphone from the dropdown
+4. Choose processing mode:
+   - **Frontend**: Lower latency, browser-based processing
+   - **Backend**: Higher accuracy, server-side processing
+5. Adjust sensitivity (0.0 - 3.0, default: 1.0)
+6. Start speaking - the teleprompter will automatically scroll!
 
-**Status Indicators:**
-- 🔘 Gray: Disabled
-- 🟠 Orange: Listening
-- 🟢 Green: Speech detected
-- 🔴 Red: Error
+**Visual Indicators:**
+- **Gray**: Voice control disabled
+- **Orange**: Listening for voice activity
+- **Green**: Voice detected, scrolling active
+- **Red**: Error or permission denied
+- **Audio Meter**: Real-time voice level visualization
 
 ### Configuration
 
-Create a `config.json` in your app directory:
+#### Frontend Settings (Stored in browser)
+- Scroll speed, font size, and UI preferences
+- Voice control settings and processing mode
+- File watching preferences
+- Performance profile selection
+
+#### Backend Configuration
+
+Create a `config.json` in your backend directory:
 
 ```json
 {
-  "scroll_speed": 1.0,
-  "font_size": 24,
-  "voice_sensitivity": 1.0,
-  "auto_hide_cursor": true,
-  "file_watch_enabled": true
+  "api": {
+    "host": "127.0.0.1",
+    "port": 8123,
+    "cors_origins": ["http://localhost:3000"]
+  },
+  "voice": {
+    "sample_rate": 16000,
+    "vad_mode": 3,
+    "frame_duration": 30
+  },
+  "file_watch": {
+    "enabled": true,
+    "debounce_seconds": 0.5
+  }
 }
 ```
 
 Or use environment variables:
 ```bash
-export TELEPROMPTER_SCROLL_SPEED=1.5
-export TELEPROMPTER_FONT_SIZE=32
+export TELEPROMPTER_API_PORT=8123
+export TELEPROMPTER_VOICE_VAD_MODE=3
+export TELEPROMPTER_FILE_WATCH_ENABLED=true
 ```
 
 ## 🏗️ Architecture
 
-The project follows **Domain-Driven Design** principles:
+CueBird uses a modern three-tier architecture:
 
+### Frontend (Electron + Next.js)
+```
+teleprompter-electron/
+├── apps/
+│   ├── desktop/          # Electron main process
+│   │   ├── main/         # Window management, IPC
+│   │   └── preload/      # Secure bridge to renderer
+│   ├── frontend/         # Next.js React app
+│   │   ├── app/          # App router pages
+│   │   ├── components/   # React components
+│   │   ├── hooks/        # Custom React hooks
+│   │   ├── store/        # Zustand state management
+│   │   └── services/     # API and WebSocket clients
+│   └── backend/          # Python backend reference
+└── packages/             # Shared TypeScript types
+```
+
+### Backend (FastAPI + Python)
 ```
 src/teleprompter/
-├── core/              # Business logic & contracts
-│   ├── protocols.py   # Interface definitions
-│   ├── container.py   # Dependency injection
-│   └── services.py    # Business services
-├── domain/            # Domain models
-│   ├── content/       # Content management
-│   ├── reading/       # Reading control
-│   └── voice/         # Voice detection
-├── infrastructure/    # External services
-└── ui/               # User interface
-    ├── widgets/      # UI components
-    └── managers/     # UI state management
+├── backend/
+│   ├── api/              # REST API endpoints
+│   ├── websocket/        # Real-time communication
+│   └── services/         # Backend adapters
+├── core/                 # Business logic & contracts
+│   ├── protocols.py      # Interface definitions
+│   ├── container.py      # Dependency injection
+│   └── services.py       # Business services
+└── domain/               # Domain models
+    ├── content/          # Content management
+    ├── reading/          # Reading control
+    └── voice/            # Voice detection
 ```
 
-### Key Design Patterns
+### Key Technologies
 
-- **Dependency Injection** - Centralized service container
-- **Protocol-Oriented** - Interface-based design
-- **Repository Pattern** - Data access abstraction
-- **Observer Pattern** - Event-driven communication
+**Frontend Stack:**
+- **Electron 32.x**: Desktop application framework
+- **Next.js 14**: React framework with App Router
+- **TypeScript 5.x**: Type-safe JavaScript
+- **Zustand**: State management
+- **Tailwind CSS**: Utility-first styling
+- **Framer Motion**: Animations
+
+**Backend Stack:**
+- **FastAPI 0.115+**: Modern Python web framework
+- **WebSockets**: Real-time communication
+- **Pydantic**: Data validation
+- **WebRTC VAD**: Voice activity detection
+- **Watchdog**: File system monitoring
+
+### Communication Flow
+1. **Electron Main** ↔️ **Renderer** via IPC (Inter-Process Communication)
+2. **React Frontend** ↔️ **Python Backend** via REST API and WebSocket
+3. **Backend Services** use dependency injection for loose coupling
 
 ## 🧪 Development
 
-### Running Tests
+### Backend Development
 
 ```bash
-# Run all tests
+# Run Python tests
 poetry poe test
-
-# Run with coverage
 poetry poe test-coverage
 
-# Run specific test
-poetry run pytest tests/test_file_manager.py
+# Code quality
+poetry poe lint      # Run ruff linter
+poetry poe format    # Format with ruff
+poetry poe check     # Run both lint and format
+
+# Start backend server
+poetry run python -m teleprompter.backend.main --reload
 ```
 
-### Code Quality
+### Frontend Development
 
 ```bash
-# Format code
-poetry poe format
+cd teleprompter-electron
 
-# Run linter
-poetry poe lint
+# Run frontend tests
+npm test
 
-# Run both
-poetry poe check
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-### Available Tasks
+### Project Scripts
 
-```bash
-poetry poe --help  # List all tasks
-```
+**Backend (Poetry):**
+- `poe run-backend` - Start FastAPI server
+- `poe run-backend-dev` - Start with auto-reload
+- `poe test` - Run pytest suite
+- `poe lint` - Check code style
+- `poe format` - Auto-format code
+
+**Frontend (npm):**
+- `npm run dev` - Start Electron + Next.js in dev mode
+- `npm run build` - Build for current platform
+- `npm run test` - Run frontend tests
+- `npm run lint` - ESLint checking
 
 ## 🤝 Contributing
 
@@ -257,27 +364,47 @@ We love contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md)
 
 ## 📋 Roadmap
 
+### Version 2.0 (Current)
+- [x] Electron + Next.js migration
+- [x] Virtual scrolling for large texts
+- [x] Dual voice processing modes
+- [x] Real-time performance monitoring
+- [x] WebSocket communication
+- [x] File watching with notifications
+
+### Version 2.1 (Planned)
 - [ ] Multiple script queue management
-- [ ] Custom themes and color schemes
-- [ ] Export to video overlay
-- [ ] Remote control via mobile app
+- [ ] Custom themes and dark/light modes
+- [ ] Bookmark system for scripts
+- [ ] Export reading statistics
+- [ ] Customizable keyboard shortcuts
+- [ ] Multi-language UI support
+
+### Version 3.0 (Future)
 - [ ] Cloud synchronization
-- [ ] Plugin system
+- [ ] Mobile companion app
+- [ ] Team collaboration features
+- [ ] AI-powered script analysis
+- [ ] Video recording integration
+- [ ] Plugin system for extensions
 
 ## 📝 License
 
-This project is dual-licensed:
-
-- **Open Source**: GPL v3 License - see the [LICENSE](LICENSE) file for details
-- **Commercial**: A commercial license is available for proprietary use
-
-For commercial licensing inquiries, please submit a Github issue.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
 Built with these excellent open-source projects:
 
-- [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) - Qt bindings for Python
+**Frontend:**
+- [Electron](https://www.electronjs.org/) - Cross-platform desktop apps
+- [Next.js](https://nextjs.org/) - React framework
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
+- [Zustand](https://github.com/pmndrs/zustand) - State management
+- [Framer Motion](https://www.framer.com/motion/) - Animation library
+
+**Backend:**
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework
 - [Python-Markdown](https://python-markdown.github.io/) - Markdown parsing
 - [WebRTC VAD](https://github.com/wiseman/py-webrtcvad) - Voice detection
 - [Poetry](https://python-poetry.org/) - Dependency management

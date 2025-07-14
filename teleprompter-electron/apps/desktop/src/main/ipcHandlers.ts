@@ -2,7 +2,7 @@ import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { IpcChannels, FileDialogResult } from '@cuebird/ipc'
 import { WindowManager } from './windowManager'
 import { PythonManager } from './pythonManager'
-import { SettingsManager } from './settingsManager'
+//import { SettingsManager } from './settingsManager'
 import { ShortcutManager } from './shortcutManager'
 import { SUPPORTED_EXTENSIONS } from '@cuebird/shared'
 
@@ -10,7 +10,7 @@ export class IpcHandlers {
   static initialize(
     windowManager: WindowManager,
     pythonManager: PythonManager,
-    settingsManager: SettingsManager,
+    //settingsManager: SettingsManager,
     shortcutManager: ShortcutManager
   ) {
     // Window management handlers
@@ -70,14 +70,14 @@ export class IpcHandlers {
       }
     })
 
-    // Settings handlers
-    ipcMain.handle(IpcChannels.SETTINGS_GET, () => {
+    // Settings handlers - temporarily disabled
+    /*ipcMain.handle(IpcChannels.SETTINGS_GET, () => {
       return settingsManager.getAll()
     })
 
     ipcMain.handle(IpcChannels.SETTINGS_SET, (_, settings) => {
       settingsManager.setAll(settings)
-    })
+    })*/
 
     // Dev tools toggle
     ipcMain.handle(IpcChannels.DEV_TOOLS_TOGGLE, () => {
@@ -104,13 +104,13 @@ export class IpcHandlers {
       return shortcutManager.unregister(accelerator)
     })
 
-    // Settings change listener
-    settingsManager.onDidAnyChange((newSettings) => {
+    // Settings change listener - temporarily disabled
+    /*settingsManager.onDidAnyChange((newSettings) => {
       const mainWindow = windowManager.getMainWindow()
       if (mainWindow) {
         mainWindow.webContents.send(IpcChannels.SETTINGS_CHANGED, newSettings)
       }
-    })
+    })*/
 
     // Backend error forwarding
     const checkBackendStatus = setInterval(() => {

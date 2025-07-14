@@ -1,16 +1,27 @@
-# CueBird Teleprompter - Electron Edition
+# CueBird Teleprompter - Electron Frontend
 
-A modern teleprompter application built with Electron, Next.js, and Python.
+Modern teleprompter application built with Electron, Next.js, and FastAPI.
 
-## Architecture
+## 🚀 Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Start development mode (backend + frontend + electron)
+npm run dev
+```
+
+That's it! The app will launch with hot-reload enabled.
+
+## 📁 Architecture
 
 This is a monorepo containing:
 
-- **apps/desktop** - Electron main process (TypeScript)
-- **apps/frontend** - Next.js frontend with static export
-- **apps/backend** - Python FastAPI backend wrapper
-- **packages/shared** - Shared types and constants
-- **packages/ipc** - Electron IPC definitions
+- **apps/desktop** - Electron main process with window management
+- **apps/frontend** - Next.js React app with Tailwind CSS
+- **apps/backend** - Python FastAPI backend integration
+- **packages/** - Shared TypeScript types and utilities
 
 ## Development Setup
 
@@ -53,35 +64,19 @@ npm run frontend:dev
 cd ../ && poetry run python -m teleprompter.backend.main
 ```
 
-## Building for Production
-
-### 1. Build Frontend
+## 🏗️ Building for Production
 
 ```bash
-cd apps/frontend
+# Build for current platform
 npm run build
+
+# Build for specific platforms
+npm run build:mac    # macOS (Universal)
+npm run build:win    # Windows (64-bit)
+npm run build:linux  # Linux (AppImage)
 ```
 
-This creates a static export in `apps/frontend/out/`.
-
-### 2. Build Python Backend
-
-```bash
-cd apps/backend
-npm run build
-```
-
-This uses PyInstaller to create a standalone executable.
-
-### 3. Package Electron App
-
-```bash
-cd apps/desktop
-npm run build
-npm run package
-```
-
-This creates platform-specific installers in `apps/desktop/release/`.
+The built applications will be in the `dist/` directory.
 
 ## Project Structure
 
@@ -105,21 +100,25 @@ teleprompter-electron/
 └── package.json       # Root workspace config
 ```
 
-## Key Features
+## ✨ Key Features
 
-- **Self-contained**: Python backend runs as subprocess
-- **Type-safe**: Full TypeScript support across packages
+### 🎯 Core Features
+- **Voice Control**: Dual-mode voice activity detection
+- **Virtual Scrolling**: Smooth performance for large texts
+- **Real-time Updates**: WebSocket-powered file watching
+- **Keyboard Shortcuts**: Global and local shortcuts
+- **Performance Monitoring**: Real-time FPS and metrics
+
+### 🛠️ Technical Features
+- **Self-contained**: Python backend embedded in app
+- **Type-safe**: Full TypeScript + Pydantic validation
 - **Secure**: Context isolation and secure IPC
-- **Modern**: React 18, Next.js 14, Zustand for state
+- **Modern Stack**: React 18, Next.js 14, Zustand
 - **Cross-platform**: Windows, macOS, Linux support
 
-## Configuration
+## ⚙️ Configuration
 
-The app uses a layered configuration approach:
-
-1. Default settings in `packages/shared/src/constants.ts`
-2. User settings stored via `electron-store`
-3. Environment-specific overrides
+Frontend settings are stored in browser localStorage, while backend settings use JSON configuration files. See the main [README](../README.md) for configuration details.
 
 ## License
 

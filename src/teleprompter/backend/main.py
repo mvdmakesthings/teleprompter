@@ -17,8 +17,8 @@ def main():
     parser.add_argument(
         "--port",
         type=int,
-        default=8000,
-        help="Port to bind to (default: 8000)",
+        default=8123,
+        help="Port to bind to (default: 8123)",
     )
     parser.add_argument(
         "--reload",
@@ -37,9 +37,12 @@ def main():
     if not args.no_container:
         try:
             from teleprompter.core.container import configure_container
+
             configure_container()
         except ImportError:
-            print("Warning: Could not configure container (Qt dependencies may be missing)")
+            print(
+                "Warning: Could not configure container (Qt dependencies may be missing)"
+            )
 
     # Run the server
     uvicorn.run(

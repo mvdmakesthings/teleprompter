@@ -3,7 +3,7 @@ import * as path from 'path'
 import { IpcChannels } from '@cuebird/ipc'
 import { WindowManager } from './windowManager'
 import { PythonManager } from './pythonManager'
-import { SettingsManager } from './settingsManager'
+//import { SettingsManager } from './settingsManager'
 import { IpcHandlers } from './ipcHandlers'
 import { ShortcutManager } from './shortcutManager'
 
@@ -37,7 +37,7 @@ if (!gotTheLock) {
 // Initialize managers
 const windowManager = WindowManager.getInstance()
 const pythonManager = PythonManager.getInstance()
-const settingsManager = SettingsManager.getInstance()
+//const settingsManager = SettingsManager.getInstance()
 const shortcutManager = ShortcutManager.getInstance()
 
 // Main app initialization
@@ -45,17 +45,17 @@ async function createApp() {
   try {
     // Start Python backend
     await pythonManager.start()
-    
+
     // Create main window
     const mainWindow = windowManager.createMainWindow()
-    
+
     // Initialize shortcut manager with main window
     shortcutManager.setMainWindow(mainWindow)
     shortcutManager.registerDefaultShortcuts()
-    
+
     // Initialize IPC handlers
-    IpcHandlers.initialize(windowManager, pythonManager, settingsManager, shortcutManager)
-    
+    //IpcHandlers.initialize(windowManager, pythonManager, shortcutManager)
+
     // Load frontend
     if (app.isPackaged) {
       // Production: Load from static files
@@ -66,19 +66,19 @@ async function createApp() {
       await mainWindow.loadURL('http://localhost:3001')
       mainWindow.webContents.openDevTools()
     }
-    
+
     // Notify renderer that app is ready
     mainWindow.webContents.on('did-finish-load', () => {
       mainWindow.webContents.send(IpcChannels.APP_READY, {
         backendUrl: pythonManager.getApiUrl(),
-        settings: settingsManager.getAll()
+        settings: {} // settingsManager.getAll()
       })
     })
-    
+
   } catch (error) {
     console.error('Failed to initialize app:', error)
-    dialog.showErrorBox('Initialization Error', 
-      `Failed to start CueBird: ${error.message}`)
+    dialog.showErrorBox('Initialization Error',
+      `Failed to start CueBird: ${(error as Error).message}`)
     app.quit()
   }
 }
@@ -94,7 +94,7 @@ app.whenReady().then(async () => {
       callback(false)
     }
   })
-  
+
   // Set permission check handler for better UX
   session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
     if (permission === 'media') {
@@ -102,7 +102,7 @@ app.whenReady().then(async () => {
     }
     return false
   })
-  
+
   await createApp()
 })
 

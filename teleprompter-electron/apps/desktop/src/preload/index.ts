@@ -50,7 +50,7 @@ const electronAPI: IpcApi = {
   getShortcuts: () => ipcRenderer.invoke(IpcChannels.SHORTCUTS_GET_ALL),
   registerShortcut: (shortcut) => ipcRenderer.invoke(IpcChannels.SHORTCUTS_REGISTER, shortcut),
   unregisterShortcut: (accelerator) => ipcRenderer.invoke(IpcChannels.SHORTCUTS_UNREGISTER, accelerator),
-  
+
   onShortcutTriggered: (callback) => {
     const subscription = (_event: any, data: { action: string }) => callback(data)
     ipcRenderer.on(IpcChannels.SHORTCUTS_TRIGGERED, subscription)
@@ -64,19 +64,19 @@ const electronAPI: IpcApi = {
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)
 
 // Handle file drop events
-window.addEventListener('dragover', (e) => {
+window.addEventListener('dragover', (e: DragEvent) => {
   e.preventDefault()
   e.stopPropagation()
 })
 
-window.addEventListener('drop', (e) => {
+window.addEventListener('drop', (e: DragEvent) => {
   e.preventDefault()
   e.stopPropagation()
 
   const files = Array.from(e.dataTransfer?.files || [])
   if (files.length > 0) {
     // Send the first file path to main process
-    ipcRenderer.send(IpcChannels.FILE_DROPPED, files[0].path)
+    ipcRenderer.send(IpcChannels.FILE_DROPPED, (files[0] as any).path)
   }
 })
 
@@ -84,5 +84,5 @@ window.addEventListener('drop', (e) => {
 ipcRenderer.once(IpcChannels.APP_READY, (_event, data) => {
   // Store backend URL and initial settings in window object
   // This will be available when the renderer loads
-  window.__CUEBIRD_INIT__ = data
+  ; (window as any).__CUEBIRD_INIT__ = data
 })

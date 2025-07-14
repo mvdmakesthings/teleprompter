@@ -11,7 +11,7 @@ export class PythonManager {
   private status: BackendStatus = { running: false }
   private startPromise: Promise<void> | null = null
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): PythonManager {
     if (!PythonManager.instance) {
@@ -37,12 +37,12 @@ export class PythonManager {
 
       // Path to Python backend
       const pythonPath = this.getPythonPath()
-      
+
       // Spawn Python process
       const args = app.isPackaged
         ? ['--port', this.port.toString(), '--host', '127.0.0.1']
         : ['-m', 'teleprompter.backend.main', '--port', this.port.toString(), '--host', '127.0.0.1']
-      
+
       this.pythonProcess = spawn(pythonPath, args, {
         env: {
           ...process.env,
@@ -67,7 +67,7 @@ export class PythonManager {
     } catch (error) {
       this.status = {
         running: false,
-        error: error.message
+        error: (error as Error).message
       }
       throw error
     }
@@ -170,16 +170,16 @@ export class PythonManager {
           resolve()
         }
 
-        if (this.pythonProcess.killed) {
+        if (!this.pythonProcess || this.pythonProcess.killed) {
           cleanup()
           return
         }
 
         this.pythonProcess.once('exit', cleanup)
-        
+
         // Try graceful shutdown first
         this.pythonProcess.kill('SIGTERM')
-        
+
         // Force kill after timeout
         setTimeout(() => {
           if (this.pythonProcess && !this.pythonProcess.killed) {

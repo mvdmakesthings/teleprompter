@@ -15,7 +15,7 @@
   "dependencies": {
     "@cuebird/ipc": "*",
     "@cuebird/shared": "*",
-    "electron-store": "^10.0.0"
+    "electron-store": "^8.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
