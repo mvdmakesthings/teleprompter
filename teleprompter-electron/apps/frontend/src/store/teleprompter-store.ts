@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { 
-  ScrollState, 
-  ContentInfo, 
-  FileInfo, 
+import {
+  ScrollState,
+  ContentInfo,
+  FileInfo,
   VoiceActivity,
   ReadingMetrics,
   DEFAULT_WORDS_PER_MINUTE
@@ -18,16 +18,16 @@ interface TeleprompterState {
     info: ContentInfo | null
     file: FileInfo | null
   }
-  
+
   // Scroll state
   scroll: ScrollState
-  
+
   // Voice state
   voice: VoiceActivity
-  
+
   // Reading metrics
   metrics: ReadingMetrics | null
-  
+
   // Actions
   loadFile: (filePath: string) => Promise<void>
   loadMarkdown: (markdown: string) => Promise<void>
@@ -71,7 +71,7 @@ export const useTeleprompterStore = create<TeleprompterState>()(
       loadFile: async (filePath: string) => {
         try {
           const response = await apiClient.loadContent({ filePath })
-          
+
           set({
             content: {
               html: response.html,
@@ -82,7 +82,7 @@ export const useTeleprompterStore = create<TeleprompterState>()(
             scroll: { ...initialState.scroll },
             metrics: null,
           })
-          
+
           // Calculate initial metrics
           get().calculateMetrics()
         } catch (error) {
@@ -94,11 +94,11 @@ export const useTeleprompterStore = create<TeleprompterState>()(
       // Load markdown directly
       loadMarkdown: async (markdown: string) => {
         try {
-          const response = await apiClient.parseContent({ 
-            content: markdown, 
-            format: 'markdown' 
+          const response = await apiClient.parseContent({
+            content: markdown,
+            format: 'markdown'
           })
-          
+
           set({
             content: {
               html: response.html,
@@ -109,7 +109,7 @@ export const useTeleprompterStore = create<TeleprompterState>()(
             scroll: { ...initialState.scroll },
             metrics: null,
           })
-          
+
           // Calculate initial metrics
           get().calculateMetrics()
         } catch (error) {
@@ -120,30 +120,70 @@ export const useTeleprompterStore = create<TeleprompterState>()(
 
       // Update scroll position
       setScrollPosition: (position: number) => {
+        const { content, scroll } = get()
         const progress = Math.max(0, Math.min(1, position))
+
+        // Only update if position actually changed
+        if (scroll.position === position) return
+
+        // Calculate metrics inline to avoid triggering another store update
+        let newMetrics = null
+        if (content.info) {
+          const wordCount = content.info.wordCount
+          const wpm = DEFAULT_WORDS_PER_MINUTE * scroll.speed
+          const totalTime = (wordCount / wpm) * 60 // in seconds
+          const elapsedTime = totalTime * progress
+          const remainingTime = totalTime - elapsedTime
+
+          newMetrics = {
+            wordsPerMinute: wpm,
+            elapsedTime,
+            remainingTime,
+            totalTime,
+          }
+        }
+
         set(state => ({
           scroll: {
             ...state.scroll,
             position,
             progress,
-          }
+          },
+          metrics: newMetrics || state.metrics
         }))
-        
-        // Recalculate metrics
-        get().calculateMetrics()
       },
 
       // Update scroll speed
       setScrollSpeed: (speed: number) => {
+        const { content, scroll } = get()
+
+        // Only update if speed actually changed
+        if (scroll.speed === speed) return
+
+        // Calculate metrics inline to avoid triggering another store update
+        let newMetrics = null
+        if (content.info) {
+          const wordCount = content.info.wordCount
+          const wpm = DEFAULT_WORDS_PER_MINUTE * speed
+          const totalTime = (wordCount / wpm) * 60 // in seconds
+          const elapsedTime = totalTime * scroll.progress
+          const remainingTime = totalTime - elapsedTime
+
+          newMetrics = {
+            wordsPerMinute: wpm,
+            elapsedTime,
+            remainingTime,
+            totalTime,
+          }
+        }
+
         set(state => ({
           scroll: {
             ...state.scroll,
             speed,
-          }
+          },
+          metrics: newMetrics || state.metrics
         }))
-        
-        // Recalculate metrics
-        get().calculateMetrics()
       },
 
       // Toggle play/pause
@@ -159,7 +199,7 @@ export const useTeleprompterStore = create<TeleprompterState>()(
       // Update voice activity
       updateVoiceActivity: (activity: VoiceActivity) => {
         set({ voice: activity })
-        
+
         // Auto-pause/resume based on voice
         const { scroll } = get()
         if (activity.isSpeaking && scroll.isPlaying) {

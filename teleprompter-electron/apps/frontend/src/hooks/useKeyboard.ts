@@ -21,7 +21,7 @@ type ActionHandler = () => void
 
 export function useKeyboard() {
   const actionHandlersRef = useRef<Map<string, ActionHandler>>(new Map())
-  
+
   // Store references
   const {
     isPlaying,
@@ -34,7 +34,7 @@ export function useKeyboard() {
     contentHeight,
     viewportHeight,
   } = useTeleprompterStore()
-  
+
   const {
     voiceControlEnabled,
     setVoiceControlEnabled,
@@ -45,19 +45,19 @@ export function useKeyboard() {
   // Define action handlers
   const setupActionHandlers = useCallback(() => {
     const handlers = new Map<string, ActionHandler>()
-    
+
     // Playback controls
     handlers.set('playPause', () => {
       useTeleprompterStore.setState({ isPlaying: !isPlaying })
     })
-    
+
     handlers.set('reset', () => {
-      useTeleprompterStore.setState({ 
+      useTeleprompterStore.setState({
         scrollPosition: 0,
-        isPlaying: false 
+        isPlaying: false
       })
     })
-    
+
     handlers.set('escape', () => {
       if (document.fullscreenElement) {
         document.exitFullscreen()
@@ -65,53 +65,53 @@ export function useKeyboard() {
         useTeleprompterStore.setState({ isPlaying: false })
       }
     })
-    
+
     // Speed controls
     handlers.set('increaseSpeed', () => {
       const newSpeed = Math.min(5, scrollSpeed + 0.1)
       useTeleprompterStore.setState({ scrollSpeed: newSpeed })
     })
-    
+
     handlers.set('decreaseSpeed', () => {
       const newSpeed = Math.max(0.1, scrollSpeed - 0.1)
       useTeleprompterStore.setState({ scrollSpeed: newSpeed })
     })
-    
+
     // Navigation
     handlers.set('nextSection', () => {
       if (!sections.length) return
-      
+
       const currentSection = sections.find(s => s.position > scrollPosition)
       if (currentSection) {
-        useTeleprompterStore.setState({ 
+        useTeleprompterStore.setState({
           scrollPosition: currentSection.position,
           isPlaying: false
         })
       }
     })
-    
+
     handlers.set('previousSection', () => {
       if (!sections.length) return
-      
+
       const reversedSections = [...sections].reverse()
       const currentSection = reversedSections.find(s => s.position < scrollPosition - 10)
       if (currentSection) {
-        useTeleprompterStore.setState({ 
+        useTeleprompterStore.setState({
           scrollPosition: currentSection.position,
           isPlaying: false
         })
       }
     })
-    
+
     // Feature toggles
     handlers.set('toggleVoiceControl', () => {
       useSettingsStore.setState({ voiceControlEnabled: !voiceControlEnabled })
     })
-    
+
     handlers.set('toggleCursor', () => {
       useSettingsStore.setState({ cursorHidden: !cursorHidden })
     })
-    
+
     actionHandlersRef.current = handlers
   }, [
     isPlaying,
@@ -127,7 +127,16 @@ export function useKeyboard() {
   // Setup handlers whenever dependencies change
   useEffect(() => {
     setupActionHandlers()
-  }, [setupActionHandlers])
+  }, [
+    isPlaying,
+    scrollSpeed,
+    scrollPosition,
+    sections,
+    voiceControlEnabled,
+    cursorHidden,
+    contentHeight,
+    viewportHeight
+  ])
 
   // Listen for global shortcut triggers from main process
   useEffect(() => {

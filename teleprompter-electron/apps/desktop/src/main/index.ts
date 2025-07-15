@@ -65,6 +65,19 @@ async function createApp() {
       // Development: Load from Next.js dev server
       await mainWindow.loadURL('http://localhost:3001')
       mainWindow.webContents.openDevTools()
+
+      // Suppress harmless DevTools console errors
+      mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+        // Filter out known harmless DevTools errors
+        if (message.includes('Autofill.enable failed') ||
+          message.includes('Autofill.setAddresses failed') ||
+          message.includes('Request Autofill') ||
+          message.includes("wasn't found")) {
+          return // Suppress these specific errors
+        }
+        // Log other console messages normally
+        console.log(`[Renderer ${level}]:`, message)
+      })
     }
 
     // Notify renderer that app is ready
@@ -82,6 +95,35 @@ async function createApp() {
     app.quit()
   }
 }
+
+// Configure Content Security Policy for enhanced security
+app.whenReady().then(() => {
+  // Set up CSP headers for localhost development
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    // Only apply CSP to localhost development server
+    if (details.url.startsWith('http://localhost:3001')) {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [
+            // More restrictive CSP for production-like security in development
+            "default-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
+            "script-src 'self' 'unsafe-inline' http://localhost:* blob:; " +
+            "style-src 'self' 'unsafe-inline' http://localhost:*; " +
+            "img-src 'self' data: blob: http://localhost:*; " +
+            "font-src 'self' data: http://localhost:*; " +
+            "connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
+            "media-src 'self' blob: data:; " +
+            "object-src 'none'; " +
+            "base-uri 'self'"
+          ]
+        }
+      })
+    } else {
+      callback({ responseHeaders: details.responseHeaders })
+    }
+  })
+})
 
 // App event handlers
 app.whenReady().then(async () => {

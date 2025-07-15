@@ -14,6 +14,7 @@ from ...core.protocols import (
     ReadingMetricsProtocol,
     SettingsStorageProtocol,
 )
+from ..services.adapters import FileWatcherAdapter
 from .models import (
     ContentAnalysisResponse,
     ContentAnalyzeRequest,
@@ -34,7 +35,6 @@ from .models import (
     WebSocketMessage,
 )
 from .websocket import WebSocketManager
-from ..services.adapters import FileWatcherAdapter
 
 # Version of the API
 API_VERSION = "0.1.0"
@@ -69,7 +69,12 @@ app = FastAPI(
 # Configure CORS for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -98,8 +103,9 @@ async def load_content(request: ContentLoadRequest) -> ContentLoadResponse:
 
         # Get file metadata
         import os
+
         stat = os.stat(request.file_path)
-        
+
         # Start watching the file for changes
         await file_watcher_adapter.start_watching(request.file_path)
 
@@ -165,7 +171,9 @@ async def get_reading_metrics(request: ReadingMetricsRequest) -> ReadingMetricsR
         metrics_service = container.get(ReadingMetricsProtocol)
 
         # Calculate metrics
-        reading_time = metrics_service.calculate_reading_time(request.word_count, request.wpm)
+        reading_time = metrics_service.calculate_reading_time(
+            request.word_count, request.wpm
+        )
         words_per_minute = metrics_service.calculate_words_per_minute(1.0)  # Base speed
 
         # For demonstration, use provided position to estimate times
@@ -241,7 +249,9 @@ voice_state = {
 
 
 @app.post("/api/voice/detect", response_model=VoiceDetectionResponse)
-async def control_voice_detection(request: VoiceDetectionRequest) -> VoiceDetectionResponse:
+async def control_voice_detection(
+    request: VoiceDetectionRequest,
+) -> VoiceDetectionResponse:
     """Control voice detection."""
     global voice_state
 

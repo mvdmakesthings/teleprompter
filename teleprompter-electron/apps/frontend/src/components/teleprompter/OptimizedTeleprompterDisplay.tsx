@@ -21,7 +21,7 @@ export const OptimizedTeleprompterDisplay = React.memo(function OptimizedTelepro
   const animationRef = useRef<number>()
   const lastFrameTime = useRef(0)
   const [isPending, startTransition] = useTransition()
-  
+
   const {
     content,
     isPlaying,
@@ -53,8 +53,29 @@ export const OptimizedTeleprompterDisplay = React.memo(function OptimizedTelepro
     return perfConfig.virtualScrolling.enabled && wordCount > perfConfig.virtualScrolling.wordThreshold
   }, [perfConfig.virtualScrolling, wordCount])
 
-  // Throttled scroll position update
-  const throttledSetScrollPosition = useThrottle(setScrollPosition, perfConfig.animation.scrollThrottleMs)
+  // Throttled scroll position update - use stable reference
+  const throttledSetScrollPosition = useMemo(() => {
+    // Create a throttled version that doesn't recreate on every render
+    let lastRun = 0
+    let timeout: NodeJS.Timeout | null = null
+
+    return (position: number) => {
+      const now = Date.now()
+      const timeSinceLastRun = now - lastRun
+      const delay = perfConfig.animation.scrollThrottleMs
+
+      if (timeSinceLastRun >= delay) {
+        lastRun = now
+        setScrollPosition(position)
+      } else {
+        if (timeout) clearTimeout(timeout)
+        timeout = setTimeout(() => {
+          lastRun = Date.now()
+          setScrollPosition(position)
+        }, delay - timeSinceLastRun)
+      }
+    }
+  }, [perfConfig.animation.scrollThrottleMs])
 
   // Update dimensions with transition for non-critical updates
   const updateDimensions = useCallback(() => {
@@ -69,9 +90,9 @@ export const OptimizedTeleprompterDisplay = React.memo(function OptimizedTelepro
   useEffect(() => {
     updateDimensions()
     window.addEventListener('resize', updateDimensions)
-    
+
     return () => window.removeEventListener('resize', updateDimensions)
-  }, [deferredContent, updateDimensions])
+  }, [deferredContent])
 
   // Optimized scrolling animation with frame time tracking
   const scroll = useCallback(() => {
@@ -79,25 +100,25 @@ export const OptimizedTeleprompterDisplay = React.memo(function OptimizedTelepro
 
     const currentTime = performance.now()
     const deltaTime = currentTime - lastFrameTime.current
-    
+
     // Skip frame if running too fast (prevent unnecessary updates)
     const targetFrameTime = 1000 / perfConfig.animation.targetFPS
     if (deltaTime < targetFrameTime) {
       animationRef.current = requestAnimationFrame(scroll)
       return
     }
-    
+
     lastFrameTime.current = currentTime
 
     const container = containerRef.current
     const maxScroll = container.scrollHeight - container.clientHeight
     const currentScroll = container.scrollTop
-    
+
     if (currentScroll < maxScroll) {
       // Adjust scroll speed based on actual frame time for consistent speed
       const frameAdjustedSpeed = scrollSpeed * (deltaTime / 16.67)
       const newPosition = Math.min(currentScroll + frameAdjustedSpeed, maxScroll)
-      
+
       container.scrollTop = newPosition
       throttledSetScrollPosition(newPosition)
       setIsScrolling(true)
@@ -137,11 +158,11 @@ export const OptimizedTeleprompterDisplay = React.memo(function OptimizedTelepro
   }, [isPlaying, scroll])
 
   // Handle manual scrolling with throttling
-  const handleScroll = useThrottle((e: React.UIEvent<HTMLDivElement>) => {
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     if (!isScrolling && containerRef.current) {
       throttledSetScrollPosition(containerRef.current.scrollTop)
     }
-  }, perfConfig.animation.scrollThrottleMs)
+  }, [isScrolling, throttledSetScrollPosition])
 
   // Handle mouse wheel
   const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
@@ -150,10 +171,14 @@ export const OptimizedTeleprompterDisplay = React.memo(function OptimizedTelepro
     }
   }, [isPlaying])
 
-  // Set scroll position
+  // Set scroll position - only update when position changes and not scrolling
   useEffect(() => {
     if (containerRef.current && !isScrolling) {
-      containerRef.current.scrollTop = scrollPosition
+      const currentScrollTop = containerRef.current.scrollTop
+      // Only update if position is different to prevent infinite loops
+      if (Math.abs(currentScrollTop - scrollPosition) > 1) {
+        containerRef.current.scrollTop = scrollPosition
+      }
     }
   }, [scrollPosition, isScrolling])
 
@@ -204,8 +229,8 @@ export const OptimizedTeleprompterDisplay = React.memo(function OptimizedTelepro
       <div
         ref={contentRef}
         className="px-8 py-16"
-        style={{ 
-          fontSize: `${deferredFontSize}px`, 
+        style={{
+          fontSize: `${deferredFontSize}px`,
           lineHeight: 1.6,
           willChange: isScrolling ? 'transform' : 'auto',
           transform: perfConfig.animation.useGPUAcceleration ? 'translateZ(0)' : undefined,

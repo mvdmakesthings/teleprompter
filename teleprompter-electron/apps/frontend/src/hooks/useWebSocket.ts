@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { getWebSocketClient, destroyWebSocketClient, WebSocketClient, WebSocketEvent } from '@/services/websocket'
 import { useTeleprompterStore } from '@/store/teleprompter'
 import { useAppStore } from '@/store/app'
@@ -13,9 +13,9 @@ export function useWebSocket() {
   const wsRef = useRef<WebSocketClient | null>(null)
   const fileReloadTimerRef = useRef<NodeJS.Timeout | null>(null)
   const lastReloadTimeRef = useRef<number>(0)
-  
+
   const { backendUrl } = useAppStore()
-  const { 
+  const {
     setIsVoiceActive,
     currentFile,
     loadContent,
@@ -33,7 +33,7 @@ export function useWebSocket() {
   const addNotificationStable = useRef(addNotification)
   const setScrollPositionStable = useRef(setScrollPosition)
   const setIsPlayingStable = useRef(setIsPlaying)
-  
+
   useEffect(() => {
     setIsVoiceActiveStable.current = setIsVoiceActive
     loadContentStable.current = loadContent
@@ -46,14 +46,14 @@ export function useWebSocket() {
     if (!backendUrl) return
 
     let isMounted = true
-    
+
     // Convert HTTP URL to WebSocket URL
     const wsUrl = backendUrl.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws'
-    
+
     try {
       const ws = getWebSocketClient(wsUrl)
       wsRef.current = ws
-      
+
       // Connection handlers
       const handleConnected = () => {
         if (isMounted) {
@@ -62,42 +62,42 @@ export function useWebSocket() {
           console.log('WebSocket connected')
         }
       }
-      
+
       const handleDisconnected = () => {
         if (isMounted) {
           setIsConnected(false)
           console.log('WebSocket disconnected')
         }
       }
-      
+
       const handleError = (error: any) => {
         if (isMounted) {
           console.error('WebSocket error:', error)
           setConnectionError('WebSocket connection error')
         }
       }
-      
+
       const handleVoiceActivity = (data: { is_active: boolean; level: number }) => {
         if (isMounted) {
           setIsVoiceActiveStable.current(data.is_active)
         }
       }
-      
+
       const handleFileChanged = async (data: { file_path: string; change_type: string }) => {
         if (!isMounted) return
-        
+
         const state = useTeleprompterStore.getState()
         const currentFileSnapshot = state.currentFile
         const settings = useSettingsStore.getState()
-        
+
         // Check if this is the current file and if auto-reload is enabled
         if (data.file_path !== currentFileSnapshot) return
-        
+
         // Clear any existing reload timer
         if (fileReloadTimerRef.current) {
           clearTimeout(fileReloadTimerRef.current)
         }
-        
+
         // Check if we're within the debounce window
         const now = Date.now()
         if (now - lastReloadTimeRef.current < fileWatchDebounce) {
@@ -107,10 +107,10 @@ export function useWebSocket() {
           }, fileWatchDebounce)
           return
         }
-        
+
         if (data.change_type === 'modified') {
           const notificationLevel = settings.fileWatchNotifications
-          
+
           if (!settings.autoReload) {
             // Show notification with reload action if notifications are enabled
             if (notificationLevel !== 'none') {
@@ -120,7 +120,7 @@ export function useWebSocket() {
                 message: notificationLevel === 'verbose'
                   ? `The file "${data.file_path.split('/').pop()}" has been modified. Click reload to update.`
                   : 'The file has been modified. Click reload to update.',
-                duration: null, // Permanent notification
+                duration: undefined, // Permanent notification
                 actions: [{
                   label: 'Reload',
                   action: async () => {
@@ -131,7 +131,7 @@ export function useWebSocket() {
             }
             return
           }
-          
+
           // Auto-reload is enabled
           await reloadFile(data.file_path)
         } else if (data.change_type === 'deleted') {
@@ -144,25 +144,25 @@ export function useWebSocket() {
               message: notificationLevel === 'verbose'
                 ? `The file "${data.file_path.split('/').pop()}" has been deleted or moved.`
                 : 'The file has been deleted or moved.',
-              duration: null,
+              duration: undefined,
             })
           }
         }
       }
-      
+
       const reloadFile = async (filePath: string) => {
         if (!isMounted) return
-        
+
         // Store current state for restoration
         const state = useTeleprompterStore.getState()
         const currentScrollPosition = state.scrollPosition
         const wasPlaying = state.isPlaying
-        
+
         // Pause if playing
         if (wasPlaying) {
           setIsPlayingStable.current(false)
         }
-        
+
         try {
           const apiClient = useAppStore.getState().apiClient
           if (apiClient && isMounted) {
@@ -170,13 +170,13 @@ export function useWebSocket() {
             const loadResponse = await apiClient.post('/api/content/load', {
               file_path: filePath
             })
-            
+
             if (loadResponse.data && isMounted) {
               // Parse the content
               const parseResponse = await apiClient.post('/api/content/parse', {
                 content: loadResponse.data.content
               })
-              
+
               if (parseResponse.data && isMounted) {
                 // Load the new content
                 loadContentStable.current({
@@ -186,29 +186,29 @@ export function useWebSocket() {
                   wordCount: parseResponse.data.word_count,
                   sections: parseResponse.data.sections,
                 })
-                
+
                 // Restore scroll position (with a small delay to ensure content is rendered)
                 setTimeout(() => {
                   if (isMounted) {
                     setScrollPositionStable.current(currentScrollPosition)
-                    
+
                     // Resume playing if it was playing before
                     if (wasPlaying) {
                       setIsPlayingStable.current(true)
                     }
                   }
                 }, 100)
-                
+
                 // Update last reload time
                 lastReloadTimeRef.current = Date.now()
-                
+
                 // Show success notification based on notification level
                 const notificationLevel = useSettingsStore.getState().fileWatchNotifications
                 if (notificationLevel !== 'none') {
                   addNotificationStable.current({
                     type: 'success',
                     title: 'File Reloaded',
-                    message: notificationLevel === 'verbose' 
+                    message: notificationLevel === 'verbose'
                       ? `The file "${filePath.split('/').pop()}" has been updated with the latest changes.`
                       : 'The file has been updated with the latest changes.',
                     duration: 3000,
@@ -229,37 +229,37 @@ export function useWebSocket() {
                 : 'Failed to reload the file. Please try again.',
             })
           }
-          
+
           // Resume playing if it was playing before
           if (wasPlaying && isMounted) {
             setIsPlayingStable.current(true)
           }
         }
       }
-      
+
       const handleReadingMetrics = (data: { words_per_minute: number; estimated_time: number }) => {
         if (isMounted) {
           // Could update a metrics store here if needed
           console.log('Reading metrics:', data)
         }
       }
-      
+
       // Handle other file events
       const handleFileRemoved = (data: { file_path: string }) => {
         if (!isMounted) return
-        
+
         const currentFileSnapshot = useTeleprompterStore.getState().currentFile
         if (data.file_path === currentFileSnapshot) {
           handleFileChanged({ file_path: data.file_path, change_type: 'deleted' })
         }
       }
-      
+
       const handleFileWatchError = (data: { file_path: string; error: string }) => {
         if (!isMounted) return
-        
+
         const currentFileSnapshot = useTeleprompterStore.getState().currentFile
         const notificationLevel = useSettingsStore.getState().fileWatchNotifications
-        
+
         if (data.file_path === currentFileSnapshot && notificationLevel !== 'none') {
           addNotificationStable.current({
             type: 'error',
@@ -270,7 +270,7 @@ export function useWebSocket() {
           })
         }
       }
-      
+
       // Add event listeners
       ws.on('connected', handleConnected)
       ws.on('disconnected', handleDisconnected)
@@ -280,25 +280,25 @@ export function useWebSocket() {
       ws.on('file_removed', handleFileRemoved)
       ws.on('file_watch_error', handleFileWatchError)
       ws.on('reading_metrics', handleReadingMetrics)
-      
+
       // Connect
       ws.connect()
-      
+
     } catch (error) {
       console.error('Failed to initialize WebSocket:', error)
       if (isMounted) {
         setConnectionError('Failed to initialize WebSocket')
       }
     }
-    
+
     return () => {
       isMounted = false
-      
+
       // Clear any pending reload timer
       if (fileReloadTimerRef.current) {
         clearTimeout(fileReloadTimerRef.current)
       }
-      
+
       if (wsRef.current) {
         wsRef.current.disconnect()
         wsRef.current.removeAllListeners()
@@ -307,13 +307,13 @@ export function useWebSocket() {
     }
   }, [backendUrl]) // Only depend on backendUrl
 
-  const sendMessage = (event: WebSocketEvent) => {
+  const sendMessage = useCallback((event: WebSocketEvent) => {
     if (wsRef.current?.isConnected) {
       wsRef.current.send(event)
     } else {
       console.warn('Cannot send message: WebSocket not connected')
     }
-  }
+  }, [])
 
   return {
     isConnected,

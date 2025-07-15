@@ -1,5 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { IpcChannels, IpcApi } from '@cuebird/ipc'
+
+// Use relative path to the built IPC package instead of workspace package name
+// Preload scripts have limited module resolution capabilities
+const { IpcChannels } = require('../../../../packages/ipc/dist/index.js')
+import type { IpcApi } from '../../../../packages/ipc/dist/index.js'
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object

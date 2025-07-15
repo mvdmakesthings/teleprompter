@@ -38,29 +38,28 @@ export const VirtualScroller = React.memo(function VirtualScroller({
   const scrollRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
   const animationRef = useRef<number>()
-  
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 10 })
+
   const [containerHeight, setContainerHeight] = useState(0)
 
   // Split content into chunks
   const chunks = useMemo(() => {
     const result: Chunk[] = []
     let offset = 0
-    
+
     for (let i = 0; i < content.length; i += CHUNK_SIZE) {
       const chunkContent = content.slice(i, Math.min(i + CHUNK_SIZE, content.length))
       const estimatedHeight = estimateHeight(chunkContent, fontSize, lineHeight)
-      
+
       result.push({
         id: i / CHUNK_SIZE,
         content: chunkContent,
         height: estimatedHeight,
         offset,
       })
-      
+
       offset += estimatedHeight
     }
-    
+
     return result
   }, [content, fontSize, lineHeight])
 
@@ -75,32 +74,34 @@ export const VirtualScroller = React.memo(function VirtualScroller({
     return lines * fontSize * lineHeight
   }
 
-  // Update visible range based on scroll position
-  const updateVisibleRange = useCallback(() => {
-    if (!containerRef.current) return
+  // Calculate visible range with useMemo to prevent unnecessary recalculations
+  const visibleRange = useMemo(() => {
+    if (!containerRef.current || chunks.length === 0) {
+      return { start: 0, end: Math.min(10, chunks.length) }
+    }
 
     const scrollTop = scrollPosition
     const viewportHeight = containerHeight
-    
+
     // Find chunks that are visible
     let startIdx = 0
     let endIdx = chunks.length - 1
-    
+
     for (let i = 0; i < chunks.length; i++) {
       if (chunks[i].offset + chunks[i].height >= scrollTop) {
         startIdx = Math.max(0, i - OVERSCAN)
         break
       }
     }
-    
+
     for (let i = startIdx; i < chunks.length; i++) {
       if (chunks[i].offset > scrollTop + viewportHeight) {
         endIdx = Math.min(chunks.length - 1, i + OVERSCAN)
         break
       }
     }
-    
-    setVisibleRange({ start: startIdx, end: endIdx })
+
+    return { start: startIdx, end: endIdx }
   }, [chunks, scrollPosition, containerHeight])
 
   // Handle resize
@@ -116,11 +117,6 @@ export const VirtualScroller = React.memo(function VirtualScroller({
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Update visible range when dependencies change
-  useEffect(() => {
-    updateVisibleRange()
-  }, [updateVisibleRange])
-
   // Handle scrolling animation
   useEffect(() => {
     if (!scrollRef.current || !isPlaying) return
@@ -130,7 +126,7 @@ export const VirtualScroller = React.memo(function VirtualScroller({
 
       const maxScroll = totalHeight - containerHeight
       const currentScroll = scrollPosition
-      
+
       if (currentScroll < maxScroll) {
         const newPosition = Math.min(currentScroll + scrollSpeed, maxScroll)
         scrollRef.current.scrollTop = newPosition
@@ -152,8 +148,7 @@ export const VirtualScroller = React.memo(function VirtualScroller({
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const scrollTop = e.currentTarget.scrollTop
     if (onScroll) onScroll(scrollTop)
-    updateVisibleRange()
-  }, [onScroll, updateVisibleRange])
+  }, [onScroll])
 
   // Set scroll position
   useEffect(() => {
@@ -197,7 +192,7 @@ export const VirtualScroller = React.memo(function VirtualScroller({
           ))}
         </div>
       </div>
-      
+
       {/* Hidden measurement div for accurate height calculation */}
       <div
         ref={measureRef}

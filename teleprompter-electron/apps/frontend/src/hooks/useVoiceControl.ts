@@ -25,13 +25,13 @@ export function useVoiceControl(options: UseVoiceControlOptions = {}) {
   const [error, setError] = useState<string | null>(null)
   const [audioLevel, setAudioLevel] = useState(0)
   const [permissionState, setPermissionState] = useState<PermissionState>('prompt')
-  
+
   const processorRef = useRef<AudioProcessor | null>(null)
   const audioStreamingRef = useRef(getAudioStreamingService())
   const lastVoiceStateRef = useRef(false)
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const resumeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+
   const { sendMessage } = useWebSocketContext()
   const {
     voiceEnabled,
@@ -60,41 +60,51 @@ export function useVoiceControl(options: UseVoiceControlOptions = {}) {
     }
   }, [])
 
-  // Handle voice activity
+  // Handle voice activity with stable dependencies
   const handleVoiceActivity = useCallback((isActive: boolean, level: number) => {
     setAudioLevel(level)
     setIsVoiceActive(isActive)
-    
+
     // Only send to backend if using frontend processing
     // (backend processing sends its own updates)
     if (!useBackendProcessing) {
-      sendMessage({
-        type: 'voice_activity',
-        data: { is_active: isActive, level }
-      })
+      try {
+        sendMessage({
+          type: 'voice_activity',
+          data: { is_active: isActive, level }
+        })
+      } catch (error) {
+        // Silently ignore WebSocket send errors
+        console.debug('WebSocket send failed:', error)
+      }
     }
-    
-    // Handle auto pause/resume
+
+    // Handle auto pause/resume with stable refs
     if (isActive !== lastVoiceStateRef.current) {
       lastVoiceStateRef.current = isActive
-      
+
       if (isActive) {
         // Voice detected - clear pause timeout and maybe resume
         if (pauseTimeoutRef.current) {
           clearTimeout(pauseTimeoutRef.current)
           pauseTimeoutRef.current = null
         }
-        
-        if (autoResumeEnabled && !isPlaying) {
-          // Debounce resume to avoid flickering
-          if (resumeTimeoutRef.current) {
-            clearTimeout(resumeTimeoutRef.current)
+
+        if (autoResumeEnabled) {
+          // Check if currently playing using current state
+          const currentIsPlaying = useTeleprompterStore.getState().isPlaying
+          if (!currentIsPlaying) {
+            // Debounce resume to avoid flickering
+            if (resumeTimeoutRef.current) {
+              clearTimeout(resumeTimeoutRef.current)
+            }
+
+            resumeTimeoutRef.current = setTimeout(() => {
+              // Use the setter from props to avoid dependency
+              useTeleprompterStore.getState().setIsPlaying(true)
+              resumeTimeoutRef.current = null
+            }, debounceMs)
           }
-          
-          resumeTimeoutRef.current = setTimeout(() => {
-            setIsPlaying(true)
-            resumeTimeoutRef.current = null
-          }, debounceMs)
         }
       } else {
         // Voice stopped - clear resume timeout and maybe pause
@@ -102,30 +112,26 @@ export function useVoiceControl(options: UseVoiceControlOptions = {}) {
           clearTimeout(resumeTimeoutRef.current)
           resumeTimeoutRef.current = null
         }
-        
-        if (autoPauseEnabled && isPlaying) {
-          // Debounce pause to avoid flickering
-          if (pauseTimeoutRef.current) {
-            clearTimeout(pauseTimeoutRef.current)
+
+        if (autoPauseEnabled) {
+          // Check if currently playing using current state
+          const currentIsPlaying = useTeleprompterStore.getState().isPlaying
+          if (currentIsPlaying) {
+            // Debounce pause to avoid flickering
+            if (pauseTimeoutRef.current) {
+              clearTimeout(pauseTimeoutRef.current)
+            }
+
+            pauseTimeoutRef.current = setTimeout(() => {
+              // Use the setter from props to avoid dependency
+              useTeleprompterStore.getState().setIsPlaying(false)
+              pauseTimeoutRef.current = null
+            }, debounceMs)
           }
-          
-          pauseTimeoutRef.current = setTimeout(() => {
-            setIsPlaying(false)
-            pauseTimeoutRef.current = null
-          }, debounceMs)
         }
       }
     }
-  }, [
-    isPlaying,
-    setIsPlaying,
-    setIsVoiceActive,
-    sendMessage,
-    autoPauseEnabled,
-    autoResumeEnabled,
-    debounceMs,
-    useBackendProcessing
-  ])
+  }, [sendMessage, autoPauseEnabled, autoResumeEnabled, debounceMs, useBackendProcessing])
 
   // Handle errors
   const handleError = useCallback((error: Error) => {
@@ -134,7 +140,7 @@ export function useVoiceControl(options: UseVoiceControlOptions = {}) {
     setIsProcessing(false)
     setVoiceEnabled(false)
   }, [setVoiceEnabled])
-  
+
   // Handle audio data for backend processing
   const handleAudioData = useCallback((data: Float32Array) => {
     if (useBackendProcessing && audioStreamingRef.current) {
@@ -147,16 +153,16 @@ export function useVoiceControl(options: UseVoiceControlOptions = {}) {
     if (processorRef.current?.isRunning()) {
       return
     }
-    
+
     setError(null)
     setIsProcessing(true)
-    
+
     try {
       // Start backend streaming if enabled
       if (useBackendProcessing) {
         await audioStreamingRef.current.start(handleVoiceActivity)
       }
-      
+
       if (!processorRef.current) {
         processorRef.current = createAudioProcessor({
           onVoiceActivity: handleVoiceActivity,
@@ -165,24 +171,24 @@ export function useVoiceControl(options: UseVoiceControlOptions = {}) {
           useBackendProcessing,
         })
       }
-      
+
       await processorRef.current.start()
-      
+
       // Update threshold based on sensitivity
       if (processorRef.current && 'setVoiceThreshold' in processorRef.current) {
         const threshold = mapSensitivityToThreshold(voiceSensitivity)
-        ;(processorRef.current as any).setVoiceThreshold(threshold)
+          ; (processorRef.current as any).setVoiceThreshold(threshold)
       }
-      
+
       setIsProcessing(true)
       setError(null)
-      
+
       // Notify backend
       sendMessage({
         type: 'voice_activity',
         data: { is_active: false, level: 0 }
       })
-      
+
     } catch (err) {
       handleError(err as Error)
       processorRef.current = null
@@ -195,12 +201,12 @@ export function useVoiceControl(options: UseVoiceControlOptions = {}) {
       processorRef.current.stop()
       processorRef.current = null
     }
-    
+
     // Stop backend streaming if enabled
     if (useBackendProcessing) {
       await audioStreamingRef.current.stop()
     }
-    
+
     // Clear any pending timeouts
     if (pauseTimeoutRef.current) {
       clearTimeout(pauseTimeoutRef.current)
@@ -210,12 +216,12 @@ export function useVoiceControl(options: UseVoiceControlOptions = {}) {
       clearTimeout(resumeTimeoutRef.current)
       resumeTimeoutRef.current = null
     }
-    
+
     setIsProcessing(false)
     setAudioLevel(0)
     setIsVoiceActive(false)
     lastVoiceStateRef.current = false
-    
+
     // Notify backend
     sendMessage({
       type: 'voice_activity',
@@ -247,9 +253,9 @@ export function useVoiceControl(options: UseVoiceControlOptions = {}) {
   useEffect(() => {
     if (processorRef.current && 'setVoiceThreshold' in processorRef.current) {
       const threshold = mapSensitivityToThreshold(voiceSensitivity)
-      ;(processorRef.current as any).setVoiceThreshold(threshold)
+        ; (processorRef.current as any).setVoiceThreshold(threshold)
     }
-    
+
     // Update backend sensitivity if using backend processing
     if (useBackendProcessing && audioStreamingRef.current) {
       audioStreamingRef.current.setSensitivity(voiceSensitivity)
